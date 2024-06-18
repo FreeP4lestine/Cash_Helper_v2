@@ -34,7 +34,7 @@
 ;        ---------------------------------------------------------------------------------------------------------------
 ;        The index of each option object determines the corresponding button state on which the bitmap will be shown.
 ;        MSDN defines 6 states (http://msdn.microsoft.com/en-us/windows/bb775975):
-;           PBS_NORMAL    = 1
+;            PBS_NORMAL    = 1
 ;	         PBS_HOT       = 2
 ;	         PBS_PRESSED   = 3
 ;	         PBS_DISABLED  = 4
