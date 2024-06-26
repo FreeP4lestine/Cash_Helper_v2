@@ -4,7 +4,7 @@
 /*
 Opens and creates an SQLite database
 	Parameters:
-	Filename -> the name of the file where to store the database
+	Filename -> The name of the file where to store the database
 */
 DBOpenTable(Filename) {
 	DB := SQLiteDB()
@@ -16,7 +16,7 @@ DBOpenTable(Filename) {
 /*
 Closes an SQLite database
 	Parameters:
-	DB -> the data base instance created with <DBOpenTable>
+	DB -> The data base instance
 */
 DBCloseTable(DB) {
 	DB.CloseDB()
@@ -25,7 +25,9 @@ DBCloseTable(DB) {
 /*
 Closes a table
 	Parameters:
-	DB -> the data base instance created with <DBOpenTable>
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+	Columns -> The table columns
 */
 DBCreateTable(Filename, Tablename, Columns) {
 	DB := DBOpenTable(Filename)
@@ -34,6 +36,12 @@ DBCreateTable(Filename, Tablename, Columns) {
 	DBCloseTable(DB)
 }
 
+/*
+Reads a table
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+*/
 DBReadTable(Filename, Tablename) {
 	DB := DBOpenTable(Filename)
 	Table := ''
@@ -42,30 +50,69 @@ DBReadTable(Filename, Tablename) {
 	DBCloseTable(DB)
 	Return Table
 }
+
+/*
+Inserts a row at the very end of the table with the default values
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+*/
 DBInsertRowTable(Filename, Tablename) {
 	DB := DBOpenTable(Filename)
 	If !DB.Exec('INSERT INTO ' Tablename ' DEFAULT VALUES;')
 		SQLError(DB.ErrorMsg, DB.ErrorCode)
 	DBCloseTable(DB)
 }
+
+/*
+Updates a row values
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+	NewValues -> The new values Column_Name=Value
+	Row -> The row number to update
+*/
 DBUpdateRowTable(Filename, Tablename, NewValues, Row) {
 	DB := DBOpenTable(Filename)
 	If !DB.Exec('UPDATE ' Tablename ' SET ' NewValues ' WHERE ROWID=' Row ';')
 		SQLError(DB.ErrorMsg, DB.ErrorCode)
 	DBCloseTable(DB)
 }
+
+/*
+Deletes a row
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+	Row -> The row number to delete
+*/
 DBDeleteRowTable(Filename, Tablename, Row) {
 	DB := DBOpenTable(Filename)
 	If !DB.Exec('DELETE FROM ' Tablename ' WHERE ROWID=' Row ';')
 		SQLError(DB.ErrorMsg, DB.ErrorCode)
 	DBCloseTable(DB)
 }
+
+/*
+Deletes a table
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+*/
 DBDeleteTable(Filename, Tablename) {
 	DB := DBOpenTable(Filename)
 	If !DB.Exec("DROP TABLE IF EXISTS " UserTable ";")
 		SQLError(DB.ErrorMsg, DB.ErrorCode)
 	DBCloseTable(DB)
 }
+
+/*
+Verifys if the column names are correct
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+	Columns -> The table columns
+*/
 DBVerifyColumns(Filename, Tablename, Columns) {
 	Table := DBReadTable(Filename, Tablename)
 	FoundColumns := ''
@@ -78,6 +125,14 @@ DBVerifyColumns(Filename, Tablename, Columns) {
 	DBDeleteTable(Filename, Tablename)
 	DBCreateTable(Filename, Tablename, Columns)
 }
+
+/*
+Verifys the registered master key
+	Parameters:
+	Filename -> The name of the file where to store the database
+	Tablename -> The table name
+	Columns -> The table columns
+*/
 DBVerifyMasterKey(Filename, Tablename, Columns) {
 	Table := DBReadTable(Filename, Tablename)
 	If !Table.RowCount || Table.RowCount < 1 || Table.ColumnCount < 2 || Table.Rows[1][2] != 'MasterKey' {

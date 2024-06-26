@@ -18,8 +18,7 @@ ArrayMerge(Array1 := [], Array2 := []) {
 		Return Merged
 	}
 	Loop Array1.Length {
-		Merged .= Merged = '' ? Array1[A_Index] '="' Array2[A_Index] '"' 
-							  : ', ' Array1[A_Index] '="' Array2[A_Index] '"'
+		Merged .= Merged = '' ? Array1[A_Index] '="' Array2[A_Index] '"' : ', ' Array1[A_Index] '="' Array2[A_Index] '"'
 	}
 	Return Merged
 }
@@ -43,4 +42,22 @@ MasterKeyCheck(MasterKey) {
 		Return False
 	}
 	Return True
+}
+IBBitmapCombine(Image1, Image2, ImgLoc := 'DB\Img') {
+	Image3 := StrReplace(Image1, 'SubApp', Image2)
+	Image2 .= '.png'
+	If !FileExist(ImgLoc '\' Image2) {
+		Return ImgLoc '\' Image1
+	}
+	pBitmap1 := Gdip_CreateBitmapFromFile(ImgLoc '\' Image1)
+	pBitmap2 := Gdip_CreateBitmapFromFile(ImgLoc '\' Image2)
+	pGraphics := Gdip_GraphicsFromImage(pBitmap1)
+	Gdip_DrawImage(pGraphics, pBitmap2, 28, 28, 64, 64)
+	If !FileExist(ImgLoc '\' Image3) {
+		Gdip_SaveBitmapToFile(pBitmap1, ImgLoc '\' Image3)
+	}
+	Gdip_DeleteGraphics(pGraphics)
+	Gdip_DisposeImage(pBitmap1)
+	Gdip_DisposeImage(pBitmap2)
+	Return ImgLoc '\' Image3
 }
