@@ -197,3 +197,33 @@ WindowSizeFix(GuiHandle, SizeW := A_ScreenWidth - 20, SizeH := A_ScreenHeight - 
 		}
 	}
 }
+
+/*
+Loads SQL items to the ListView and the TreeView
+	Parameters:
+	ListView -> ListView object
+	LoadLoc -> Items location
+*/
+
+ChargeItems(LoadLoc, ListView, TreeView, Parent := 'Items Tree View') {
+	TreeMap := Map()
+	TreeMap[LoadLoc] := TreeView.Add(Parent,, 'Icon2')
+	TreeView.Modify(TreeMap[LoadLoc], 'Bold')
+	Loop Files, LoadLoc '\*', 'RD' {
+		SubParent := A_LoopFileDir '\' A_LoopFileName
+		If !TreeMap.Has(SubParent) {
+			ID := TreeView.Add(A_LoopFileName, TreeMap[A_LoopFileDir], 'Icon2')
+			TreeView.Modify(ID, 'Bold')
+			TreeMap[SubParent] := ID
+		}
+	}
+	For Parent, ID in TreeMap {
+		AddToTheParent(Parent, ID)
+	}
+	TreeView.Redraw()
+	AddToTheParent(LoopDir, Parent) {
+		Loop Files, LoopDir '\*.db' {
+			TreeView.Add(A_LoopFileName, Parent, 'Icon3')
+		}
+	}
+}

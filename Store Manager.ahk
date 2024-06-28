@@ -11,7 +11,7 @@
 #Include <UserDefinedFunctions>
 #Include <IButtons>
 
-Functions := ['Sell Manager', 'Review Manager', 'Stock Manager', 'Statistics Manager', 'Discounts Manager', 'Currency Manager', 'Kridi Manager', 'About', 'Updates Check', 'Report Bug']
+Functions := ['Sell Manager', 'Review Manager', 'Stock Manager', 'Statistics Manager', 'Discounts Manager', 'Currency Manager', 'Credit Manager', 'About', 'Updates Check', 'Report Bug']
 
 MainDB := 'DB\MAIN.DB'
 UserTable := 'UserTable'
@@ -23,7 +23,6 @@ DBOpenTable(MainDB)
 DBCreateTable(MainDB, UserTable, UserTableCols)
 DBVerifyColumns(MainDB, UserTable, UserTableCols)
 DBVerifyMasterKey(MainDB, UserTable, UserTableCols)
-
 
 Levels := ['Admin', 'Standart']
 
@@ -37,7 +36,7 @@ Welcome.SetFont('s19 Bold')
 Welcome.OnEvent('Close', (*) => ExitApp())
 
 GoBack := Welcome.AddButton('x0 y0 w50 h30 Disabled', '←')
-CreateImageButton(GoBack, 0, IBBlue2*)
+CreateImageButton(GoBack, 0, IBBlack2*)
 GoBack.OnEvent('Click', DefaultView)
 
 Welcome.SetFont('s20')
@@ -526,9 +525,9 @@ SavedInputsCheck(Ctrl, Info) {
 	If !UserExist {
 		Return
 	}
+	LoadGif.Visible := False
+	Thumbnail.Visible := True
 	If Table.Rows[UserExist][4] != '' {
-		LoadGif.Visible := False
-		Thumbnail.Visible := True
 		Thumbnail.Value := 'hbitmap:* ' Gdip_CreateHBITMAPFromBitmap(Gdip_BitmapFromBase64(Table.Rows[UserExist][4]))
 		CreateUserInfo[4] := Table.Rows[UserExist][4]
 	}
