@@ -101,7 +101,7 @@ Deletes a table
 */
 DBDeleteTable(Filename, Tablename) {
 	DB := DBOpenTable(Filename)
-	If !DB.Exec("DROP TABLE IF EXISTS " UserTable ";")
+	If !DB.Exec("DROP TABLE IF EXISTS " Tablename ";")
 		SQLError(DB.ErrorMsg, DB.ErrorCode)
 	DBCloseTable(DB)
 }

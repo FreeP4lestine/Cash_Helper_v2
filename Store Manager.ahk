@@ -9,26 +9,22 @@
 #Include <AnimateMove>
 #Include <DBManager>
 #Include <UserDefinedFunctions>
+#Include <IButtons>
 
-UseGDIP()
-IBFireFox := [['DB\Img\SubApp_normal.png'], ['DB\Img\SubApp_hover.png'], ['DB\Img\SubApp_click.png'], ['DB\Img\SubApp_disabled.png']]
-IBRed := [[0xFFFFFF,, 0xFF0000, 4, 0xFF0000, 2], [0xFF0000,, 0xFFFFFF], [0xFF0000,, 0xFFFF00], [0xFFFFFF,, 0xCCCCCC,, 0xCCCCCC]]
-IBBlue := [[0xFFFFFF,, 0x0000FF, 4, 0x0000FF, 2], [0x80C0FF,, 0xFFFFFF], [0x80C0FF,, 0xFFFF00], [0xFFFFFF,, 0xCCCCCC,, 0xCCCCCC]]
-IBBlack := [[0xFFFFFF,, 0x000000, 4, 0x000000, 2], [0x000000,, 0xFFFFFF], [0x000000,, 0xFFFF00], [0xFFFFFF,, 0xCCCCCC,, 0xCCCCCC]]
-IBGray := [[0xFFFFFF,, 0x000000, 4, 0xCCCCCC, 2], [0xAAAAAA], [0xBBBBBB], [0xFFFFFF,, 0xCCCCCC]]
-
-Functions := ['Sell Manager', 'Review Manager', 'Stock Manager', 'Statistics Manager', 'Discounts Manager', 'Currency Manager', 'Kridi Manager', 'About']
+Functions := ['Sell Manager', 'Review Manager', 'Stock Manager', 'Statistics Manager', 'Discounts Manager', 'Currency Manager', 'Kridi Manager', 'About', 'Updates Check', 'Report Bug']
 
 MainDB := 'DB\MAIN.DB'
 UserTable := 'UserTable'
 UserTableCols := 'Row, Username, Password, Thumbnail, Level, Access, Extra'
+UserTableColsArr := StrSplit(UserTableCols, ', ')
+CreateUserInfo := CreateArray(UserTableColsArr.Length)
 
 DBOpenTable(MainDB)
 DBCreateTable(MainDB, UserTable, UserTableCols)
 DBVerifyColumns(MainDB, UserTable, UserTableCols)
 DBVerifyMasterKey(MainDB, UserTable, UserTableCols)
 
-CreateUserInfo := ClearArray(StrSplit(UserTableCols, ','))
+
 Levels := ['Admin', 'Standart']
 
 DP := Map()
@@ -41,7 +37,7 @@ Welcome.SetFont('s19 Bold')
 Welcome.OnEvent('Close', (*) => ExitApp())
 
 GoBack := Welcome.AddButton('x0 y0 w50 h30 Disabled', '←')
-CreateImageButton(GoBack, 0, IBBlack*)
+CreateImageButton(GoBack, 0, IBBlue2*)
 GoBack.OnEvent('Click', DefaultView)
 
 Welcome.SetFont('s20')
@@ -52,20 +48,20 @@ Login := Welcome.AddButton('w300', 'Login')
 Login.GetPos(&X, &Y, &W, &H)
 DP[Login] := [X, Y, W, H]
 Login.SetFont('s10')
-CreateImageButton(Login, 0, IBBlack*)
+CreateImageButton(Login, 0, IBBlack2*)
 Login.OnEvent('Click', LoginView)
 
 DEMO := Welcome.AddButton('w300 Disabled', 'Quick Demo Seller')
 DEMO.GetPos(&X, &Y, &W, &H)
 DP[DEMO] := [X, Y, W, H]
 DEMO.SetFont('s10')
-CreateImageButton(DEMO, 0, IBBlack*)
+CreateImageButton(DEMO, 0, IBBlack2*)
 
 Users := Welcome.AddButton('w300', 'Manage Users')
 Users.GetPos(&X, &Y, &W, &H)
 DP[Users] := [X, Y, W, H]
 Users.SetFont('s10')
-CreateImageButton(Users, 0, IBBlack*)
+CreateImageButton(Users, 0, IBBlack2*)
 Users.OnEvent('Click', ManageView)
 
 Thumbnail := Welcome.AddPicture('xm+86 y70 w128 h128 Hidden', 'DB\Img\userlogo.png')
@@ -83,7 +79,7 @@ RemoveThumbnail.OnEvent('Click', ClearThumbnail)
 Welcome.SetFont('s14')
 
 Try {
-	LoadGif := Welcome.AddActiveX('xm+126 yp-30 w48 h48 Hidden ', 'Shell.Explorer')
+	LoadGif := Welcome.AddActiveX('xm+118 y70 w64 h64 Hidden ', 'Shell.Explorer')
 	LoadGif.Value.Navigate("about:<meta charset='utf-8'><meta http-equiv='X-UA-Compatible' content='IE=Edge'>")
 	LoadGif.Value.document.body.innerHTML := "<style> * { border: 0; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; } </style><img src='" A_ScriptDir "\DB\Img\loading.gif'>"
 } Catch {
@@ -94,6 +90,7 @@ Try {
 }
 Username := Welcome.AddEdit('xm y240 w300 -E0x200 Border Hidden')
 EM_SETCUEBANNER(Username.Hwnd, ' Username')
+Username.OnEvent('Change', SavedInputsCheck)
 
 UsernameM := Welcome.AddComboBox('xp yp wp r5 Hidden')
 UsernameM.OnEvent('Change', ChargeUser)
@@ -114,17 +111,17 @@ Welcome.SetFont('Bold')
 
 Create := Welcome.AddButton('xm y100 w300 Hidden', 'Create')
 Create.SetFont('s10')
-CreateImageButton(Create, 0, IBBlack*)
+CreateImageButton(Create, 0, IBBlack2*)
 Create.OnEvent('Click', CreateForms)
 
 Modify := Welcome.AddButton('xm y200 w300 Hidden', 'Modify')
 Modify.SetFont('s10')
-CreateImageButton(Modify, 0, IBBlack*)
+CreateImageButton(Modify, 0, IBBlack2*)
 Modify.OnEvent('Click', ModifyForms)
 
 Delete := Welcome.AddButton('xm y300 w300 Hidden', 'Delete')
 Delete.SetFont('s10')
-CreateImageButton(Delete, 0, IBRed*)
+CreateImageButton(Delete, 0, IBRed2*)
 Delete.OnEvent('Click', DeleteForms)
 
 Welcome.Show()
@@ -223,10 +220,10 @@ LoginSubmit(Ctrl, Info) {
 	Welcome.Destroy()
 	Board := Gui(, 'Store Manager')
 	Board.BackColor := 'White'
-	Board.MarginX := 50
-	Board.MarginY := 50
-	Board.AddText('xm y10 cGreen w200 h30', 'Welcome!').SetFont('s20 Bold')
-	Board.AddText('xp+10 yp+35 w100', 'Version: 1.0').SetFont('s7 Bold')
+	Board.MarginX := 20
+	Board.MarginY := 20
+	Board.AddText('xm y10 cGreen w400 h50', 'Store Manager').SetFont('s25 Bold')
+	Board.AddText('xp+10 yp+40 w100', 'Version: 1.0').SetFont('s7 Bold')
 	Board.SetFont('s10', 'Calibri')
 	Board.OnEvent('Close', (*) => ExitApp())
 	FunctionPerRow := 4
@@ -234,6 +231,9 @@ LoginSubmit(Ctrl, Info) {
 	While Functions.Length {
 		Loop (Functions.Length > FunctionPerRow ? FunctionPerRow : Functions.Length) {
 			SubAppName := Functions.RemoveAt(1)
+			If !FileExist(SubAppName '.ahk') {
+				FileAppend('#Requires AutoHotkey v2.0`n#SingleInstance Force', SubAppName '.ahk')
+			}
 			SubApp := Board.AddButton('w120 h143 ' ((A_Index = 1) ? 'xm' : 'yp'), '`n`n`n`n`n`n`n' SubAppName)
 			IBFireFox[1] := [IBBitmapCombine('SubApp_normal.png', SubAppName)]
 			IBFireFox[2] := [IBBitmapCombine('SubApp_hover.png', SubAppName)]
@@ -325,8 +325,8 @@ CreateFormsSubmit(Ctrl, Info) {
 			Return
 		}
 	}
+	NewValues := ArrayMerge(UserTableColsArr, CreateUserInfo)
 	DBInsertRowTable(MainDB, UserTable)
-	NewValues := ArrayMerge(StrSplit(UserTableCols, ','), CreateUserInfo)
 	DBUpdateRowTable(MainDB, UserTable, NewValues, CreateUserInfo[1])
 	CreateUserInfo := ClearArray(CreateUserInfo)
 	If 'Yes' = Msgbox('User successfully created!`n`nReturn to login now?', 'Done', 0x40 + 0x4)
@@ -472,7 +472,7 @@ ModifyFormsSubmit(Ctrl, Info) {
 	If ULevel.Value {
 		CreateUserInfo[5] := ULevel.Text
 	}
-	NewValues := ArrayMerge(StrSplit(UserTableCols, ','), CreateUserInfo)
+	NewValues := ArrayMerge(UserTableColsArr, CreateUserInfo)
 	DBUpdateRowTable(MainDB, UserTable, NewValues, CreateUserInfo[1])
 	CreateUserInfo := ClearArray(CreateUserInfo)
 	If 'Yes' = Msgbox('User successfully modified!`n`nReturn to login now?', 'Done', 0x40 + 0x4)
@@ -508,7 +508,35 @@ DeleteFormsSubmit(Ctrl, Info) {
 	If 'Yes' = Msgbox('User successfully deleted!`n`nReturn to login now?', 'Done', 0x40 + 0x4)
 		DefaultView(Ctrl, Info)
 }
+SavedInputsCheck(Ctrl, Info) {
+	LoadGif.Visible := True
+	Thumbnail.Visible := False
+	Thumbnail.Value := 'DB\Img\userlogo.png'
+	Table := DBReadTable(MainDB, UserTable)
+	If !Username.Value || !Table.RowCount {
+		Return
+	}
+	UserExist := False
+	For Row, Col in Table.Rows {
+		If Col[2] = Username.Value {
+			UserExist := Row
+			Break
+		}
+	}
+	If !UserExist {
+		Return
+	}
+	If Table.Rows[UserExist][4] != '' {
+		LoadGif.Visible := False
+		Thumbnail.Visible := True
+		Thumbnail.Value := 'hbitmap:* ' Gdip_CreateHBITMAPFromBitmap(Gdip_BitmapFromBase64(Table.Rows[UserExist][4]))
+		CreateUserInfo[4] := Table.Rows[UserExist][4]
+	}
+}
 
 LaunchSubApp(Ctrl, Info) {
-
+	SubAppLoc := StrReplace(Ctrl.Text, '`n') '.ahk'
+	If FileExist(SubAppLoc) {
+		Run(SubAppLoc ' ' A_ScriptDir)
+	}
 }

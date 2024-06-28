@@ -19,3 +19,4 @@ UseGDIP() {
       DllCall("Gdiplus.dll\GdiplusShutdown", "Ptr", GdipToken)
    }
 }
+UseGDIP()
