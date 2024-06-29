@@ -220,6 +220,8 @@ Class LV_Colors {
    Cell(Row, Col, BkColor := "", TxColor := "") {
       If !(This.HWND)
          Return False
+	  This.RowCount := This.LV.GetCount()
+      This.ColCount := This.LV.GetCount("Col")
       If (Row > This.RowCount) || (Col > This.ColCount)
          Return False
       If This.IsStatic

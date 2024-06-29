@@ -57,10 +57,15 @@ Inserts a row at the very end of the table with the default values
 	Filename -> The name of the file where to store the database
 	Tablename -> The table name
 */
-DBInsertRowTable(Filename, Tablename) {
+DBInsertRowTable(Filename, Tablename, Values := '') {
 	DB := DBOpenTable(Filename)
-	If !DB.Exec('INSERT INTO ' Tablename ' DEFAULT VALUES;')
-		SQLError(DB.ErrorMsg, DB.ErrorCode)
+	If Values = '' {
+		If !DB.Exec('INSERT INTO ' Tablename ' DEFAULT VALUES;')
+			SQLError(DB.ErrorMsg, DB.ErrorCode)
+	} Else {
+		If !DB.Exec('INSERT INTO ' Tablename ' VALUES(' Values ');')
+			SQLError(DB.ErrorMsg, DB.ErrorCode)
+	}
 	DBCloseTable(DB)
 }
 
@@ -154,4 +159,14 @@ DBVerifyMasterKey(Filename, Tablename, Columns) {
 		DBInsertRowTable(Filename, Tablename)
 		DBUpdateRowTable(Filename, Tablename, Columns[2] '="MasterKey", ' Columns[3] '="' MasterKey '"', 1)
 	}
+}
+
+DBCreateDefinition(FilePath, SerilizedData) {
+	SplitPath(FilePath, &OutName, &OutDir)
+	If OutDir != '' && !DirExist('DB\Items\' OutDir) {
+		DirCreate('DB\Items\' OutDir)
+	}
+	Obj := FileOpen('DB\Items\' FilePath, 'w')
+	Obj.Write(SerilizedData)
+	Obj.Close()
 }

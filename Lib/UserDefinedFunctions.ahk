@@ -50,10 +50,10 @@ Analyzes and choses a certain slice from a value based on StrSplit() split
 	Array -> an array
 	Index -> The index of the slice to keep
 */
-ArrayItemSelectSlice(Array, Index := 2) {
+ArrayItemSelectSlice(Array, Index := 2, Spliter := '#') {
 	NewArray := []
 	For Each, Item in Array {
-		NewArray.Push(StrSplit(Item, '#')[2])
+		NewArray.Push(StrSplit(Item, Spliter)[Index])
 	}
 	Return NewArray
 }
@@ -180,7 +180,7 @@ Adjusts the a GUI to fit the screen
 	SizeW -> Maximum width
 	SizeH -> Maximum height
 */
-WindowSizeFix(GuiHandle, SizeW := A_ScreenWidth - 20, SizeH := A_ScreenHeight - 80) {
+WindowSizeFix(GuiHandle, SizeW := A_ScreenWidth - 10, SizeH := A_ScreenHeight - 75) {
 	GuiHandle.GetPos(&X, &Y, &W, &H)
 	If X + W > SizeW {
 		If W > SizeW {
@@ -201,11 +201,14 @@ WindowSizeFix(GuiHandle, SizeW := A_ScreenWidth - 20, SizeH := A_ScreenHeight - 
 /*
 Loads SQL items to the ListView and the TreeView
 	Parameters:
-	ListView -> ListView object
 	LoadLoc -> Items location
+	ListView -> ListView object
+	TreeView -> TreeView object
+	Parent -> Name of the first parent in TreeView
 */
-
-ChargeItems(LoadLoc, ListView, TreeView, Parent := 'Items Tree View') {
+ChargeItems(LoadLoc, ListView, ListViewColors, TreeView, Parent := 'Items Tree View') {
+	TreeView.Delete()
+	ListView.Delete()
 	TreeMap := Map()
 	TreeMap[LoadLoc] := TreeView.Add(Parent,, 'Icon2')
 	TreeView.Modify(TreeMap[LoadLoc], 'Bold')
@@ -217,13 +220,41 @@ ChargeItems(LoadLoc, ListView, TreeView, Parent := 'Items Tree View') {
 			TreeMap[SubParent] := ID
 		}
 	}
+	FilesCount := 0
+	Loop Files, LoadLoc '\' '*.Def', 'R' {
+		FilesCount++
+	}
+	ProgressBar.Visible := True
+	ProgressText.Visible := True
+	ProgressBar.Value := 0
+	ProgressBar.Opt('Range0-' FilesCount)
 	For Parent, ID in TreeMap {
 		AddToTheParent(Parent, ID)
 	}
+	Loop ListView.GetCount('Col') - 1
+		ListView.ModifyCol(A_Index + 1, 'AutoHdr Center')
+	ListView.Redraw()
 	TreeView.Redraw()
 	AddToTheParent(LoopDir, Parent) {
-		Loop Files, LoopDir '\*.db' {
+		Loop Files, LoopDir '\*.def' {
+			ProgressBar.Value++
+			ProgressText.Value := 'Loading ' LoopDir ' --> ' A_LoopFileName '...'
 			TreeView.Add(A_LoopFileName, Parent, 'Icon3')
+			SerilizedData := FileRead(A_LoopFileFullPath)
+			SerilizedData := StrSplit(SerilizedData, ', ')
+			SerilizedData := ArrayItemSelectSlice(SerilizedData,, '=')
+			R := ListView.Add('Icon3', SerilizedData*)
+			ListViewColors.Cell(R, 2, 0xFFE6E6E6)
+			ListViewColors.Cell(R, 3,, 0xFF0000FF)
+			ListViewColors.Cell(R, 4, 0xFFE6E6E6)
+			ListViewColors.Cell(R, 6, 0xFFE6E6E6)
+			ListViewColors.Cell(R, 8, 0xFFE6E6E6)
+			ListViewColors.Cell(R, 9,, 0xFFFF0000)
+			ListViewColors.Cell(R, 10,, 0xFF008000)
+			ListViewColors.Cell(R, 11, 0xFFE6E6E6)
+			ListViewColors.Cell(R, 13, 0xFFE6E6E6)
 		}
 	}
+	ProgressBar.Visible := False
+	ProgressText.Visible := False
 }
