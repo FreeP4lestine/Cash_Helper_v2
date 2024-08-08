@@ -32,7 +32,7 @@ Class InCellEdit {
       Critical -1
       Item := NumGet(L + (A_PtrSize * 3), 0, "Int")
       Subitem := NumGet(L + (A_PtrSize * 3), 4, "Int")
-      If Item = 2 || Item = 11 || !Subitem { ; Ignore some cells
+      If Item = 2 || Item = 12 || !Subitem { ; Ignore some cells
          Return
       }
       CellText := LV.GetText(Item + 1, SubItem + 1)

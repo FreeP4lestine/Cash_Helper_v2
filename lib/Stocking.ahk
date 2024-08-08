@@ -2,6 +2,8 @@
 #Include <BarCoder>
 class Stocking extends Imaging {
 	__New(ItemPropFile := 'setting\ItemProperties'
+	    , SellMethodsFile := 'setting\SellMethods'
+	    , SellCurrencyFile := 'setting\SellCurrency'
 		, DefaultLocation := 'setting\defs'
 		, List1 := ''
 		, List2 := ''
@@ -12,6 +14,8 @@ class Stocking extends Imaging {
 		, Thumb := ''
 		, Log := '') {
 		This.ItemPropFile := ItemPropFile
+		This.SellMethodsFile := SellMethodsFile
+		This.SellCurrencyFile := SellCurrencyFile
 		This.DefaultLocation := DefaultLocation
 		This.List1 := List1
 		This.List2 := List2
@@ -23,13 +27,35 @@ class Stocking extends Imaging {
 		This.Log := Log
 		This.Property := []
 		This.PropertyName := Map()
+		This.SellMethods := Map()
+		This.SellCurrency := Map()
+		This.ViewCurrency := ''
+	}
+	getSellCurrency() {
+		If FileExist(This.SellCurrencyFile) {
+			O := FileOpen(This.SellCurrencyFile, 'r')
+			While !O.AtEOF {
+				Definition := StrSplit(O.ReadLine(), ';')
+				This.SellCurrency[Definition[1]] := {Unit: Definition[2], ConvertFactor: Definition[3]}
+			}
+			This.ViewCurrency := 'TNM'
+		}
+	}
+	getSellMethods() {
+		If FileExist(This.SellMethodsFile) {
+			O := FileOpen(This.SellMethodsFile, 'r')
+			While !O.AtEOF {
+				Definition := StrSplit(O.ReadLine(), ';')
+				This.SellMethods[Definition[1]] := {Value: Definition[2]}
+			}
+		}
 	}
 	getPropertiesNames() {
 		If FileExist(This.ItemPropFile) {
 			O := FileOpen(This.ItemPropFile, 'r')
 			While !O.AtEOF {
 				Definition := StrSplit(O.ReadLine(), ';')
-				This.Property.Push({Name : Definition[1], Value : Definition[2], Unit : Definition[3]})
+				This.Property.Push({Name : Definition[1], Value : Definition[2], ViewValue : Definition[3]})
 				This.PropertyName[This.Property[A_Index].Name] := This.Property[A_Index]
 			}
 		}
@@ -37,57 +63,31 @@ class Stocking extends Imaging {
 	cleanPropertyValues() {
 		For Property in This.Property {
 			Property.Value := ''
+			Property.ViewValue := ''
 		}
 	}
 	writePropertyValues(Row, Value) {
-		This.Property[Row].Value := Value
+		This.Property[Row].ViewValue := Value
+		This.Property[Row].Value := Value / This.SellCurrency[This.ViewCurrency].ConvertFactor
 	}
 	showPropertiesValues(Code, SelectInList := False, readFromFile := True) {
 		If readFromFile {
-		This.Thumb.Value := 'images\Default.png'
-		This.updateValueColors()
-		This.cleanPropertyValues()
-		If !FileExist(This.DefaultLocation '\' Code) || DirExist(This.DefaultLocation '\' Code) {
-			Return
-		}
-		Item := FileOpen(This.DefaultLocation '\' Code, 'r')
-		While !Item.AtEOF {
-			Value := Item.ReadLine()
-			This.Property[A_Index].Value := Value
-			Switch This.Property[A_Index].Name {
-				Case 'Thumbnail' :
-					If This.Property[A_Index].Value != '' {
-						This.Thumb.Value := 'HBITMAP:*' This.hBitmapFromB64(This.Property[A_Index].Value)
-						This.List1.Modify(A_Index,,, 'True')
-					}
-				Case 'Code128' :
-					If This.Property[A_Index].Value != '' {
-						This.List1.Modify(A_Index,,, 'True')
-					}
-				Default :
-					This.List1.Modify(A_Index,,, (Value != '') ? Value : 'N/A')
+			This.Thumb.Value := 'images\Default.png'
+			This.updateValueColors()
+			This.cleanPropertyValues()
+			If !FileExist(This.DefaultLocation '\' Code) || DirExist(This.DefaultLocation '\' Code) {
+				Return
+			}
+			If !This.readProperties(Code) {
+				Return
 			}
 		}
-		Item.Close()
+		For Property in This.Property {
+			This.List1.Modify(A_Index,,, Property.ViewValue)
+		}
 		If SelectInList && Row := This.findItemInList(Code) {
 			This.List2.Focus()
 			This.List2.Modify(Row, 'Select Vis')
-		}
-		} Else {
-		For Property in This.Property {
-			Switch Property.Name {
-				Case 'Thumbnail' :
-					If Property.Value != '' {
-						This.List1.Modify(A_Index,,, 'True')
-					}
-				Case 'Code128' :
-					If Property.Value != '' {
-						This.List1.Modify(A_Index,,, 'True')
-					}
-				Default :
-					This.List1.Modify(A_Index,,, (Property.Value != '') ? Property.Value : 'N/A')
-			}
-		}
 		}
 		This.updateValueColors()
 		Return True
@@ -97,14 +97,14 @@ class Stocking extends Imaging {
 			If This.Property[A_Index].Value = '' {
 				This.List1CLV.Cell(A_Index, 2,, 0xFF808080)
 				This.List1.Modify(A_Index,,, 'N/A')
-			} Else Switch A_Index {
-				Case 1 : This.List1CLV.Cell(A_Index, 2,, 0xFF0000FF)
-				Case 7 : This.List1CLV.Cell(A_Index, 2,, 0xFFFF0000)
-				Case 8 : This.List1CLV.Cell(A_Index, 2,, 0xFF008000)
+			} Else Switch This.Property[A_Index].Name {
+				Case 'Code' : This.List1CLV.Cell(A_Index, 2,, 0xFF0000FF)
+				Case 'Buy Value' : This.List1CLV.Cell(A_Index, 2,, 0xFFFF0000)
+				Case 'Sell Value' : This.List1CLV.Cell(A_Index, 2,, 0xFF008000)
 				Default : This.List1CLV.Cell(A_Index, 2,, 0xFF000000)
 			}
 		}
-		This.List1.Redraw()
+		;This.List1.Redraw()
 	}
 	showItemInList(Code, List) {
 		If Row := This.findItemInList(Code) {
@@ -125,16 +125,47 @@ class Stocking extends Imaging {
 		Return foundCode
 	}
 	readProperties(Code) {
-		Try {
+		;Try {
 			This.cleanPropertyValues()
 			O := FileOpen(This.DefaultLocation '\' Code, 'r')
 			For Property in This.Property {
 				Property.Value := O.ReadLine()
+				Switch Property.Name {
+					Case 'Thumbnail' :
+						If Property.Value != '' {
+							This.Thumb.Value := 'HBITMAP:*' This.hBitmapFromB64(Property.Value)
+							Property.ViewValue := 'True'
+						}
+					Case 'Sell Method':
+						Method := This.PropertyName['Sell Method'].Value
+						If Property.Value = '' || !This.SellMethods.Has(Method) {
+							Property.Value := 'Piece (P)'
+						}
+						Property.ViewValue := Property.Value
+					Case 'Sell Amount':
+						Method := This.PropertyName['Sell Method'].Value
+						If Property.Value = '' {
+							Property.Value := This.SellMethods[Method].Value
+						}
+						Property.ViewValue := Property.Value
+					Case 'Code128' :
+						If This.Property[A_Index].Value != '' {
+							Property.ViewValue := 'True'
+						}
+					Case 'Currency' :
+						Property.ViewValue := This.ViewCurrency
+					Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
+						If IsNumber(Property.Value) {
+							Currency := This.ViewCurrency
+							Property.ViewValue := Round(Property.Value * This.SellCurrency[Currency].ConvertFactor, 3)
+						}
+					Default : Property.ViewValue := (Property.Value != '') ? Property.Value : 'N/A'
+				}
 			}
 			O.Close
-		} Catch as Err {
-			Return False
-		}
+		;} Catch as Err {
+		;	Return False
+		;}
 		Return True
 	}
 	writeProperties(Prompt := True) {
@@ -160,14 +191,10 @@ class Stocking extends Imaging {
 			}
 			O := FileOpen(This.DefaultLocation '\' Code, 'w')
 			For Property in This.Property {
-				Switch Property.Name {
-					;Default : 
-				}
 				O.WriteLine(Property.Value)
 				This.List1.Modify(A_Index,,, 'N/A')
 			}
 			O.Close
-			This.Thumb.Value := 'images\Default.png'
 			updateInList(Code)
 			updateInList(Code) {
 				If !This.readProperties(Code) {
@@ -176,11 +203,7 @@ class Stocking extends Imaging {
 				foundCode := This.findItemInList(Code, This.List2)
 				Info := []
 				For Property in This.Property {
-					Switch Property.Name {
-						Case 'Thumbanil' : Info.Push(Property.Value != '' ? 'True' : '')
-						Case 'Code128' : Info.Push(Property.Value != '' ? 'True' : '')
-						Default : Info.Push(Property.Value)
-					}
+					Info.Push(Property.ViewValue)
 				}
 				IsNumber(foundCode) ? This.List2.Modify(foundCode,, Info*) : This.List2.Insert(1,, Info*)
 			}
@@ -188,6 +211,7 @@ class Stocking extends Imaging {
 			Return False
 		}
 		If Prompt {
+			This.Thumb.Value := 'images\Default.png'
 			This.cleanPropertyValues()
 			This.updateValueColors()
 			Msgbox(Code ' is updated!', 'Update', 0x40)
@@ -249,11 +273,15 @@ class Stocking extends Imaging {
 				This.cleanPropertyValues()
 				This.PropertyName['Code'].Value := Code
 				This.PropertyName['Name'].Value := Content[1]
+				This.PropertyName['Currency'].Value := 'TNM'
+				This.PropertyName['Sell Method'].Value := 'Piece (P)'
+				This.PropertyName['Sell Amount'].Value := 1
 				If !IsNumber(This.PropertyName['Buy Value'].Value := Content[2]) 
 				|| !IsNumber(This.PropertyName['Sell Value'].Value := Content[3])
 				|| !IsNumber(This.PropertyName['Stock Value'].Value := Content[4]) {
 					Return False
 				}
+				This.updateBuyValueRelatives() || This.updateSellValueRelatives() || This.updateProfitValueRelatives() || This.updateProfitPercentageRelatives()
 			} Catch {
 				If 'Yes' = Msgbox('Invalid old definition`n' Name, 'Abort?', 0x30 + 0x4) {
 					Return False
@@ -295,12 +323,7 @@ class Stocking extends Imaging {
 			}
 			Info := []
 			For Property in This.Property {
-				Switch Property.Name {
-					Case 'Thumbnail' : Info.Push(Property.Value != '' ? 'True' : '')
-					Case 'Code128' : Info.Push(Property.Value != '' ? 'True' : '')
-					Default : Info.Push(Property.Value)
-				}
-				Property.Value := ''
+				Info.Push(Property.ViewValue)
 			}
 			This.List2.Add(, Info*)
 			++Counted
@@ -313,49 +336,139 @@ class Stocking extends Imaging {
 		updateList2Colors()
 		updateList2Colors() {
 			Loop This.List2.GetCount() {
-				This.List2CLV.Cell(A_Index, 1, Mod(A_Index, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFF0000FF)
-				This.List2CLV.Cell(A_Index, 7, Mod(A_Index, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFFFF0000)
-				This.List2CLV.Cell(A_Index, 8, Mod(A_Index, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFF008000)
+				Row := A_Index
+				For Propery in This.Property {
+					Switch Propery.Name {
+						Case 'Code' : This.List3CLV.Cell(Row, A_Index, Mod(A_Index, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFF0000FF)
+						Case 'Buy Value' : This.List3CLV.Cell(Row, A_Index, Mod(A_Index, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFFFF0000)
+						Case 'Sell Value' : This.List3CLV.Cell(Row, A_Index, Mod(A_Index, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFF008000)
+					}
+				}
 			}
 			This.List2.Redraw()
 		}
 	}
+	updateCurrencyValues() {
+		This.PropertyName['Buy Value'].Value := This.PropertyName['Buy Value'].ViewValue / This.SellCurrency[This.ViewCurrency].ConvertFactor
+		This.PropertyName['Sell Value'].Value := This.PropertyName['Sell Value'].ViewValue / This.SellCurrency[This.ViewCurrency].ConvertFactor
+		This.PropertyName['Profit Value'].Value := This.PropertyName['Profit Value'].ViewValue / This.SellCurrency[This.ViewCurrency].ConvertFactor
+		This.PropertyName['Added Value'].Value := This.PropertyName['Added Value'].ViewValue / This.SellCurrency[This.ViewCurrency].ConvertFactor
+	}
 	updateBuyValueRelatives() {
-		If !Code := This.PropertyName['Code'].Value || !IsNumber(This.PropertyName['Buy Value'].Value) || (!IsNumber(This.PropertyName['Sell Value'].Value) && !IsNumber(This.PropertyName['Profit Value'].Value) && !IsNumber(This.PropertyName['Profit Percentage'].Value)) {
+		If !(Code := This.PropertyName['Code'].ViewValue) 
+		|| !IsNumber(This.PropertyName['Buy Value'].ViewValue) 
+		|| !(IsNumber(This.PropertyName['Sell Value'].ViewValue) 
+			|| IsNumber(This.PropertyName['Profit Value'].ViewValue) 
+			|| IsNumber(This.PropertyName['Profit Percentage'].ViewValue)) {
 			Return
 		}
-		If IsNumber(This.PropertyName['Sell Value'].Value) {
-			This.PropertyName['Profit Value'].Value := This.PropertyName['Sell Value'].Value - This.PropertyName['Buy Value'].Value
-			This.PropertyName['Profit Percentage'].Value := Round(This.PropertyName['Profit Value'].Value / This.PropertyName['Buy Value'].Value * 100, 2)
+		If IsNumber(This.PropertyName['Sell Value'].ViewValue) {
+			This.PropertyName['Profit Value'].ViewValue := This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Buy Value'].ViewValue
+			This.PropertyName['Profit Percentage'].ViewValue := Round(This.PropertyName['Profit Value'].ViewValue / This.PropertyName['Buy Value'].ViewValue * 100, 2)
 			This.showPropertiesValues(Code,, False)
-			Return
+			This.updateCurrencyValues()
+			Return True
 		}
-		If IsNumber(This.PropertyName['Profit Value'].Value) {
-			This.PropertyName['Sell Value'].Value := This.PropertyName['Profit Value'].Value + This.PropertyName['Buy Value'].Value
-			This.PropertyName['Profit Percentage'].Value := Round(This.PropertyName['Profit Value'].Value / This.PropertyName['Buy Value'].Value * 100, 2)
+		If IsNumber(This.PropertyName['Profit Value'].ViewValue) {
+			This.PropertyName['Sell Value'].ViewValue := This.PropertyName['Profit Value'].ViewValue + This.PropertyName['Buy Value'].ViewValue
+			This.PropertyName['Profit Percentage'].ViewValue := Round(This.PropertyName['Profit Value'].ViewValue / This.PropertyName['Buy Value'].ViewValue * 100, 2)
 			This.showPropertiesValues(Code,, False)
-			Return
+			This.updateCurrencyValues()
+			Return True
 		}
-		If IsNumber(This.PropertyName['Profit Percentage'].Value) {
-			This.PropertyName['Sell Value'].Value := Round(This.PropertyName['Profit Percentage'].Value / 100 * This.PropertyName['Buy Value'].Value + This.PropertyName['Buy Value'].Value)
-			This.PropertyName['Profit Value'].Value := Round(This.PropertyName['Sell Value'].Value - This.PropertyName['Buy Value'].Value)
+		If IsNumber(This.PropertyName['Profit Percentage'].ViewValue) {
+			This.PropertyName['Sell Value'].ViewValue := Round(This.PropertyName['Profit Percentage'].ViewValue / 100 * This.PropertyName['Buy Value'].ViewValue + This.PropertyName['Buy Value'].ViewValue)
+			This.PropertyName['Profit Value'].ViewValue := Round(This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Buy Value'].ViewValue)
 			This.showPropertiesValues(Code,, False)
-			Return
+			This.updateCurrencyValues()
+			Return True
 		}
 	}
 	updateSellValueRelatives() {
-		If !IsNumber(This.PropertyName['Buy Value'].Value) || (!IsNumber(This.PropertyName['Sell Value'].Value) && !IsNumber(This.PropertyName['Profit Value'].Value) && !IsNumber(This.PropertyName['Profit Percentage'].Value)) {
+		If !(Code := This.PropertyName['Code'].ViewValue)
+		|| !IsNumber(This.PropertyName['Sell Value'].ViewValue) 
+		|| (!IsNumber(This.PropertyName['Buy Value'].ViewValue) 
+			&& !IsNumber(This.PropertyName['Profit Value'].ViewValue) 
+			&& !IsNumber(This.PropertyName['Profit Percentage'].ViewValue)) {
 			Return
+		}
+		If IsNumber(This.PropertyName['Buy Value'].ViewValue) {
+			This.PropertyName['Profit Value'].ViewValue := This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Buy Value'].ViewValue
+			This.PropertyName['Profit Percentage'].ViewValue := Round(This.PropertyName['Profit Value'].ViewValue / This.PropertyName['Buy Value'].ViewValue * 100, 2)
+			This.showPropertiesValues(Code,, False)
+			This.updateCurrencyValues()
+			Return True
+		}
+		If IsNumber(This.PropertyName['Profit Value'].ViewValue) {
+			This.PropertyName['Buy Value'].ViewValue := This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Profit Value'].ViewValue
+			This.PropertyName['Profit Percentage'].ViewValue := Round(This.PropertyName['Profit Value'].ViewValue / This.PropertyName['Buy Value'].ViewValue * 100, 2)
+			This.showPropertiesValues(Code,, False)
+			This.updateCurrencyValues()
+			Return True
+		}
+		If IsNumber(This.PropertyName['Profit Percentage'].ViewValue) {
+			This.PropertyName['Buy Value'].ViewValue := Round(This.PropertyName['Sell Value'].ViewValue - (This.PropertyName['Sell Value'].ViewValue / (1 + This.PropertyName['Profit Percentage'].ViewValue / 100)))
+			This.PropertyName['Profit Value'].ViewValue := Round(This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Buy Value'].ViewValue)
+			This.showPropertiesValues(Code,, False)
+			This.updateCurrencyValues()
+			Return True
 		}
 	}
 	updateProfitValueRelatives() {
-		If !IsNumber(This.PropertyName['Profit Value'].Value) || (!IsNumber(This.PropertyName['Sell Value'].Value) && !IsNumber(This.PropertyName['Buy Value'].Value) && !IsNumber(This.PropertyName['Profit Percentage'].Value)) {
+		If !(Code := This.PropertyName['Code'].ViewValue)
+		|| !IsNumber(This.PropertyName['Profit Value'].ViewValue) 
+		|| (!IsNumber(This.PropertyName['Sell Value'].ViewValue) 
+			&& !IsNumber(This.PropertyName['Buy Value'].ViewValue) 
+			&& !IsNumber(This.PropertyName['Profit Percentage'].ViewValue)) {
 			Return
+		}
+		If IsNumber(This.PropertyName['Buy Value'].ViewValue) {
+			This.PropertyName['Sell Value'].ViewValue := This.PropertyName['Buy Value'].ViewValue + This.PropertyName['Profit Value'].ViewValue
+			This.PropertyName['Profit Percentage'].ViewValue := Round(This.PropertyName['Profit Value'].ViewValue / This.PropertyName['Buy Value'].ViewValue * 100, 2)
+			This.showPropertiesValues(Code,, False)
+			This.updateCurrencyValues()
+			Return True
+		}
+		If IsNumber(This.PropertyName['Sell Value'].ViewValue) {
+			This.PropertyName['Buy Value'].ViewValue := This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Profit Value'].ViewValue
+			This.PropertyName['Profit Percentage'].ViewValue := Round(This.PropertyName['Profit Value'].ViewValue / This.PropertyName['Buy Value'].ViewValue * 100, 2)
+			This.showPropertiesValues(Code,, False)
+			This.updateCurrencyValues()
+			Return True
+		}
+		If IsNumber(This.PropertyName['Profit Percentage'].ViewValue) {
+			This.PropertyName['Buy Value'].ViewValue := Round((1 / (This.PropertyName['Profit Percentage'].ViewValue / 100) * This.PropertyName['Profit Value'].ViewValue))
+			This.PropertyName['Sell Value'].ViewValue := This.PropertyName['Buy Value'].ViewValue + This.PropertyName['Profit Value'].ViewValue
+			This.showPropertiesValues(Code,, False)
+			This.updateCurrencyValues()
+			Return True
 		}
 	}
 	updateProfitPercentageRelatives() {
-		If !IsNumber(This.PropertyName['Profit Percentage'].Value) || (!IsNumber(This.PropertyName['Buy Value'].Value) && !IsNumber(This.PropertyName['Sell Value'].Value) && !IsNumber(This.PropertyName['Profit Value'].Value)) {
+		If !(Code := This.PropertyName['Code'].ViewValue)
+		|| !IsNumber(This.PropertyName['Profit Percentage'].ViewValue) 
+		|| (!IsNumber(This.PropertyName['Buy Value'].ViewValue) 
+			&& !IsNumber(This.PropertyName['Sell Value'].ViewValue) 
+			&& !IsNumber(This.PropertyName['Profit Value'].ViewValue)) {
 			Return
+		}
+		If IsNumber(This.PropertyName['Buy Value'].ViewValue) {
+			This.PropertyName['Sell Value'].ViewValue := Round(This.PropertyName['Buy Value'].ViewValue + This.PropertyName['Buy Value'].ViewValue * This.PropertyName['Profit Percentage'].ViewValue / 100)
+			This.PropertyName['Profit Value'].ViewValue := This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Buy Value'].ViewValue
+			This.showPropertiesValues(Code,, False)
+			Return True
+		}
+		If IsNumber(This.PropertyName['Sell Value'].ViewValue) {
+			This.PropertyName['Buy Value'].ViewValue := Round(This.PropertyName['Sell Value'].ViewValue / (1 + This.PropertyName['Profit Percentage'].ViewValue / 100))
+			This.PropertyName['Profit Value'].ViewValue := This.PropertyName['Sell Value'].ViewValue - This.PropertyName['Buy Value'].ViewValue
+			This.showPropertiesValues(Code,, False)
+			Return True
+		}
+		If IsNumber(This.PropertyName['Profit Value'].ViewValue) {
+			This.PropertyName['Buy Value'].ViewValue := Round((1 / (This.PropertyName['Profit Percentage'].ViewValue / 100) * This.PropertyName['Profit Value'].ViewValue))
+			This.PropertyName['Sell Value'].ViewValue := This.PropertyName['Buy Value'].ViewValue + This.PropertyName['Profit Value'].ViewValue
+			This.showPropertiesValues(Code,, False)
+			Return True
 		}
 	}
 	generateCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF', CodeColor := '0xFF000000') {
@@ -472,11 +585,7 @@ class Stocking extends Imaging {
 			If ok {
 				Info := []
 				Loop This.Property.Length {
-					Switch This.Property[A_Index].Name {
-						Case 'Thumbnail'  : Info.Push(This.List2.GetText(Row, A_Index) != '' ? 'True' : '')
-						Case 'Code128' : Info.Push(This.List2.GetText(Row, A_Index) != '' ? 'True' : '')
-						Default : Info.Push(This.List2.GetText(Row, A_Index))
-					}
+					Info.Push(This.List2.GetText(Row, A_Index))
 				}
 				This.List3.Add(, Info*)
 			}
@@ -489,9 +598,14 @@ class Stocking extends Imaging {
 		updateList3Colors()
 		updateList3Colors() {
 			Loop This.List3.GetCount() {
-				This.List3CLV.Cell(A_Index, 1, Mod(A_Index, 2) = 0 ? 0xFFDCEEFF : 0xFFFFFFFF, 0xFF0000FF)
-				This.List3CLV.Cell(A_Index, 7, Mod(A_Index, 2) = 0 ? 0xFFDCEEFF : 0xFFFFFFFF, 0xFFFF0000)
-				This.List3CLV.Cell(A_Index, 8, Mod(A_Index, 2) = 0 ? 0xFFDCEEFF : 0xFFFFFFFF, 0xFF008000)
+				Row := A_Index
+				For Propery in This.Property {
+					Switch Propery.Name {
+						Case 'Code' : This.List3CLV.Cell(Row, A_Index, Mod(A_Index, 2) = 0 ? 0xFFDCEEFF : 0xFFFFFFFF, 0xFF0000FF)
+						Case 'Buy Value' : This.List3CLV.Cell(Row, A_Index, Mod(A_Index, 2) = 0 ? 0xFFDCEEFF : 0xFFFFFFFF, 0xFFFF0000)
+						Case 'Sell Value' : This.List3CLV.Cell(Row, A_Index, Mod(A_Index, 2) = 0 ? 0xFFDCEEFF : 0xFFFFFFFF, 0xFF008000)
+					}
+				}
 			}
 			This.List3.Redraw()
 		}
@@ -500,5 +614,9 @@ class Stocking extends Imaging {
 		This.List2.Visible := True
 		This.List3.Visible := False
 		This.List3.Delete()
+	}
+	inputsClear() {
+		This.cleanPropertyValues()
+		This.showPropertiesValues('')
 	}
 }

@@ -12,7 +12,7 @@ appSetting := Setting()
 appStocking := Stocking()
 appStocking.loadAppImages()
 
-mainWindow := Gui(, appSetting.Title)
+mainWindow := Gui('', appSetting.Title)
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 5
@@ -75,16 +75,18 @@ updatePropertyValue(List, L) {
 	Critical -1
     OffText := 16 + (A_PtrSize * 4)
     Row := NumGet(L + (A_PtrSize * 3), 4, "Int")
-    ;Col := NumGet(L + (A_PtrSize * 3), 4, "Int")
     If (TxtPtr := NumGet(L, OffText, "UPtr")) {
     	ItemText := StrGet(TxtPtr)
     	appStocking.writePropertyValues(Row + 1, ItemText)
     }
-    SetTimer(updateValueColors, -50)
+    SetTimer(updateValueColors, -100)
     updateValueColors() {
     	appStocking.updateValueColors()
     	Switch Row + 1 {
     		Case 7 : appStocking.updateBuyValueRelatives()
+    		Case 8 : appStocking.updateSellValueRelatives()
+    		Case 9 : appStocking.updateProfitValueRelatives()
+    		Case 10 : appStocking.updateProfitPercentageRelatives()
     	}
     }
 }
@@ -99,6 +101,7 @@ chargeItem.OnEvent('Click', (*) => appStocking.chargeOldDefinitions())
 genBarcode := mainWindow.AddButton('xp+100 yp w200 hp', 'Generate Barcode')
 genBarcode.OnEvent('Click', (*) => appStocking.generateCode128(3, True))
 FileMenu := Menu()
+FileMenu.Add "&New", (*) => appStocking.inputsClear()
 FileMenu.Add "&Load", (*) => appStocking.chargeOldDefinitions()
 FileMenu.Add "&Update`tCtrl + S", (*) => appStocking.writeProperties()
 FileMenu.Add "E&xit", (*) => ExitApp()
@@ -122,6 +125,8 @@ appStocking.List1CLV := itemFormsColor
 appStocking.List3CLV := searchListCLV
 appStocking.Thumb := itemThumbnail
 appStocking.Log := currentTask
+appStocking.getSellMethods()
+appStocking.getSellCurrency()
 appStocking.viewDefinitionsList()
 appStocking.updateValueColors()
 
@@ -130,4 +135,5 @@ appStocking.updateValueColors()
 Del::appStocking.deleteProperties()
 ^F::appStocking.searchItemInList(1)
 ^B::appStocking.searchClear()
+^N::appStocking.inputsClear()
 #HotIf
