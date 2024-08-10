@@ -189,6 +189,7 @@ Class LV_Colors {
    Row(Row, BkColor := "", TxColor := "") {
       If !(This.HWND)
          Return False
+      This.RowCount := This.LV.GetCount()
       If (Row >This.RowCount)
          Return False
       If This.IsStatic

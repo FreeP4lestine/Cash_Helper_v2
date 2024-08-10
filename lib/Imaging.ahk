@@ -1,4 +1,3 @@
-#Include <Gdip_All>
 class Imaging {
 	loadAppImages() {
 		This.Picture := Map()
