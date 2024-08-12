@@ -3,7 +3,7 @@
 ; ======================================================================================================================
 Class InCellEdit {
    ; -------------------------------------------------------------------------------------------------------------------
-   __New(LV) {
+   __New(LV, Ignore := {Row: Map(), Col: Map()}) {
       If (Type(LV) != "Gui.ListView")
          Throw Error("Class LVICE requires a GuiControl object of type Gui.ListView!")
       This.DoubleClickFunc := ObjBindMethod(This, "DoubleClick")
@@ -15,6 +15,7 @@ Class InCellEdit {
       This.LV := LV
       This.HWND := LV.Hwnd
       This.Changes := []
+      This.Ignore := Ignore
    }
    ; -------------------------------------------------------------------------------------------------------------------
    __Delete() {
@@ -32,9 +33,10 @@ Class InCellEdit {
       Critical -1
       Item := NumGet(L + (A_PtrSize * 3), 0, "Int")
       Subitem := NumGet(L + (A_PtrSize * 3), 4, "Int")
-      If Item = 2 || Item = 12 || !Subitem { ; Ignore some cells
+      If This.Ignore.Row.Has(Item + 1) || This.Ignore.Col.Has(Subitem + 1) { ; Ignore some cells
          Return
       }
+      LV.Opt('-ReadOnly')
       CellText := LV.GetText(Item + 1, SubItem + 1)
       RC := Buffer(16, 0)
       NumPut("Int", 0, "Int", SubItem, RC)
@@ -71,8 +73,9 @@ Class InCellEdit {
    ; LVN_ENDLABELEDIT notification
    ; -------------------------------------------------------------------------------------------------------------------
    EndLabelEdit(LV, L) {
-      Static OffText := 16 + (A_PtrSize * 4)
       Critical -1
+      LV.Opt('ReadOnly')
+      Static OffText := 16 + (A_PtrSize * 4)
       This.LV.OnNotify(-176, This.EndLabelEditFunc, 0)
       OnMessage(0x0111, This.CommandFunc, 0)
       If (TxtPtr := NumGet(L, OffText, "UPtr")) {

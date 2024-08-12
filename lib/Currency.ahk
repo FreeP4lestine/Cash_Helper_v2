@@ -3,6 +3,7 @@ class Currency {
 		This.SellCurrencyNameFile := SellCurrencyFile
 		This.SellCurrency := []
 		This.SellCurrencyName := Map()
+		This.Updates := []
 	}
 	getSellCurrency() {
 		If FileExist(This.SellCurrencyNameFile) {
@@ -18,10 +19,15 @@ class Currency {
 	readCurrencies() {
 		mainList.Delete()
 		For Definition in This.SellCurrency {
-			mainList.Add(, Definition.Symbol, Definition.Name, Definition.ConvertFactor)
+			R := mainList.Add(, Definition.Symbol, Definition.Name, Definition.ConvertFactor)
 			mainListCLV.Cell(A_Index, 1, '0xFFE6E6E6')
-			mainListCLV.Cell(A_Index, 3,, '0xFF0000E6')
+			mainListCLV.Cell(A_Index, 3,, '0xFF0000FF')
+			mainListCLV.Row(A_Index, '0xFFFFFFFF')
 		}
+		For Update in This.Updates {
+			mainListCLV.Row(Update, '0xFFFFC080')
+		}
+		mainList.Redraw()
 		FormulaResult.Text := This.SellCurrencyName.Has('USD') && This.SellCurrencyName.Has('TND') ? Round(This.SellCurrencyName['USD'].ConvertFactor / This.SellCurrencyName['TND'].ConvertFactor, 3) : '1.000'
 		mainList.ModifyCol(1, 'AutoHdr')
 		mainList.ModifyCol(2, 'AutoHdr')
@@ -88,6 +94,10 @@ class Currency {
 		This.showCurrentCurrency()
 	}
 	onlineUpdateCurrencies() {
+		If !ConnectedToInternet() {
+			MsgBox('Internet connection required!', 'Currency', 0x30)
+			Return
+		}
 		If appSetting.exAPI = '' {
 			API := InputBox('Exchange Rates Data API key is required!', 'API', 'w400 h100')
 			If API.Result != 'OK' || API.Value = '' {
@@ -106,20 +116,30 @@ class Currency {
 		whr := ComObject('WinHttp.WinHttpRequest.5.1')
 		whr.Open('GET', url, False)
 		whr.SetRequestHeader('apikey', appSetting.exAPI)
-		whr.Send()
-		Response := whr.ResponseText
+		Try {
+			whr.Send()
+			Response := whr.ResponseText
+		} Catch {
+			Response := '{"success":false}'
+		}
 		exRate := Jxon_Load(&Response)
 		If !exRate['success'] {
-			If 'Yes' != MsgBox('Unable to return the exchange rate from server!`nThe following link copied to the clipboard`n' (A_Clipboard := url) '`nContinue?', 'Currency', 0x30 + 0x4) {
+			If 'Yes' != MsgBox('Unable to return the exchange rate from server!`nThe following link copied to the clipboard`n`n' (A_Clipboard := url) '`n`nContinue?', 'Currency', 0x30 + 0x4) {
 				Return
 			}
 		}
+		This.Updates := []
 		For Currency in This.SellCurrency {
 			If Currency.Symbol ~= 'TND|TNM' {
 				Continue
 			}
-			This.SellCurrency[A_Index].ConvertFactor := Round(exRate['rates'][Currency.Symbol], 3)
+			exChange := Round(exRate['rates'][Currency.Symbol], 3)
+			prevExChange := Currency.ConvertFactor
+			This.SellCurrency[A_Index].ConvertFactor := exChange
 			This.SellCurrencyName[Currency.Symbol].ConvertFactor := This.SellCurrency[A_Index].ConvertFactor
+			If prevExChange != exChange {
+				This.Updates.Push(A_Index)
+			}
 		}
 		whr := 0
 		O := FileOpen(This.SellCurrencyNameFile, 'w')
@@ -139,5 +159,12 @@ class Currency {
 		} Else {
 			LatestCheck.Text := 'Latest Check: ' 'None'
 		}
+	}
+	newAPIKey() {
+		API := InputBox('Enter Exchange Rates Data API key', 'API', 'w400 h100')
+		If API.Result != 'OK' || API.Value = '' {
+			Return
+		}
+		appSetting.writeSetting('exAPI', appSetting.exAPI := API.Value)
 	}
 }

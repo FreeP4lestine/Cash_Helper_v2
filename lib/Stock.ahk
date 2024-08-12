@@ -40,6 +40,7 @@ class Stock {
 				This.Property.Push({ Name: Definition[1], Value: Definition[2], ViewValue: Definition[3] })
 				This.PropertyName[This.Property[A_Index].Name] := This.Property[A_Index]
 			}
+            O.Close()
 		}
 	}
 	cleanPropertyValues() {
@@ -319,7 +320,7 @@ class Stock {
 			For Property in This.Property {
 				Info.Push(Property.ViewValue)
 			}
-			mainList.Add(, Info*)
+			mainList.Add('Icon1', Info*)
 			++Counted
 		}
 		Log.Value := 'Loaded ' A_LoopFileName '... [ ' Counted ' ]'

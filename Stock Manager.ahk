@@ -41,7 +41,8 @@ For Property in appStock.Property {
 }
 itemForms.ModifyCol(1, 'Right AutoHdr')
 itemForms.ModifyCol(2, 'AutoHdr Center')
-itemFormsCell := InCellEdit(itemForms)
+IgnoreCell := {Row: Map(3, 1, 13, 1), Col: Map(1, 1)}
+InCellEdit(itemForms, IgnoreCell)
 itemFormsCLV := LV_Colors(itemForms)
 itemFormsCLV.AlternateRows(0xFFF0F0F0)
 Loop itemForms.GetCount() {
