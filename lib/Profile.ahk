@@ -51,6 +51,7 @@ class Profile {
 	}
 	submitAccount() {
 		If This.Bypass = bypassKey.Value {
+			saveLogins()
 			Return True
 		}
 		If !Profile := This.profileExists(loginUsername.Value) {
@@ -61,13 +62,16 @@ class Profile {
 			Msgbox('Incorrect password!', 'Login', 0x30)
 			Return False
 		}
-		If loginRemember.Value {
-			IniWrite(loginUsername.Value
-				 ',' loginPassword.Value
-				 ',' bypassKey.Value , This.Configuration, 'Setting', 'Remember')
-		} Else {
-			If IniRead(This.Configuration, 'Setting', 'Remember', '') {
-				IniDelete(This.Configuration, 'Setting', 'Remember')
+		saveLogins()
+		saveLogins() {
+			If loginRemember.Value {
+				IniWrite(loginUsername.Value
+					 ',' loginPassword.Value
+					 ',' bypassKey.Value, This.Configuration, 'Setting', 'Remember')
+			} Else {
+				If IniRead(This.Configuration, 'Setting', 'Remember', '') {
+					IniDelete(This.Configuration, 'Setting', 'Remember')
+				}
 			}
 		}
 		Return True
@@ -115,36 +119,36 @@ class Profile {
 		If !Image {
 			Return
 		}
-		This.Thumbnail := gdipImage.b64ResizeImage(Image)
-		createThumbnail.Value := 'HBITMAP:*' gdipImage.hBitmapFromB64(This.Thumbnail)
+		This.Thumbnail := appImage.b64ResizeImage(Image)
+		createThumbnail.Value := 'HBITMAP:*' appImage.hBitmapFromB64(This.Thumbnail)
 	}
 	updateThumbnail() {
 		If !Profile := This.profileExists(loginUsername.Value) {
-			loginThumbnail.Value := appImage.Choose['Default']
+			loginThumbnail.Value := appImage.Picture['Default']
 			Return
 		}
 		Try {
-			loginThumbnail.Value := 'HBITMAP:*' gdipImage.hBitmapFromB64(Profile.Thumbnail)
+			loginThumbnail.Value := 'HBITMAP:*' appImage.hBitmapFromB64(Profile.Thumbnail)
 		}
 	}
 	createUpdateThumbnail() {
 		If !Profile := This.profileExists(createUsername.Value) {
-			createThumbnail.Value := appImage.Choose['Default']
+			createThumbnail.Value := appImage.Picture['Default']
 			Return
 		}
 		Try {
-			createThumbnail.Value := 'HBITMAP:*' gdipImage.hBitmapFromB64(Profile.Thumbnail)
+			createThumbnail.Value := 'HBITMAP:*' appImage.hBitmapFromB64(Profile.Thumbnail)
 		}
 	}
 	welcomeUpdateProfile() {
+		If This.Bypass = bypassKey.Value {
+			loginUsername.Value := 'Owner'
+			welcomeThumbnail.Value := appImage.Picture['Default']
+		} Else {
+			Profile := This.profileExists(loginUsername.Value)
+			welcomeThumbnail.Value := 'HBITMAP:*' appImage.hBitmapFromB64(Profile.Thumbnail)
+		}
 		welcomeAccountInfo.Value := loginUsername.Value 
-		If !Profile := This.profileExists(loginUsername.Value) {
-			welcomeThumbnail.Value := appImage.Choose['Default']
-			Return
-		}
-		Try {
-			welcomeThumbnail.Value := 'HBITMAP:*' gdipImage.hBitmapFromB64(Profile.Thumbnail)
-		}
 		welcomeWindow.GetPos(,, &Width)
 		welcomeThumbnail.Move(Width - 168)
 		welcomeAccountInfo.Move(Width - 336)

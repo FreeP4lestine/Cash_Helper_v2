@@ -2,25 +2,22 @@
 #SingleInstance Force
 
 #Include <Gdip_All>
-#Include <Gdip>
 #Include <CreateImageButton>
 #Include <Setting>
 #Include <Profile>
-#Include <Image>
+#Include <Imaging>
 
 appSetting := Setting()
-appImage := Image()
+appImage := Imaging()
 appProfile := Profile()
 appProfile.checkBypass()
-gdipImage := Gdip()
-
 mainWindow := Gui(, appSetting.Title)
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 20
 mainWindow.OnEvent('Close', (*) => ExitApp())
 mainWindow.SetFont('s10')
-loginThumbnail := mainWindow.AddPicture('xm+86 w128 h128', appImage.Choose['Default'])
+loginThumbnail := mainWindow.AddPicture('xm+86 w128 h128', appImage.Picture['Default'])
 mainWindow.AddText('xm w300 Center', 'Username / ID:')
 mainWindow.MarginY := 5
 loginUsername := mainWindow.AddEdit('w300')
@@ -49,7 +46,7 @@ createWindow.BackColor := 'White'
 createWindow.MarginX := 20
 createWindow.MarginY := 20
 createWindow.SetFont('s10')
-createThumbnail := createWindow.AddPicture('xm+86 w128 h128', appImage.Choose['Default'])
+createThumbnail := createWindow.AddPicture('xm+86 w128 h128', appImage.Picture['Default'])
 createThumbnail.OnEvent('Click', (*) => appProfile.pickThumbnail())
 createWindow.AddText('xm w300 Center', '* Username / ID:')
 createWindow.MarginY := 5
@@ -85,6 +82,7 @@ welcomeThumbnail := welcomeWindow.AddPicture('ym w128 h128')
 welcomeWindow.SetFont('s10 norm')
 FunctionPerRow := 5
 Applications := FileOpen('setting\Application', 'r')
+pToken := Gdip_Startup()
 While !Applications.AtEOF {
 	Name := Applications.ReadLine()
 	If !FileExist(Name '.ahk') {
@@ -93,11 +91,12 @@ While !Applications.AtEOF {
 	_XY := Mod((Index := A_Index - 1), FunctionPerRow) = 0 ? 'xm' : 'xp+145 yp'
 	ButtonFunc := welcomeWindow.AddButton('w120 h143 ' _XY, '`n`n`n`n`n`n`n' Name)
 	ButtonFunc.OnEvent('Click', RunMe)
-	CreateImageButton(ButtonFunc, 0, [['images\' Name '_normal.png'			 ]
-									, ['images\' Name '_hover.png'			 ]
-									, ['images\' Name '_click.png'			 ]
+	CreateImageButton(ButtonFunc, 0, [['images\' Name '_normal.png']
+									, ['images\' Name '_hover.png']
+									, ['images\' Name '_click.png']
 									, ['images\SubApp_disabled2.png',, 0x80000000]]*)
 }
+Gdip_Shutdown(pToken)
 RunMe(Ctrl, Info) {
 	Run(StrReplace(Ctrl.Text, '`n') '.ahk')
 }

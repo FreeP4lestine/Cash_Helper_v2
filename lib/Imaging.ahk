@@ -1,4 +1,7 @@
 class Imaging {
+	__New() {
+		This.loadAppImages()
+	}
 	loadAppImages() {
 		This.Picture := Map()
 		Loop Files, 'images\*.*' {
@@ -44,4 +47,5 @@ class Imaging {
 		Gdip_Shutdown(This.pToken)
 		Return HBITMAP
 	}
+	
 }
