@@ -40,8 +40,8 @@ IgnoreCell := {Row: Map(3, 1, 13, 1), Col: Map(1, 1)}
 InCellEdit(itemPropertiesForms, IgnoreCell)
 itemPropertiesFormsCLV := LV_Colors(itemPropertiesForms)
 Loop itemPropertiesForms.GetCount() {
-	backColor := !Mod(A_Index, 2) ? 0xFFFFFFFF : 0xFFE3FFE3
-	itemPropertiesFormsCLV.Cell(A_Index, 1, 0xFFD6FFD6)
+	backColor := !Mod(A_Index, 2) ? 0xFFFFFFFF : 0xFFE6E6E6
+	itemPropertiesFormsCLV.Cell(A_Index, 1, 0xFFFFFFFF)
 	itemPropertiesFormsCLV.Cell(A_Index, 2, backColor)
 }
 itemPropertiesForms.OnNotify(-2, pickItemThumbnail)
@@ -61,7 +61,7 @@ updateItemRelativeValues(List, L) {
     ItemText := ''
     If (TxtPtr := NumGet(L, OffText, "UPtr")) {
     	ItemText := StrGet(TxtPtr)
-		appStock.itemProperties[Row + 1].ViewValue := ItemText != '' ? ItemText : 'N/A'
+		appStock.itemProperties[Row + 1].ViewValue := ItemText
     }
     SetTimer(Update, -100)
     Update() {
@@ -74,7 +74,7 @@ updateItemRelativeValues(List, L) {
     	}
     }
 }
-mainList := mainWindow.AddListView('xm+270 ym+80 w1000 h500 -Multi')
+mainList := mainWindow.AddListView('xm+270 ym+80 w1000 h540 -Multi BackgroundE6E6E6')
 searchList := mainWindow.AddListView('xp yp wp hp Hidden -Multi')
 SetExplorerTheme(mainList.Hwnd)
 SetExplorerTheme(searchList.Hwnd)
@@ -99,64 +99,28 @@ For Property in appStock.itemProperties {
 	mainList.InsertCol(A_Index, '100', Property.Name)
 	searchList.InsertCol(A_Index, '100', Property.Name)
 }
-mainList.GetPos(&X, &Y, &W)
+mainList.GetPos(&X, &Y, &W, &H)
 currentTask := mainWindow.AddEdit('x' X + 500 ' y' Y - 25 ' w' W - 500 ' ReadOnly BackgroundWhite -E0x200 Right cGray')
-updateItem := mainWindow.AddButton('xm w250', 'Update')
-updateItem.OnEvent('Click', (*) => appStock.writeItemProperties())
+updateItem := mainWindow.AddButton('xm y' (Y + H - 27) ' w250', 'Update')
+updateItem.OnEvent('Click', (*) => appStock.writeItemProperties(1))
 updateItem.SetFont('Bold')
 mainWindow.SetFont('s8')
-chargeItem := mainWindow.AddButton('xp+270 yp w100 hp', 'Load')
-chargeItem.OnEvent('Click', (*) => appStock.loadItemsOldDefinitions())
-genBarcode := mainWindow.AddButton('xp+100 yp w200 hp', 'Generate Barcode')
-genBarcode.OnEvent('Click', (*) => appStock.generateItemCode128(3, True))
 FileMenu := Menu()
-FileMenu.Add "&New", (*) => appStock.clearItemViewProperties()
-FileMenu.Add "&Load", (*) => appStock.loadItemsOldDefinitions()
-FileMenu.Add "&Update`tCtrl + S", (*) => appStock.writeItemProperties()
-FileMenu.Add "E&xit", (*) => ExitApp()
+FileMenu.Add("Exit", (*) => ExitApp())
+FileMenu.Add("Load item old definition", (*) => appStock.loadItemsOldDefinitions())
 HelpMenu := Menu()
-HelpMenu.Add "&Return from search", (*) => appStock.searchItemInMainListClear()
-HelpMenu.Add "&Find an item (And)", (*) => appStock.searchItemInMainList(1)
-HelpMenu.Add "&Find an item (Or)", (*) => appStock.searchItemInMainList()
-HelpMenu.Add "&Choose a thumbnail", (*) => appStock.pickItemThumbnail()
-HelpMenu.Add "&Generate a barcode", (*) => appStock.generateItemCode128(3, True)
-CurrencyMenu := Menu()
-For Cur, Definition in appStock.itemCurrency {
-	CurrencyMenu.Add(Cur '`t' Definition.Name, changeItemCurrencyView)
-	If Cur = 'TND' {
-		CurrencyMenu.Check(Cur '`t' Definition.Name)
-	}
-}
-changeItemCurrencyView(ItemName, ItemPos, MyMenu) {
-	For Cur, Definition in appStock.SellCurrency {
-		CurrencyMenu.UnCheck(Cur '`t' Definition.Name)
-	}
-	CurrencyMenu.Check(ItemName)
-	Currency := StrSplit(ItemName, '`t')
-	appStock.changeItemCurrencyView(Currency[1])
-}
-ValueMenu := Menu()
-ValueMenu.Add('0 (exp. 1)', changeItemValueRounder)
-ValueMenu.Add('1 (exp. 1.0)', changeItemValueRounder)
-ValueMenu.Add('2 (exp. 1.00)', changeItemValueRounder)
-ValueMenu.Add('3 (exp. 1.000)', changeItemValueRounder)
-ValueMenu.Check('3 (exp. 1.000)')
-ValueMenu.Add('4 (exp. 1.0000)', changeItemValueRounder)
-changeItemValueRounder(ItemName, ItemPos, MyMenu) {
-	ValueMenu.Uncheck('0 (exp. 1)')
-	ValueMenu.Uncheck('1 (exp. 1.0)')
-	ValueMenu.Uncheck('2 (exp. 1.00)')
-	ValueMenu.Uncheck('3 (exp. 1.000)')
-	ValueMenu.Uncheck('4 (exp. 1.0000)')
-	ValueMenu.Check(ItemName)
-	Rounder := StrSplit(ItemName, ' ')
-	appStock.changeItemValueRounder(Rounder[1])
-}
+HelpMenu.Add("&Return from search", (*) => appStock.searchItemInMainListClear())
+HelpMenu.Add("&Find an item (And)", (*) => appStock.searchItemInMainList(1))
+HelpMenu.Add("&Find an item (Or)", (*) => appStock.searchItemInMainList())
+HelpMenu.Add("&Choose item thumbnail", (*) => appStock.pickItemThumbnail())
+HelpMenu.Add("&Generate item barcode", (*) => appStock.generateItemCode128(3, True))
+ViewMenu := Menu()
+ViewMenu.Add('Currency', (*) => Run('Currency Manager.ahk'))
+
 Menus := MenuBar()
-Menus.Add "&File", FileMenu
-Menus.Add "&Edit", HelpMenu
-Menus.Add "&Currency", CurrencyMenu
-Menus.Add "&Values", ValueMenu
+Menus.Add("File", FileMenu)
+Menus.Add("Edit", HelpMenu)
+Menus.Add("View", ViewMenu)
 mainWindow.MenuBar := Menus
 mainWindow.Show()
 
@@ -164,7 +128,7 @@ appStock.loadItemsDefinitions()
 appStock.colorizeItemViewProperties()
 
 #HotIf WinActive(mainWindow)
-^S::appStock.writeItemProperties()
+^Enter::appStock.writeItemProperties(1)
 Del::appStock.deleteItemProperties()
 ^F::appStock.searchItemInMainList(1)
 ^B::appStock.searchItemInMainListClear()

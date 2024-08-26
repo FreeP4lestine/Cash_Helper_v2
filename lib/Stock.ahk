@@ -1,16 +1,15 @@
 class Stock {
 	__New() {
 		This.defaultLocation 		:= 'setting\defs'
+		This.defaultBackup 		    := 'setting\defs\backup'
 		This.itemPropertiesDef 		:= 'setting\ItemProperties'
 		This.sellPropertiesDef 		:= 'setting\SellMethods'
 		This.currencyPropertiesDef 	:= 'setting\SellCurrency'
 		This.itemProperties 		:= []
 		This.itemSellMethod			:= Map()
 		This.itemCurrency 			:= Map()
-		This.selectedCurrency 		:= 'TND'
-		This.Rounder 				:= 3
-		This.itemThumb				:= 'N/A'
-		This.itemCode128			:= 'N/A'
+		This.selectedCurrency 		:= appSetting.selectedCurrency
+		This.Rounder 				:= appSetting.Rounder
 		This.readItemPropertiesDef()
 		This.readSellPropertiesDef()
 		This.readCurrencyPropertiesDef()
@@ -18,7 +17,7 @@ class Stock {
 	; Item values clear
 	restoreItemPropertiesValues(ViewChanges := False) {
 		For Property in This.itemProperties {
-			Property.Value := 'N/A'
+			Property.Value := ''
 			Property.ViewValue := ''
 			If ViewChanges
 				itemPropertiesForms.Modify(A_Index,,, 'N/A')
@@ -55,7 +54,6 @@ class Stock {
 				This.itemCurrency[Definition[1]] := {Name: Definition[2], ConvertFactor: Definition[3]}
 			}
 			O.Close()
-			This.selectedCurrency := 'TND'
 		}
 	}
 	; Item definition read from a file
@@ -122,17 +120,22 @@ class Stock {
 				Case 'Thumbnail', 'Code128':
 					Property.ViewValue := Property.Value != '' ? 'True' : ''
 				Case 'Currency':
+					If Property.Value != '' || !This.itemCurrency.Has(Property.Value) {
+						Property.Value := This.selectedCurrency
+					}
 					ConvertFactor := This.itemCurrency[Property.Value].ConvertFactor
 					Property.ViewValue := Property.Value
 				Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
+					If !IsNumber(Property.Value) {
+						Property.Value := 0
+					}
 					Property.ViewValue := Round(Property.Value * ConvertFactor, This.Rounder)
-				Default:
-					Property.ViewValue := Property.Value != '' ? Property.Value : ''
+				Default: Property.ViewValue := Property.Value
 			}
 		}
 	}
 	; Barcode check before updating the item
-	beforWriteItemProperties() {
+	beforWriteItemProperties(backUp := True) {
 		Code := ItemPropertiesForms.GetText(1, 2)
 		If Code = '' || Code ~= '[^A-Za-z0-9_]' {
 			MsgBox('The code is invalid', 'Create', 0x30)
@@ -147,6 +150,12 @@ class Stock {
 			}
 			If 'Yes' != MsgBox('Overwriting other defintions may create unwanted issues`nPlease be aware of what are you doing!`nContinue?', 'Confirm [3]', 0x30 + 0x4)
 				Return False
+		}
+		If backUp && FileExist(This.defaultLocation '\' Code) {
+			If !DirExist(This.defaultBackup '\' Code) {
+				DirCreate(This.defaultBackup '\' Code)
+			}
+			FileCopy(This.defaultLocation '\' Code, This.defaultBackup '\' Code '\' A_Now)
 		}
 		Return True
 	}
@@ -169,15 +178,19 @@ class Stock {
 	; Finish after updating the item
 	afterWriteItemProperties() {
 		Code := ItemPropertiesForms.GetText(1, 2)
-		foundRow := This.findItemInListView(Code,, 1)
+		foundRow1 := This.findItemInListView(Code,, 1)
+		foundRow2 := This.findItemInListView(Code, searchList, 1)
 		This.readItemViewProperties()
 		rowInfo := []
 		For Property in This.itemProperties {
 			rowInfo.Push(Property.ViewValue)
 		}
-		foundRow ? mainList.Modify(foundRow,, rowInfo*) : mainList.Insert(1,, rowInfo*)
+		foundRow1 ? mainList.Modify(foundRow1,, rowInfo*) : mainList.Insert(1,, rowInfo*)
+		foundRow2 ? searchList.Modify(foundRow2,, rowInfo*) : searchList.Insert(1,, rowInfo*)
 		Thumb.Value := appImage.Picture['Default']
 		This.restoreItemPropertiesValues(True)
+		This.fitItemsListContent(mainList)
+		This.fitItemsListContent(searchList)
 		Msgbox(Code ' is updated!', 'Update', 0x40)
 	}
 	; reverse of readItemViewProperties()
@@ -199,11 +212,26 @@ class Stock {
 						Property.Value := This.itemSellMethod[itemSellMethod]
 					}
 				Case 'Currency':
+					ConvertFromCurrency := Property.Value
+					If ConvertFromCurrency = '' || !This.itemCurrency.Has(ConvertFromCurrency) {
+						ConvertFromCurrency := This.selectedCurrency
+					}
+					ConvertFromFactor := This.itemCurrency[ConvertFromCurrency].ConvertFactor
 					Property.Value := Property.ViewValue
 					If Property.Value = '' || !This.itemCurrency.Has(Property.Value) {
 						Property.Value := This.selectedCurrency
 					}
-				Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value', 'Profit Percentage':
+					ConvertToCurrency := Property.Value
+					ConvertToFactor := This.itemCurrency[ConvertToCurrency].ConvertFactor
+				Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
+					Property.Value := Property.ViewValue
+					If !IsNumber(Property.Value) {
+						Property.Value := 0
+					}
+					If ConvertFromCurrency != 'TND' {
+						Property.Value := Property.ViewValue / ConvertFromFactor
+					}
+				Case 'Profit Percentage':
 					Property.Value := Property.ViewValue
 					If !IsNumber(Property.Value) {
 						Property.Value := 0
@@ -221,18 +249,22 @@ class Stock {
 		}
 	}
 	; Write or save item into the hard drive
-	writeItemProperties() {
+	writeItemProperties(NormalMod := False) {
 		If !This.beforWriteItemProperties() {
 			Return
 		}
-		This.submitItemViewProperties()
-		Code := This.itemProperties[1]
+		If NormalMod {
+			This.submitItemViewProperties()
+		}
+		Code := ItemPropertiesForms.GetText(1, 2)
 		O := FileOpen(This.defaultLocation '\' Code, 'w')
 		For Property in This.itemProperties {
 			O.WriteLine(Property.Value)
 		}
 		O.Close
-		This.afterWriteItemProperties()
+		If NormalMod {
+			This.afterWriteItemProperties()
+		}
 	}
 	showItemViewProperties() {
 		For Property in This.itemProperties {
@@ -255,7 +287,7 @@ class Stock {
 	}
 	colorizeItemViewProperties() {
 		For Property in This.itemProperties {
-			backColor := !Mod(A_Index, 2) ? 0xFFFFFFFF : 0xFFE3FFE3
+			backColor := !Mod(A_Index, 2) ? 0xFFFFFFFF : 0xFFE6E6E6
 			If !Property.ViewValue {
 				itemPropertiesFormsCLV.Cell(A_Index, 2, backColor, 0xFF808080)
 			} Else Switch Property.Name {
@@ -302,6 +334,25 @@ class Stock {
 		This.readItemViewProperties()
 		This.showItemViewProperties()
 	}
+	colorizeItemsList(List, ListCLV) {
+		Loop List.GetCount() {
+			Row := A_Index
+			backColor := !Mod(Row, 2) ? 0xFFFFFFFF : 0xFFE6E6E6
+			For Property in This.itemProperties {
+				Switch Property.Name {
+					Case 'Code': ListCLV.Cell(Row, A_Index, backColor, 0xFF0000FF)
+					Case 'Buy Value': ListCLV.Cell(Row, A_Index, backColor, 0xFFFF0000)
+					Case 'Sell Value': ListCLV.Cell(Row, A_Index, backColor, 0xFF008000)
+					Default: ListCLV.Cell(Row, A_Index, backColor, 0xFF000000)
+				}
+			}
+		}
+	}
+	fitItemsListContent(List) {
+		Loop List.GetCount('Col') {
+			List.ModifyCol(A_Index, 'AutoHdr Center')
+		}
+	}
 	loadItemsOldDefinitions() {
 		Default := FileSelect('D')
 		BackupTo := (Default = This.defaultLocation) ? Default '\olddefs' : Default
@@ -320,7 +371,7 @@ class Stock {
 			Try {
 				This.itemProperties[1].Value := Code
 				This.itemProperties[2].Value := Content[1]
-				This.itemProperties[4].Value := 'TND'
+				;This.itemProperties[4].Value := 'TND'
 				This.itemProperties[5].Value := 'Piece (P)'
 				This.itemProperties[6].Value := 1
 				This.itemProperties[7].Value := Round(Content[2] / 1000, 3)
@@ -331,6 +382,7 @@ class Stock {
 			} Catch {
 				Return False
 			}
+			itemPropertiesForms.Modify(1,,, Code)
 			This.writeItemProperties()
 			Return True
 		}
@@ -346,6 +398,7 @@ class Stock {
 				FileMove(A_LoopFileFullPath, BackupTo)
 			}
 		}
+		itemPropertiesForms.Modify(1,,, '')
 		Msgbox('Load Complete!', 'Load', 0x40)
 	}
 	loadItemsDefinitions() {
@@ -372,20 +425,9 @@ class Stock {
 			++Counted
 		}
 		currentTask.Value := 'Loaded ' A_LoopFileName '... [ ' Counted ' ]'
-		Loop mainList.GetCount('Col') {
-			mainList.ModifyCol(A_Index, 'AutoHdr Center')
-		}
+		This.fitItemsListContent(mainList)
+		This.colorizeItemsList(mainList, mainListCLV)
 		currentTask.Value := Counted ' Item(s) loaded in ' Round((A_TickCount - StartTime) / 1000, 2) ' second(s)'
-		Loop mainList.GetCount() {
-			Row := A_Index
-			For Propery in This.itemProperties {
-				Switch Propery.Name {
-					Case 'Code': mainListCLV.Cell(Row, A_Index, Mod(Row, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFF0000FF)
-					Case 'Buy Value': mainListCLV.Cell(Row, A_Index, Mod(Row, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFFFF0000)
-					Case 'Sell Value': mainListCLV.Cell(Row, A_Index, Mod(Row, 2) = 0 ? 0xFFF0F0F0 : 0xFFFFFFFF, 0xFF008000)
-				}
-			}
-		}
 		mainList.Redraw()
 	}
 	roundItemRelatives() {
@@ -395,7 +437,9 @@ class Stock {
 				Value.ViewValue := Round(Value.ViewValue, This.Rounder)
 			}
 		}
-		This.itemProperties[10].ViewValue := Round(This.itemProperties[10].ViewValue, 2)
+		If IsNumber(This.itemProperties[10].ViewValue) {
+			This.itemProperties[10].ViewValue := Round(This.itemProperties[10].ViewValue, 2)
+		}
 		This.showItemViewProperties()
 	}
 	; Buy value auto update
@@ -407,13 +451,18 @@ class Stock {
 	buy_SellPercent(Sell, Percent) {
 		Sell := !IsNumber(Sell) ? 0 : Sell
 		Percent := !IsNumber(Percent) ? 0 : Percent
-		Percent := Percent = -100 ? 0 : Percent
-		Return Sell - (Sell  / (1 + (Percent / 100)))
+		If Percent = -100 {
+			Return 0
+		}
+		Return Sell / (1 + (Percent / 100))
 	}
 	buy_ProfitPercent(Profit, Percent) {
 		Profit := !IsNumber(Profit) ? 0 : Profit
-		Percent := !Percent || !IsNumber(Percent) ? 100 : Percent
-		Return 1 / (Percent / 100) * Profit
+		Percent := !IsNumber(Percent) ? 0 : Percent
+		If !Percent || !Profit {
+			Return 0
+		}
+		Return 1 / ((Percent / 100) * Profit)
 	}
 	; Sell value auto update
 	sell_BuyProfit(Buy, Profit) {
@@ -448,119 +497,109 @@ class Stock {
 		Sell := !IsNumber(Sell) ? 0 : Sell
 		Percent := !IsNumber(Percent) ? 0 : Percent
 		Buy := This.buy_SellPercent(Sell, Percent)
-		Return Sell - Buy
+		Return Sell - Buy 
 	}
 	; Percetage value auto update
 	percent_BuySell(Buy, Sell) {
 		Buy := !IsNumber(Buy) ? 0 : Buy
+		If !Buy {
+			Return 0
+		}
 		Sell := !IsNumber(Sell) ? 0 : Sell
 		Profit := This.profit_BuySell(Buy, Sell)
-		Buy := !Buy ? This.buy_ProfitPercent(Profit, 0) : Buy
-		Buy := !Buy ? 1 : Buy
 		Return Profit / Buy * 100
 	}
 	percent_BuyProfit(Buy, Profit) {
 		Buy := !IsNumber(Buy) ? 0 : Buy
+		If !Buy {
+			Return 0
+		}
 		Profit := !IsNumber(Profit) ? 0 : Profit
-		Buy := !Buy ? This.buy_ProfitPercent(Profit, 0) : Buy
-		Buy := !Buy ? 1 : Buy
 		Return Profit / Buy * 100
 	}
 	percent_SellProfit(Sell, Profit) {
 		Sell := !IsNumber(Sell) ? 1 : Sell
 		Profit := !IsNumber(Profit) ? 0 : Profit
 		Buy := This.sell_BuyProfit(Sell, Profit)
-		Buy := !Buy ? This.buy_ProfitPercent(Profit, 0) : Buy
-		Buy := !Buy ? 1 : Buy
+		If !Buy {
+			Return 0
+		}
 		Return Profit / Buy * 100
 	}
 	updateItemBuyValueRelatives() {
 		Code := This.itemProperties[1]
 		Buy := This.itemProperties[7]
-		Sell := This.itemProperties[8]
-		Profit := This.itemProperties[9]
-		Percent := This.itemProperties[10]
 		If !Code.ViewValue || !Buy.ViewValue {
 			This.roundItemRelatives()
 			Return
 		}
-		Sell.ViewValue    := This.sell_BuyProfit(Buy.ViewValue, Profit.ViewValue)
-					      || This.sell_BuyPercent(Buy.ViewValue, Percent.ViewValue)
-					      || This.sell_ProfitPercent(Profit.ViewValue, Percent.ViewValue)
-		Profit.ViewValue  := This.profit_BuySell(Buy.ViewValue, Sell.ViewValue)
-					      || This.profit_BuyPercent(Buy.ViewValue, Percent.ViewValue)
-					      || This.profit_SellPercent(Sell.ViewValue, Percent.ViewValue)
-		Percent.ViewValue := This.percent_BuySell(Buy.ViewValue, Sell.ViewValue)
-					      || This.percent_BuyProfit(Buy.ViewValue, Profit.ViewValue)
-					      || This.percent_SellProfit(Sell.ViewValue, Profit.ViewValue)
+		Sell := This.itemProperties[8]
+		Profit := This.itemProperties[9]
+		Percent := This.itemProperties[10]
+		If Sell.ViewValue {
+			Profit.ViewValue := This.profit_BuySell(Buy.ViewValue, Sell.ViewValue)
+			Percent.ViewValue := This.percent_BuySell(Buy.ViewValue, Sell.ViewValue)
+		}
 		This.roundItemRelatives()
 	}
 	updateItemSellValueRelatives() {
-		If !This.itemProperties[1].ViewValue
-		|| !This.itemProperties[7].ViewValue
-		|| !IsNumber(This.itemProperties[8].ViewValue)
-		|| (!IsNumber(This.itemProperties[7].ViewValue)
-		&&  !IsNumber(This.itemProperties[9].ViewValue)
-		&&  !IsNumber(This.itemProperties[10].ViewValue)) {
+		Code := This.itemProperties[1]
+		Sell := This.itemProperties[8]
+		If !Code.ViewValue || !Sell.ViewValue {
+			This.roundItemRelatives()
 			Return
 		}
-		If IsNumber(This.itemProperties[7].ViewValue) {
-			This.itemProperties[9].ViewValue := This.itemProperties[8].ViewValue - This.itemProperties[7].ViewValue
-			This.itemProperties[10].ViewValue := This.itemProperties[9].ViewValue / This.itemProperties[7].ViewValue * 100
-		} Else If IsNumber(This.itemProperties[9].ViewValue) {
-			This.itemProperties[7].ViewValue := This.itemProperties[8].ViewValue - This.itemProperties[9].ViewValue
-			This.itemProperties[10].ViewValue := This.itemProperties[9].ViewValue / This.itemProperties[7].ViewValue * 100
-		} Else If IsNumber(This.itemProperties[10].ViewValue) {
-			This.itemProperties[7].ViewValue := This.itemProperties[8].ViewValue - (This.itemProperties[8].ViewValue  / (1 + This.itemProperties[10].ViewValue / 100))
-			This.itemProperties[9].ViewValue := This.itemProperties[8].ViewValue - This.itemProperties[7].ViewValue
+		Buy := This.itemProperties[7]
+		Profit := This.itemProperties[9]
+		Percent := This.itemProperties[10]
+		If Buy.ViewValue {
+			Profit.ViewValue := This.profit_BuySell(Buy.ViewValue, Sell.ViewValue)
+			Percent.ViewValue := This.percent_BuySell(Buy.ViewValue, Sell.ViewValue)
 		}
 		This.roundItemRelatives()
 	}
 	updateItemProfitValueRelatives() {
-		If !This.itemProperties[1].ViewValue
-		|| !This.itemProperties[7].ViewValue
-		|| !This.itemProperties[10].ViewValue
-		|| !IsNumber(This.itemProperties[9].ViewValue)
-		|| (!IsNumber(This.itemProperties[8].ViewValue)
-		&&  !IsNumber(This.itemProperties[7].ViewValue)
-		&&  !IsNumber(This.itemProperties[10].ViewValue)) {
+		Code := This.itemProperties[1]
+		Profit := This.itemProperties[9]
+		If !Code.ViewValue || !Profit.ViewValue {
+			This.roundItemRelatives()
 			Return
 		}
-		If IsNumber(This.itemProperties[7].ViewValue) {
-			This.itemProperties[8].ViewValue  := This.itemProperties[7].ViewValue + This.itemProperties[9].ViewValue
-			This.itemProperties[10].ViewValue := This.itemProperties[9].ViewValue / This.itemProperties[7].ViewValue * 100
-		} Else If IsNumber(This.itemProperties[8].ViewValue) {
-			This.itemProperties[7].ViewValue := This.itemProperties[8].ViewValue - This.itemProperties[9].ViewValue
-			This.itemProperties[10].ViewValue := This.itemProperties[9].ViewValue / This.itemProperties[7].ViewValue * 100
-		} Else If IsNumber(This.itemProperties[10].ViewValue) {
-			This.itemProperties[7].ViewValue := (1 / (This.itemProperties[10].ViewValue / 100) * This.itemProperties[9].ViewValue)
-			This.itemProperties[8].ViewValue := This.itemProperties[7].ViewValue + This.itemProperties[9].ViewValue
+		Buy := This.itemProperties[7]
+		Sell := This.itemProperties[8]
+		Percent := This.itemProperties[10]
+		If Buy.ViewValue {
+			Sell.ViewValue := This.sell_BuyProfit(Buy.ViewValue, Profit.ViewValue)
+			Percent.ViewValue := This.percent_BuyProfit(Buy.ViewValue, Profit.ViewValue)
+		} Else If Percent.ViewValue {
+			Sell.ViewValue := This.sell_ProfitPercent(Profit.ViewValue, Percent.ViewValue)
 		}
 		This.roundItemRelatives()
 	}
 	updateItemProfitPercentageRelatives() {
-		If !This.itemProperties[1].ViewValue
-		|| !This.itemProperties[10].ViewValue
-		|| !IsNumber(This.itemProperties[10].ViewValue)
-		|| (!IsNumber(This.itemProperties[7].ViewValue)
-		&&  !IsNumber(This.itemProperties[8].ViewValue)
-		&&  !IsNumber(This.itemProperties[9].ViewValue)) {
+		Code := This.itemProperties[1]
+		Percent := This.itemProperties[10]
+		If !Code.ViewValue || !Percent.ViewValue {
+			This.roundItemRelatives()
 			Return
 		}
-		If IsNumber(This.itemProperties[7].ViewValue) {
-			This.itemProperties[8].ViewValue := This.itemProperties[7].ViewValue + This.itemProperties[7].ViewValue * This.itemProperties[10].ViewValue / 100
-			This.itemProperties[9].ViewValue := This.itemProperties[8].ViewValue - This.itemProperties[7].ViewValue
-		} Else If IsNumber(This.itemProperties[8].ViewValue) {
-			This.itemProperties[7].ViewValue := This.itemProperties[8].ViewValue / (1 + This.itemProperties[10].ViewValue / 100)
-			This.itemProperties[9].ViewValue := This.itemProperties[8].ViewValue - This.itemProperties[7].ViewValue
-		} Else If IsNumber(This.itemProperties[9].ViewValue) {
-			This.itemProperties[7].ViewValue := 1 / (This.itemProperties[10].ViewValue / 100) * This.itemProperties[9].ViewValue
-			This.itemProperties[8].ViewValue := This.itemProperties[7].ViewValue + This.itemProperties[9].ViewValue
+		Buy := This.itemProperties[7]
+		Sell := This.itemProperties[8]
+		Profit := This.itemProperties[9]
+		If Buy.ViewValue {
+			Sell.ViewValue := This.sell_BuyPercent(Buy.ViewValue, Percent.ViewValue)
+			Profit.ViewValue := This.profit_BuyPercent(Buy.ViewValue, Percent.ViewValue)
+		} Else If Profit.ViewValue {
+			Sell.ViewValue := This.sell_ProfitPercent(Profit.ViewValue, Percent.ViewValue)
 		}
 		This.roundItemRelatives()
 	}
 	updateItemAddedValue() {
-		This.itemProperties[12].ViewValue := Round(This.itemProperties[12].ViewValue, This.Rounder)
+		Added := This.itemProperties[12]
+		If IsNumber(Added.ViewValue) {
+			Added.ViewValue := Round(Added.ViewValue, This.Rounder)
+		}
+		This.showItemViewProperties()
 	}
 	searchItemInMainList(andSearch := False) {
 		Counted := 0
@@ -600,16 +639,8 @@ class Stock {
 		}
 		mainList.Visible := False
 		searchList.Visible := True
-		Loop searchList.GetCount() {
-			Row := A_Index
-			For Propery in This.itemProperties {
-				Switch Propery.Name {
-					Case 'Code': searchListCLV.Cell(Row, A_Index, Mod(Row, 2) = 0 ? 0xFFE0FFE0 : 0xFFFFFFFF, 0xFF0000FF)
-					Case 'Buy Value': searchListCLV.Cell(Row, A_Index, Mod(Row, 2) = 0 ? 0xFFE0FFE0 : 0xFFFFFFFF, 0xFFFF0000)
-					Case 'Sell Value': searchListCLV.Cell(Row, A_Index, Mod(Row, 2) = 0 ? 0xFFE0FFE0 : 0xFFFFFFFF, 0xFF008000)
-				}
-			}
-		}
+		This.fitItemsListContent(searchList)
+		This.colorizeItemsList(searchList, searchListCLV)
 		searchList.Redraw()
 	}
 	clearItemViewProperties() {

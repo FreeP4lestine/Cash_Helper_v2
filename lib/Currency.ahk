@@ -167,4 +167,14 @@ class Currency {
 		}
 		appSetting.writeSetting('exAPI', appSetting.exAPI := API.Value)
 	}
+	updateRoundValue() {
+		appSetting.writeSetting('Rounder', Rounder.Value ? Rounder.Value : 0)
+	}
+	setDefaultCurrency() {
+		If !This.SellCurrencyName.Has(Symbol.Value) {
+			MsgBox('Currency is not set!', 'No Currency', 0x30)
+			Return
+		}
+		appSetting.writeSetting('Currency', Symbol.Value)
+	}
 }

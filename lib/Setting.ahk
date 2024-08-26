@@ -8,6 +8,8 @@ class Setting {
 		This.Version := IniRead(This.Configuration, 'Setting', 'Version', '1.0')
 		This.exAPI := IniRead(This.Configuration, 'Setting', 'exAPI', '')
 		This.latestCurrencyCheck := IniRead(This.Configuration, 'Setting', 'latestCurrencyCheck', '')
+		This.selectedCurrency := IniRead(This.Configuration, 'Setting', 'Currency', 'TND')
+		This.Rounder := IniRead(This.Configuration, 'Setting', 'Rounder', 0)
 		This.Title := 'Cash Helper v' This.Version
 		This.createTitle := 'Manage account'
 	}
