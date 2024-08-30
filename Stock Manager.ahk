@@ -1,22 +1,21 @@
 #Requires AutoHotkey v2
 #SingleInstance Force
 
-#Include <Gdip_All>
-#Include <Imaging>
-#Include <BarCoder>
-#Include <CreateImageButton>
-#Include <LV_Colors>
-#Include <SetExplorerTheme>
-#Include <_JXON>
-#Include <InCellEdit>
-
-#Include <Setting>
-#Include <Stock>
+#Include <shared\gdip>
+#Include <shared\barcoder>
+#Include <shared\createimagebutton>
+#Include <shared\lv_colors>
+#Include <shared\explorertheme>
+#Include <shared\incelledit>
+#Include <custom\class_setting>
+#Include <custom\class_stock>
+#Include <custom\class_image>
 
 appSetting := Setting()
 appImage := Imaging()
 appStock := Stock()
 
+pToken := Gdip_Startup()
 mainWindow := Gui('', appSetting.Title)
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
@@ -102,17 +101,18 @@ For Property in appStock.itemProperties {
 mainList.GetPos(&X, &Y, &W, &H)
 currentTask := mainWindow.AddEdit('x' X + 500 ' y' Y - 25 ' w' W - 500 ' ReadOnly BackgroundWhite -E0x200 Right cGray')
 updateItem := mainWindow.AddButton('xm y' (Y + H - 27) ' w250', 'Update')
-updateItem.OnEvent('Click', (*) => appStock.writeItemProperties(1))
 updateItem.SetFont('Bold')
+CreateImageButton(updateItem, 0, [[0xFF008000,, 0xFFFFFFFF, 3], [0xFF009F00], [0xFF00BB00]]*)
+updateItem.OnEvent('Click', (*) => appStock.writeItemProperties(1))
 mainWindow.SetFont('s8')
 FileMenu := Menu()
 FileMenu.Add("Exit", (*) => ExitApp())
 FileMenu.Add("Load item old definition", (*) => appStock.loadItemsOldDefinitions())
 HelpMenu := Menu()
+HelpMenu.Add("&Clear", (*) => appStock.clearItemViewProperties())
 HelpMenu.Add("&Return from search", (*) => appStock.searchItemInMainListClear())
 HelpMenu.Add("&Find an item (And)", (*) => appStock.searchItemInMainList(1))
 HelpMenu.Add("&Find an item (Or)", (*) => appStock.searchItemInMainList())
-HelpMenu.Add("&Choose item thumbnail", (*) => appStock.pickItemThumbnail())
 HelpMenu.Add("&Generate item barcode", (*) => appStock.generateItemCode128(3, True))
 ViewMenu := Menu()
 ViewMenu.Add('Currency', (*) => Run('Currency Manager.ahk'))
@@ -123,7 +123,7 @@ Menus.Add("Edit", HelpMenu)
 Menus.Add("View", ViewMenu)
 mainWindow.MenuBar := Menus
 mainWindow.Show()
-
+Gdip_Shutdown(pToken)
 appStock.loadItemsDefinitions()
 appStock.colorizeItemViewProperties()
 

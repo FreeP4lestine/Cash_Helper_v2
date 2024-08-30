@@ -16,7 +16,6 @@ A_MaxHotkeysPerInterval := 200
 appSetting := Setting()
 appSell := Sell()
 appImage := Imaging()
-appImage.loadAppImages()
 
 mainWindow := Gui('', appSetting.Title)
 mainWindow.BackColor := 'White'

@@ -1,18 +1,15 @@
 class Stock {
 	__New() {
-		This.defaultLocation 		:= 'setting\defs'
-		This.defaultBackup 		    := 'setting\defs\backup'
-		This.itemPropertiesDef 		:= 'setting\ItemProperties'
-		This.sellPropertiesDef 		:= 'setting\SellMethods'
-		This.currencyPropertiesDef 	:= 'setting\SellCurrency'
-		This.itemProperties 		:= []
-		This.itemSellMethod			:= Map()
-		This.itemCurrency 			:= Map()
-		This.selectedCurrency 		:= appSetting.selectedCurrency
-		This.Rounder 				:= appSetting.Rounder
+		This.defaultLocation := 'setting\defs'
+		This.defaultBackup := 'setting\defs\backup'
+		This.itemPropertiesDef := 'setting\ItemProperties'
+		This.sellMethodsDef := 'setting\SellMethods'
+		This.SellCurrencyDef := 'setting\SellCurrency'
+		This.selectedCurrency := appSetting.selectedCurrency
+		This.Rounder := appSetting.Rounder
 		This.readItemPropertiesDef()
-		This.readSellPropertiesDef()
-		This.readCurrencyPropertiesDef()
+		This.readsellMethodsDef()
+		This.readSellCurrencyDef()
 	}
 	; Item values clear
 	restoreItemPropertiesValues(ViewChanges := False) {
@@ -27,6 +24,7 @@ class Stock {
 	}
 	; Definitions load
 	readItemPropertiesDef(File := This.itemPropertiesDef) {
+		This.itemProperties := []
 		If FileExist(File) {
 			O := FileOpen(File, 'r')
 			While !O.AtEOF {
@@ -36,7 +34,8 @@ class Stock {
             O.Close()
 		}
 	}
-	readSellPropertiesDef(File := This.SellPropertiesDef) {
+	readsellMethodsDef(File := This.sellMethodsDef) {
+		This.itemSellMethod := Map()
 		If FileExist(File) {
 			O := FileOpen(File, 'r')
 			While !O.AtEOF {
@@ -46,7 +45,8 @@ class Stock {
 			O.Close()
 		}
 	}
-	readCurrencyPropertiesDef(File := This.currencyPropertiesDef) {
+	readSellCurrencyDef(File := This.SellCurrencyDef) {
+		This.itemCurrency := Map()
 		If FileExist(File) {
 			O := FileOpen(File, 'r')
 			While !O.AtEOF {
@@ -662,14 +662,14 @@ class Stock {
 	}
 	generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF', CodeColor := '0xFF000000') {
 		Code := This.itemProperties[1].Value
+		Code128 := This.itemProperties[13]
 		NAME := This.itemProperties[2].Value
-		THUMB := This.itemProperties[3]
-		If !CODE {
+		If !Code {
 			MsgBox('The code is required', 'Create', 0x30)
 			Return
 		}
 		Overwrite := True
-		if THUMB.Value != '' {
+		if Code128.Value {
 			If 'Yes' != Msgbox('It seems like the barcode already generated!, overwrite?', 'Barcode', 0x40 + 0x4) {
 				Overwrite := False
 			}
@@ -678,9 +678,9 @@ class Stock {
 			HEIGHT_OF_IMAGE := (Thickness * 20)
 			HEIGHT_OF_CODE := HEIGHT_OF_IMAGE
 			If Caption {
-				HEIGHT_OF_IMAGE += HEIGHT_OF_IMAGE // 2
+				HEIGHT_OF_IMAGE += (HEIGHT_OF_IMAGE // 2) * 2
 			}
-			MATRIX_TO_PRINT := BARCODER_GENERATE_CODE_128B(CODE)
+			MATRIX_TO_PRINT := BARCODER_GENERATE_CODE_128B(Code)
 			WIDTH_OF_IMAGE := (MATRIX_TO_PRINT.Length * Thickness) + 8
 			pToken := Gdip_Startup()
 			pBitmap := Gdip_CreateBitmap(WIDTH_OF_IMAGE, HEIGHT_OF_IMAGE)
@@ -703,10 +703,10 @@ class Stock {
 			If Caption {
 				CAPTION_W := WIDTH_OF_IMAGE
 				CAPTION_H := HEIGHT_OF_IMAGE - (HEIGHT_OF_CODE + 5)
-				CAPTION_SIZE := CAPTION_H / 1.25
-				Gdip_TextToGraphics(G, NAME, "s" CAPTION_SIZE " Bold x0 y" (HEIGHT_OF_CODE + 5) " w" CAPTION_W " h" CAPTION_H " C" CodeColor ' Center', "Arial")
+				CAPTION_SIZE := CAPTION_H / 2.5
+				Gdip_TextToGraphics(G, Code '`n' Name, "s" CAPTION_SIZE " Bold x0 y" (HEIGHT_OF_CODE + 5) " w" CAPTION_W " h" CAPTION_H " cFF0000FF Center", "Arial")
 			}
-			THUMB.Value := Gdip_EncodeBitmapTo64string(pBitmap, "JPG")
+			Code128.Value := Gdip_EncodeBitmapTo64string(pBitmap, "JPG")
 			mainList.Focus()
 			Gdip_DisposeImage(pBitmap)
 			Gdip_DeleteGraphics(G)
@@ -717,8 +717,8 @@ class Stock {
 		barcoderWindow.MarginX := 10
 		barcoderWindow.MarginY := 10
 		barcoderWindow.BackColor := 'White'
-		barcoderPicture := barcoderWindow.AddPicture(, 'HBITMAP:*' appImage.hBitmapFromB64(This.itemCode128))
-		base64Picture := This.itemProperties[13].Value
+		barcoderPicture := barcoderWindow.AddPicture(, 'HBITMAP:*' appImage.hBitmapFromB64(Code128.Value))
+		base64Picture := Code128.Value
 		barcoderWindow.AddButton('xm', 'Copy image to clipboard').OnEvent('Click', (*) => saveImageToClipboard())
 		saveImageToClipboard() {
 			pToken := Gdip_Startup()

@@ -1,0 +1,24 @@
+{
+    "Author": "Chandool Muhammad",
+    "Bypass": "GoodGuy",
+    "Currency": "TND",
+    "FirstUse": 1,
+    "LatestCurrencyCheck": "",
+    "Name": "Cash Helper",
+    "Rounder": 3,
+    "Version": "1.0.0",
+    "exAPI": "",
+    "Managers": {
+        "Sell Manager": true,
+        "Review Manager": true,
+        "Stock Manager": true,
+        "Statistics Manager": true,
+        "Discounts Manager": true,
+        "Currency Manager": true,
+        "Credit Manager": true,
+        "User Manager": true,
+        "Updates Check": true,
+        "Report Bug": true,
+        "About": true
+    }
+}

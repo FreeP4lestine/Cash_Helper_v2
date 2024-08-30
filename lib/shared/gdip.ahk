@@ -3113,3 +3113,42 @@ WinGetRect( hwnd, &x:="", &y:="", &w:="", &h:="" ) {
 	w := NumGet(winRect,  8, "UInt") - x
 	h := NumGet(winRect, 12, "UInt") - y
 }
+
+; Returns a HBITMAP from a Base64 image
+hBitmapFromB64(b64Image) {
+	If (B := Gdip_BitmapFromBase64(b64Image)) > -1 {
+		Return Gdip_CreateHBITMAPFromBitmap(B)
+	}
+}
+
+; Resize given image and returns it base64 encoding
+b64ResizeImage(Image, Width := 128, Height := 128) {
+	pBitmap1 := Gdip_CreateBitmapFromFile(Image)
+	ImageWidth := Gdip_GetImageWidth(pBitmap1)
+	ImageHeight := Gdip_GetImageHeight(pBitmap1)
+	If ImageWidth > ImageHeight {
+		ScaleFactor := ImageWidth / Width
+		If !ScaleFactor {
+			ScaleFactor := 1
+		}
+		ImageWidth /= ScaleFactor
+		ImageHeight /= ScaleFactor
+		YPastePos := (Height - ImageHeight) / 2
+	} Else {
+		ScaleFactor := ImageHeight / Height
+		If !ScaleFactor {
+			ScaleFactor := 1
+		}
+		ImageWidth /= ScaleFactor
+		ImageHeight /= ScaleFactor
+		XPastePos := (Width - ImageWidth) / 2
+	}
+	pBitmap2 := Gdip_CreateBitmap(Width, Height)
+	pGraphics := Gdip_GraphicsFromImage(pBitmap2)
+	Gdip_DrawImage(pGraphics, pBitmap1, IsSet(XPastePos) ? XPastePos : 0, 0, ImageWidth, ImageHeight)
+	b64Image := Gdip_EncodeBitmapTo64string(pBitmap2)
+	Gdip_DeleteGraphics(pGraphics)
+	Gdip_DisposeImage(pBitmap1)
+	Gdip_DisposeImage(pBitmap2)
+	Return b64Image
+}

@@ -141,7 +141,6 @@ Jxon_Load(&src, args*) {
 			next := obj == tree ? "" : is_array ? ",]" : ",}"
 		}
 	}
-	
 	return tree[1]
 }
 

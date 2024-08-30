@@ -62,6 +62,7 @@ class Currency {
 		O.Close()
 		This.SellCurrencyName[Symbol.Value] := {Name: Name.Value, ConvertFactor: ConvertF.Value}
 		This.readCurrencies()
+		MsgBox('Updated successfully!', 'Currency', 0x40)
 	}
 	showCurrentCurrency(Currency := '') {
 		If Currency = '' || !This.SellCurrencyName.Has(Currency) {
@@ -92,6 +93,7 @@ class Currency {
 		This.SellCurrencyName.Delete(deleteCurrency)
 		This.readCurrencies()
 		This.showCurrentCurrency()
+		MsgBox('Deleted successfully!', 'Currency', 0x40)
 	}
 	onlineUpdateCurrencies() {
 		If !ConnectedToInternet() {
@@ -166,6 +168,7 @@ class Currency {
 			Return
 		}
 		appSetting.writeSetting('exAPI', appSetting.exAPI := API.Value)
+		MsgBox(appSetting.exAPI '`nis now the your new api key!', 'API', 0x40)
 	}
 	updateRoundValue() {
 		appSetting.writeSetting('Rounder', Rounder.Value ? Rounder.Value : 0)
@@ -176,5 +179,6 @@ class Currency {
 			Return
 		}
 		appSetting.writeSetting('Currency', Symbol.Value)
+		MsgBox(This.SellCurrencyName[Symbol.Value].Name ' is now the default currecny', 'Default Currency', 0x40)
 	}
 }

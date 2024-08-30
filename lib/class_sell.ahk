@@ -1,13 +1,11 @@
 class Sell {
-    __New(DefaultLocation := 'setting\defs', ItemPropFile := 'setting\ItemProperties', SellMethodsFile := 'setting\SellMethods', SellCurrencyFile := 'setting\SellCurrency', SellPropertiesFile := 'setting\SellProperties') {
-        This.DefaultLocation := DefaultLocation
-        This.ItemPropFile := ItemPropFile
-        This.SellMethodsFile := SellMethodsFile
-        This.SellCurrencyFile := SellCurrencyFile
-        This.SellPropertiesFile := SellPropertiesFile
-        This.tempRow := 0
-		This.SellProperties := []
-		This.SellPropertiesMap := Map()
+    __New() {
+		This.defaultLocation 		:= 'setting\defs'
+		This.itemPropertiesDef 		:= 'setting\ItemProperties'
+		This.sellMethodsDef 		:= 'setting\SellMethods'
+		This.sellCurrencyDef 		:= 'setting\SellCurrency'
+        This.sellPropertiesDef 		:= 'setting\SellProperties'
+        This.tempRow 				:= 0
         This.PropertyName := Map()
         This.Property := []
         This.SellCurrencyName := Map()
@@ -20,6 +18,7 @@ class Sell {
 		This.SessionList := [This.Session]
 		This.sessionUpdate := True
 		This.switchSession := True
+		This.getSellProperties()
     }
     clearTempRow() {
         If This.tempRow {
@@ -33,44 +32,48 @@ class Sell {
 			Property.ViewValue := ''
 		}
 	}
-	getSellProperties() {
-		If FileExist(This.SellPropertiesFile) {
-			O := FileOpen(This.SellPropertiesFile, 'r')
+	getSellProperties(File := This.sellPropertiesDef) {
+		This.SellProperties := []
+		If FileExist(File) {
+			O := FileOpen(File, 'r')
 			While !O.AtEOF {
 				Definition := StrSplit(O.ReadLine(), ';')
 				This.SellProperties.Push({Name: Definition[1], Value: Definition[2], ViewValue: Definition[3]})
 			}
 		}
 	}
-	getSellMethods() {
-		If FileExist(This.SellMethodsFile) {
-			O := FileOpen(This.SellMethodsFile, 'r')
+	; Definitions load
+	readItemPropertiesDef(File := This.itemPropertiesDef) {
+		This.itemProperties := []
+		If FileExist(File) {
+			O := FileOpen(File, 'r')
 			While !O.AtEOF {
 				Definition := StrSplit(O.ReadLine(), ';')
-				This.SellMethods[Definition[1]] := {Value: Definition[2]}
-			}
-		}
-	}
-	getSellCurrency() {
-		If FileExist(This.SellCurrencyFile) {
-			O := FileOpen(This.SellCurrencyFile, 'r')
-			While !O.AtEOF {
-				Definition := StrSplit(O.ReadLine(), ';')
-				This.SellCurrency.Push({ Symbol: Definition[1], Name: Definition[2], ConvertFactor: Definition[3] })
-				This.SellCurrencyName[Definition[1]] := { Name: Definition[2], ConvertFactor: Definition[3] }
-			}
-			This.ViewCurrency := 'TND'
-		}
-	}
-    getPropertiesNames() {
-		If FileExist(This.ItemPropFile) {
-			O := FileOpen(This.ItemPropFile, 'r')
-			While !O.AtEOF {
-				Definition := StrSplit(O.ReadLine(), ';')
-				This.Property.Push({ Name: Definition[1], Value: Definition[2], ViewValue: Definition[3] })
-				This.PropertyName[This.Property[A_Index].Name] := This.Property[A_Index]
+				This.itemProperties.Push({Name: Definition[1], Value: '', ViewValue: ''})
 			}
             O.Close()
+		}
+	}
+	readsellMethodsDef(File := This.sellMethodsDef) {
+		This.itemSellMethod := Map()
+		If FileExist(File) {
+			O := FileOpen(File, 'r')
+			While !O.AtEOF {
+				Definition := StrSplit(O.ReadLine(), ';')
+				This.itemSellMethod[Definition[1]] := Definition[2]
+			}
+			O.Close()
+		}
+	}
+	readSellCurrencyDef(File := This.SellCurrencyDef) {
+		This.itemCurrency := Map()
+		If FileExist(File) {
+			O := FileOpen(File, 'r')
+			While !O.AtEOF {
+				Definition := StrSplit(O.ReadLine(), ';')
+				This.itemCurrency[Definition[1]] := {Name: Definition[2], ConvertFactor: Definition[3]}
+			}
+			O.Close()
 		}
 	}
     readProperties(Code) {

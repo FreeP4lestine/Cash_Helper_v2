@@ -1,27 +1,35 @@
 #Requires AutoHotkey v2
 #SingleInstance Force
 
-#Include <Gdip_All>
-#Include <CreateImageButton>
-#Include <Setting>
-#Include <Profile>
-#Include <Imaging>
+#Include <shared\gdip>
+#Include <shared\createimagebutton>
+#Include <setting>
+#Include <profile>
 
-appSetting := Setting()
-appImage := Imaging()
-appProfile := Profile()
-appProfile.checkBypass()
-mainWindow := Gui(, appSetting.Title)
+If !DirExist(A_AppData '\Cash Helper') {
+	DirCreate(A_AppData '\Cash Helper')
+}
+If !FileExist(A_AppData '\Cash Helper\setting.json') {
+	FileCopy('setting\setting.json', A_AppData '\Cash Helper\setting.json')
+}
+
+If !checkBypass() {
+	ExitApp
+}
+
+setting := readJson()
+
+mainWindow := Gui(, setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 20
 mainWindow.OnEvent('Close', (*) => ExitApp())
 mainWindow.SetFont('s10')
-loginThumbnail := mainWindow.AddPicture('xm+86 w128 h128', appImage.Picture['Default'])
+loginThumbnail := mainWindow.AddPicture('xm+86 w128 h128', 'images\Default.png')
 mainWindow.AddText('xm w300 Center', 'Username / ID:')
 mainWindow.MarginY := 5
 loginUsername := mainWindow.AddEdit('w300')
-loginUsername.OnEvent('Change', (*) => appProfile.updateThumbnail())
+loginUsername.OnEvent('Change', (*) => updateThumbnail())
 mainWindow.SetFont('s9')
 Keyboard := mainWindow.AddLink("w300 Center", '<a>Keyboard</a>')
 Keyboard.OnEvent('Click', (*) => Run('osk.exe'))
@@ -37,21 +45,36 @@ bypassKey := mainWindow.AddEdit('w300 cGreen Password')
 mainWindow.MarginY := 20
 loginRemember := mainWindow.AddCheckBox(, 'Remember')
 submitLogin := mainWindow.AddButton('w300', 'Login')
-submitLogin.OnEvent('Click', (*) => appProfile.checkBypass() && appProfile.submitAccount() ? (welcomeWindow.Show(), mainWindow.Hide(), appProfile.welcomeUpdateProfile()) : '')
+submitLogin.OnEvent('Click', Submit)
+Submit(Ctrl, Info) {
+	If !checkBypass() || !submitAccount() {
+		Return
+	}
+	welcomeWindow.Show()
+	mainWindow.Hide()
+	welcomeUpdateProfile()
+}
 mainWindow.SetFont('s9')
 createAccount := mainWindow.AddLink("w300 Center", 'No account? <a>Create!</a>')
-createAccount.OnEvent('Click', (*) => appProfile.checkBypass(1) ? createWindow.Show() : '')
-createWindow := Gui(, appSetting.createTitle)
+createAccount.OnEvent('Click', Create)
+Create(Ctrl, ID, HREF) {
+	If !checkBypass(True) {
+		Return
+	}
+	createWindow.Show()
+}
+createWindow := Gui(, setting['Name'])
 createWindow.BackColor := 'White'
 createWindow.MarginX := 20
 createWindow.MarginY := 20
 createWindow.SetFont('s10')
-createThumbnail := createWindow.AddPicture('xm+86 w128 h128', appImage.Picture['Default'])
-createThumbnail.OnEvent('Click', (*) => appProfile.pickThumbnail())
+b64createThumbnail := createWindow.AddEdit('x0 y0 w300 ReadOnly Hidden')
+createThumbnail := createWindow.AddPicture('xm+86 ym w128 h128', 'images\Default.png')
+createThumbnail.OnEvent('Click', (*) => pickThumbnail())
 createWindow.AddText('xm w300 Center', '* Username / ID:')
 createWindow.MarginY := 5
 createUsername := createWindow.AddEdit('w300')
-createUsername.OnEvent('Change', (*) => appProfile.createUpdateThumbnail())
+createUsername.OnEvent('Change', (*) => createUpdateThumbnail())
 createWindow.SetFont('s9')
 Keyboard := createWindow.AddLink("w300 Center", '<a>Keyboard</a>')
 Keyboard.OnEvent('Click', (*) => Run('osk.exe'))
@@ -61,17 +84,20 @@ createWindow.AddText('w300 Center', '* Password:')
 createWindow.MarginY := 5
 createPassword := createWindow.AddEdit('w300 cRed Password')
 createWindow.MarginY := 20
+createAutorisation := createWindow.AddListView('r10 w300 Checked', ['Autorisation'])
+ImageListID := IL_Create(setting['Managers'].Count)
+createAutorisation.SetImageList(ImageListID)
 flagDelete := createWindow.AddCheckBox(, 'Flag to delete')
 submitCreate := createWindow.AddButton('w300', 'Update')
-submitCreate.OnEvent('Click', (*) => appProfile.updateAccount())
+submitCreate.OnEvent('Click', (*) => updateAccount())
 
-welcomeWindow := Gui(, appSetting.Title)
+welcomeWindow := Gui(, setting['Name'])
 welcomeWindow.BackColor := 'White'
 welcomeWindow.MarginX := 20
 welcomeWindow.MarginY := 20
 welcomeWindow.OnEvent('Close', (*) => ExitApp())
 welcomeWindow.SetFont('s25')
-welcomeTitle := welcomeWindow.AddText(, appSetting.Title)
+welcomeTitle := welcomeWindow.AddText(, setting['Name'])
 welcomeTitle.Focus()
 welcomeWindow.SetFont('s15')
 welcomeMetaInfo := welcomeWindow.AddText('xp yp+35 wp cGray')
@@ -81,24 +107,29 @@ welcomeAccountInfo.SetFont('Bold')
 welcomeThumbnail := welcomeWindow.AddPicture('ym w128 h128')
 welcomeWindow.SetFont('s10 norm')
 FunctionPerRow := 5
-Applications := FileOpen('setting\Application', 'r')
+Managers := Map()
 pToken := Gdip_Startup()
-While !Applications.AtEOF {
-	Name := Applications.ReadLine()
+For Name in setting['Managers'] {
 	If !FileExist(Name '.ahk') {
 		FileAppend('', Name '.ahk')
 	}
 	_XY := Mod((Index := A_Index - 1), FunctionPerRow) = 0 ? 'xm' : 'xp+145 yp'
 	ButtonFunc := welcomeWindow.AddButton('w120 h143 ' _XY, '`n`n`n`n`n`n`n' Name)
 	ButtonFunc.OnEvent('Click', RunMe)
-	CreateImageButton(ButtonFunc, 0, [['images\' Name '_normal.png']
-									, ['images\' Name '_hover.png']
-									, ['images\' Name '_click.png']
-									, ['images\SubApp_disabled2.png',, 0x80000000]]*)
+	Try {
+		 CreateImageButton(ButtonFunc, 0, [['images\' Name '_normal.png']
+		 								 , ['images\' Name '_hover.png']
+		 								 , ['images\' Name '_click.png']
+		 								 , ['images\SubApp_disabled2.png',, 0x80000000]]*)
+	}
+	Managers[Name] := ButtonFunc
+	; Add manager option to the create window
+	IL_Add(ImageListID, 'images\' Name '.png')
+	createAutorisation.Add('Icon' A_Index, Name)
 }
 Gdip_Shutdown(pToken)
 RunMe(Ctrl, Info) {
 	Run(StrReplace(Ctrl.Text, '`n') '.ahk')
 }
 mainWindow.Show()
-appProfile.checkRememberProfile()
+checkRememberProfile()

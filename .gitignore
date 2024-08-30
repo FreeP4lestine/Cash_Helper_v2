@@ -1,5 +1,3 @@
-lib/v1/
-data/
 setting/defs/
 setting/sessions/
-.vscode/
+data/
