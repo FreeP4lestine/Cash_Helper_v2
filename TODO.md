@@ -8,8 +8,8 @@
 - [x] Bypass login
 - [x] Remember logins
 ### Dashboard Window
-- [ ] Load & Open managers
-    - [ ] Update autorisations
+- [x] Load & Open managers
+    - [x] Update autorisations
 ### Managers
 - [ ] Sell Manager
 - [ ] Review Manager
