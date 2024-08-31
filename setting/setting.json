@@ -1,24 +1,24 @@
 {
-    "Author": "Chandool Muhammad",
-    "Bypass": "GoodGuy",
-    "Currency": "TND",
-    "FirstUse": 1,
-    "LatestCurrencyCheck": "",
-    "Name": "Cash Helper",
-    "Rounder": 3,
-    "Version": "1.0.0",
-    "exAPI": "",
-    "Managers": {
-        "Sell Manager": true,
-        "Review Manager": true,
-        "Stock Manager": true,
-        "Statistics Manager": true,
-        "Discounts Manager": true,
-        "Currency Manager": true,
-        "Credit Manager": true,
-        "User Manager": true,
-        "Updates Check": true,
-        "Report Bug": true,
-        "About": true
-    }
+	"Author": "Chandool Muhammad",
+	"Bypass": "GoodGuy",
+	"DisplayCurrency": "TND",
+	"FirstUse": 1,
+	"LatestCurrencyCheck": "2024-08-31",
+	"Managers": {
+		"01": "Sell Manager",
+		"02": "Review Manager",
+		"03": "Stock Manager",
+		"04": "Statistics Manager",
+		"05": "Discounts Manager",
+		"06": "Currency Manager",
+		"07": "Credit Manager",
+		"09": "Updates Check",
+		"10": "Report Bug",
+		"11": "About"
+	},
+	"Name": "Cash Helper",
+	"Rounder": "3",
+	"Version": "1.0.0",
+	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
+	"latestCurrencyCheck": "2024-08-31"
 }

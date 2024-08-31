@@ -16,9 +16,8 @@
 - [ ] Stock Manager
 - [ ] Statistics Manager
 - [ ] Discounts Manager
-- [ ] Currency Manager
+- [x] Currency Manager
 - [ ] Credit Manager
-- [ ] User Manager
 - [ ] Updates Check
 - [ ] Report Bug
 - [ ] About

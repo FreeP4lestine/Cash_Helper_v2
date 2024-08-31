@@ -102,14 +102,14 @@ welcomeTitle.Focus()
 welcomeWindow.SetFont('s15')
 welcomeMetaInfo := welcomeWindow.AddText('xp yp+35 wp cGray')
 welcomeWindow.SetFont('s10')
-welcomeAccountInfo := welcomeWindow.AddEdit('ym h128 -VScroll Right ReadOnly BackgroundWhite -E0x200')
-welcomeAccountInfo.SetFont('Bold')
+welcomeAccountInfo := welcomeWindow.AddEdit('ym h128 Right -VScroll ReadOnly BackgroundWhite -E0x200')
+welcomeAccountInfo.SetFont('s8')
 welcomeThumbnail := welcomeWindow.AddPicture('ym w128 h128')
 welcomeWindow.SetFont('s10 norm')
 FunctionPerRow := 5
 Managers := Map()
 pToken := Gdip_Startup()
-For Name in setting['Managers'] {
+For Each, Name in setting['Managers'] {
 	If !FileExist(Name '.ahk') {
 		FileAppend('', Name '.ahk')
 	}

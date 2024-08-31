@@ -1,28 +1,21 @@
 ﻿#Requires AutoHotkey v2
 #SingleInstance Force
 
-#Include <Gdip_All>
-#Include <Imaging>
-#Include <Setting>
-#Include <LV_Colors>
-#Include <SetExplorerTheme>
-#Include <_JXON>
-#Include <ConnectedToInternet>
-#Include <Currency>
+#Include <shared\lv_colors>
+#Include <shared\explorertheme>
+#Include <shared\jxon>
+#Include <shared\connected>
+#Include <currency>
+#Include <setting>
 
-appSetting := Setting()
-appImage := Imaging()
-appCurrency := Currency()
+setting := readJson()
 
-appImage.loadAppImages()
-appCurrency.getSellCurrency()
-
-mainWindow := Gui('', appSetting.Title)
+mainWindow := Gui('', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 20
 mainWindow.OnEvent('Close', (*) => ExitApp())
-loginThumbnail := mainWindow.AddPicture(, appImage.Picture['Currency Manager'])
+loginThumbnail := mainWindow.AddPicture(, 'images\Currency Manager.png')
 mainWindow.SetFont('s25')
 mainWindow.AddText('ym+10', 'Currency Manager')
 mainWindow.MarginY := 10
@@ -32,7 +25,7 @@ mainWindow.MarginY := 2
 mainWindow.AddText(, '*Exp.: ')
 mainWindow.AddText('yp cRed', 'TND')
 mainWindow.AddText('yp', ' = ')
-FormulaResult := mainWindow.AddText('yp cBlue', '0.000')
+FormulaResult := mainWindow.AddText('yp cBlue', '1.000')
 FormulaResult.SetFont('Underline Italic')
 mainWindow.AddText('yp', '  x ')
 mainWindow.AddText('yp cRed', 'USD')
@@ -43,11 +36,7 @@ mainWindow.AddText('yp cRed', 'USD')
 mainWindow.MarginY := 20
 mainWindow.SetFont('Norm s12')
 mainList := mainWindow.AddListView('xm w500 h400 -ReadOnly NoSort', ['Symbol', 'Name', 'Factor'])
-mainList.OnEvent('Click', showCurrentCurrency)
-showCurrentCurrency(Ctrl, Row) {
-    Currency := Ctrl.GetText(Row)
-    appCurrency.showCurrentCurrency(Currency)
-}
+mainList.OnEvent('Click', (*) => showCurrentCurrency())
 mainList.ModifyCol(1, '100 Center')
 mainList.ModifyCol(2, '200 Center')
 mainList.ModifyCol(3, '195 Center')
@@ -55,8 +44,8 @@ SetExplorerTheme(mainList.Hwnd)
 mainListCLV := LV_Colors(mainList)
 mainWindow.SetFont('Norm s10')
 mainWindow.AddText(, 'Round Values By:')
-Rounder := mainWindow.AddEdit('xp+100 cBlue yp-3 w50 Number Center', appSetting.Rounder)
-Rounder.OnEvent('Change', (*) => appCurrency.updateRoundValue())
+Rounder := mainWindow.AddEdit('xp+100 cBlue yp-3 w50 Number Center', setting['Rounder'])
+Rounder.OnEvent('Change', (*) => updateRoundValue())
 mainWindow.AddLink('xp+260 yp', '<a href="https://apilayer.com/marketplace/exchangerates_data-api">Exchange Rates Data API</a>').SetFont('Bold')
 mainWindow.MarginY := 10
 mainList.GetPos(, &Y)
@@ -67,34 +56,24 @@ Name := mainWindow.AddEdit('w300')
 mainWindow.AddText(, 'Convert Factor:')
 ConvertF := mainWindow.AddEdit('w300 cBlue')
 mainWindow.SetFont('Bold s12')
-Default := mainWindow.AddButton('xp yp+60 w300', 'Set As Default')
-Default.OnEvent('Click', (*) => appCurrency.setDefaultCurrency())
+Default := mainWindow.AddButton('xp yp+30 w300', 'Set As Default')
+Default.OnEvent('Click', (*) => setDefaultCurrency())
 Update := mainWindow.AddButton('w300', 'Update')
-Update.OnEvent('Click', (*) => appCurrency.updateCurrencies())
+Update.OnEvent('Click', (*) => updateCurrencies())
 onlineUpdate := mainWindow.AddButton('w300', 'Auto Update')
-onlineUpdate.OnEvent('Click', onlineUpdateCurrencies)
-onlineUpdateCurrencies(Ctrl, Info) {
-    Ctrl.Enabled := False
-    appCurrency.onlineUpdateCurrencies()
-    Ctrl.Enabled := True
-}
-NewAPI := mainWindow.AddButton('wp hp-10', 'New API Key')
+onlineUpdate.OnEvent('Click', (*) => onlineUpdateCurrencies())
+Get := mainWindow.AddButton('wp hp-10', 'Get Currencies')
+Get.SetFont('Norm s10')
+Get.OnEvent('Click', (*) => readSymbols())
+NewAPI := mainWindow.AddButton('wp hp', 'New API Key')
 NewAPI.SetFont('Norm s10')
-NewAPI.OnEvent('Click', (*) => appCurrency.newAPIKey())
+NewAPI.OnEvent('Click', (*) => newAPIKey())
 Delete := mainWindow.AddButton('wp hp', 'Delete')
 Delete.SetFont('Norm s10')
-Delete.OnEvent('Click', (*) => appCurrency.deleteCurrencies())
+Delete.OnEvent('Click', (*) => deleteCurrency())
 LatestCheck := mainWindow.AddText('xp wp yp+50 cRed Right', '...')
 LatestCheck.SetFont('s10')
 mainWindow.MarginY := 20
 mainWindow.Show()
-
-appCurrency.List4 := mainList
-appCurrency.List4CLV := mainListCLV
-appCurrency.FormulaResult := FormulaResult
-appCurrency.Symbol := Symbol
-appCurrency.Name := Name
-appCurrency.ConvertF := ConvertF
-
-appCurrency.readCurrencies()
-appCurrency.latestCurrencyCheck()
+readCurrencies()
+latestCurrencyCheck()

@@ -203,9 +203,13 @@ welcomeUpdateProfile() {
 	If setting['Bypass'] = bypassKey.Value {
 		Return
 	}
-	For Name, Handle in Managers {
+	Autorizations := ''
+	For Each, Name in setting['Managers'] {
 		If !usersetting['Registered'][loginUsername.Value].Has('Autorization') || !usersetting['Registered'][loginUsername.Value]['Autorization'].Has(Name) {
-			Handle.Enabled := False
+			Managers[Name].Enabled := False
+			Continue
 		}
+		Autorizations .= (Autorizations = '' ? '' : '`n') Name
 	}
+	welcomeAccountInfo.Value .= '`n------`n' Autorizations
 }
