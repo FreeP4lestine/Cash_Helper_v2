@@ -1,2 +1,9 @@
-setting/
+setting/defs/
+setting/sessions/
+setting/sessions/ItemProperties
+setting/sessions/SellCurrency
+setting/sessions/SellMethods
+setting/sessions/SellProperties
+setting/currency.json
+setting/currencySymbol.json
 data/

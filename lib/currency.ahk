@@ -1,6 +1,7 @@
 readSymbols() {
 	setting := readJson()
-	If !setting['exAPI'] && !setting['exAPI'] := newAPIKey() {
+	If (!setting.Has('exAPI') || !setting['exAPI']) && !setting['exAPI'] := newAPIKey() {
+		MsgBox('The API key is required!', 'Currency', 0x30)
 		Return
 	}
 	url := "https://api.apilayer.com/exchangerates_data/symbols"
@@ -14,7 +15,12 @@ readSymbols() {
 		Response := '{"success":false}'
 	}
 	exRate := Jxon_Load(&Response)
+	If !exRate.Has('success') || !exRate['success'] {
+		MsgBox('Unable to return the exchange rate from server!`nThe following link copied to the clipboard`n`n' (A_Clipboard := url), 'Currency', 0x30)
+		Return
+	}
 	writeJson(exRate, 'setting\currencySymbol.json')
+	MsgBox(exRate['symbols'].Count ' Currencies were loaded!`nNow you may try to auto Update them!', 'Currency', 0x40)
 }
 readCurrencies() {
 	mainList.Delete()
@@ -44,6 +50,7 @@ updateCurrencies() {
 	currencySymbol := readJson('setting\currencySymbol.json')
 	currency := readJson('setting\currency.json')
 	If Symbol.Value = '' || currency['rates'].Has(Symbol.Value) && 'Yes' != MsgBox(Symbol.Value ' already exist!`nUpdate it now?', 'Currency', 0x40 + 0x4) {
+		MsgBox('Currency is not selected', 'Currency', 0x30)
 		Return
 	}
 	If Name.Value = '' {
@@ -63,6 +70,9 @@ updateCurrencies() {
 }
 showCurrentCurrency() {
 	If !Row := mainList.GetNext() {
+		Symbol.Value := ''
+		Name.Value := ''
+		ConvertF.Value := ''
 		Return
 	}
 	Sym := mainList.GetText(Row)
@@ -105,7 +115,8 @@ onlineUpdateCurrencies() {
 		MsgBox('Internet connection required!', 'Currency', 0x30)
 		Return
 	}
-	If setting['exAPI'] = '' && !newAPIKey() {
+	If (!setting.Has('exAPI') || setting['exAPI'] = '') && !newAPIKey() {
+		MsgBox('The API key is required!', 'Currency', 0x30)
 		Return
 	}
 	setting := readJson()

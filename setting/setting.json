@@ -1,0 +1,98 @@
+{
+	"Author": "Chandool Muhammad",
+	"Bypass": "GoodGuy",
+	"DisplayCurrency": "TND",
+	"FirstUse": 1,
+	"Item": [
+		[
+			"Code",
+			1,
+			""
+		],
+		[
+			"Name",
+			1,
+			""
+		],
+		[
+			"Thumbnail",
+			0,
+			""
+		],
+		[
+			"Currency",
+			0,
+			""
+		],
+		[
+			"Sell Method",
+			0,
+			""
+		],
+		[
+			"Sell Amount",
+			0,
+			""
+		],
+		[
+			"Buy Value",
+			1,
+			""
+		],
+		[
+			"Sell Value",
+			1,
+			""
+		],
+		[
+			"Profit Value",
+			0,
+			""
+		],
+		[
+			"Profit Percentage",
+			0,
+			""
+		],
+		[
+			"Stock Value",
+			0,
+			""
+		],
+		[
+			"Added Value",
+			0,
+			""
+		],
+		[
+			"Code128",
+			0,
+			""
+		],
+		[
+			"Latest Update",
+			0,
+			""
+		]
+	],
+	"ItemBakLoc": "setting\\defs\\backup",
+	"ItemDefLoc": "setting\\defs",
+	"LatestCurrencyCheck": "2024-08-31",
+	"Managers": {
+		"01": "Sell Manager",
+		"02": "Review Manager",
+		"03": "Stock Manager",
+		"04": "Statistics Manager",
+		"05": "Discounts Manager",
+		"06": "Currency Manager",
+		"07": "Credit Manager",
+		"09": "Updates Check",
+		"10": "Report Bug",
+		"11": "About"
+	},
+	"Name": "Cash Helper",
+	"Rounder": "3",
+	"Version": "1.0.0",
+	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
+	"latestCurrencyCheck": "2024-08-31"
+}

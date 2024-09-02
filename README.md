@@ -17,6 +17,12 @@
 - [ ] Statistics Manager
 - [ ] Discounts Manager
 - [x] Currency Manager
+    - [x] Set as default
+    - [x] Update
+    - [x] Auto update
+    - [x] Get available currencies
+    - [x] New API key
+    - [x] Delete
 - [ ] Credit Manager
 - [ ] Updates Check
 - [ ] Report Bug
