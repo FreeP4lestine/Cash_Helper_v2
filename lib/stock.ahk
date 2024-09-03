@@ -1,4 +1,4 @@
-; Look for an item in the main list
+;
 findItemInListView(Code, List := mainList, Vis := False) {
 	foundRow := 0
 	Loop List.GetCount() {
@@ -21,6 +21,8 @@ clearForms() {
 			Form['PForm'].Value := ''
 		}
 	}
+	ItemPropertiesForms['Thumbnail']['BForm'].Text := 'Select'
+	ItemPropertiesForms['Code128']['BForm'].Text := 'Generate'
 }
 writeItemProperties(backUp := False) {
 	setting := readJson()
@@ -29,11 +31,22 @@ writeItemProperties(backUp := False) {
 		MsgBox('The code is invalid', 'Create', 0x30)
 		Return False
 	}
+	LCode := ''
+	if mainList.Visible {
+		LCode := (R := mainList.GetNext()) ? mainList.GetText(R) : ''
+	}
+	if searchList.Visible {
+		LCode := (R := searchList.GetNext()) ? searchList.GetText(R) : ''
+	}
 	If FileExist(setting['ItemDefLoc'] '\' Code '.json') {
-		If 'Yes' != MsgBox(Code ' already exist you want to update it?', 'Confirm [1]', 0x30 + 0x4) {
+		If LCode != Code {
+			MsgBox(Code ' already exist', setting['Name'], 0x30)
+				Return
+		}
+		If 'Yes' != MsgBox(Code ' already exist you want to update it?', setting['Name'], 0x30 + 0x4) {
 			Return False
 		}
-		If 'Yes' != MsgBox(Code ' already exist you want to update it?', 'Confirm [2]', 0x30 + 0x4) {
+		If 'Yes' != MsgBox(Code ' already exist you want to update it?', setting['Name'], 0x30 + 0x4) {
 			Return False
 		}
 	}
@@ -207,7 +220,7 @@ loadItemsOldDefinitions() {
 			item['Buy Value'] := Round(Content[2] / 1000, 3)
 			item['Sell Value'] := Round(Content[3] / 1000, 3)
 			item['Profit Value'] := Round(item['Sell Value'] - item['Buy Value'], 3)
-			item['Profit Percentage'] := Round(item['Profit Value'] / item['Buy Value'] * 100, 2)
+			item['Profit Percent'] := Round(item['Profit Value'] / item['Buy Value'] * 100, 2)
 			item['Stock Value'] := Content[4]
 		} Catch {
 			Return False
@@ -360,85 +373,95 @@ percent_SellProfit(Sell, Profit) {
 	}
 	Return Profit / Buy * 100
 }
-;updateItemBuyValueRelatives() {
-;	Code := itemProperties[1]
-;	Buy := itemProperties[7]
-;	If !Code.ViewValue || !Buy.ViewValue {
-;		roundItemRelatives()
-;		Return
-;	}
-;	Sell := itemProperties[8]
-;	Profit := itemProperties[9]
-;	Percent := itemProperties[10]
-;	If Sell.ViewValue {
-;		Profit.ViewValue := profit_BuySell(Buy.ViewValue, Sell.ViewValue)
-;		Percent.ViewValue := percent_BuySell(Buy.ViewValue, Sell.ViewValue)
-;	}
-;	roundItemRelatives()
-;}
-;updateItemSellValueRelatives() {
-;	Code := itemProperties[1]
-;	Sell := itemProperties[8]
-;	If !Code.ViewValue || !Sell.ViewValue {
-;		roundItemRelatives()
-;		Return
-;	}
-;	Buy := itemProperties[7]
-;	Profit := itemProperties[9]
-;	Percent := itemProperties[10]
-;	If Buy.ViewValue {
-;		Profit.ViewValue := profit_BuySell(Buy.ViewValue, Sell.ViewValue)
-;		Percent.ViewValue := percent_BuySell(Buy.ViewValue, Sell.ViewValue)
-;	}
-;	roundItemRelatives()
-;}
+updateItemBuyValueRelatives() {
+	setting := readJson()
+	Code := itemPropertiesForms['Code']['Form']
+	Buy := itemPropertiesForms['Buy Value']['Form']
+	If !Code.Value || !Buy.Value {
+		Return
+	}
+	Sell := itemPropertiesForms['Sell Value']['Form']
+	Profit := itemPropertiesForms['Profit Value']['Form']
+	Percent := itemPropertiesForms['Profit Percent']['Form']
+	If Sell.Value {
+		Profit.Value := Round(profit_BuySell(Buy.Value, Sell.Value), setting['Rounder'])
+		Percent.Value := Round(percent_BuySell(Buy.Value, Sell.Value), 2)
+	} Else If Profit.Value {
+		Sell.Value := Round(sell_BuyProfit(Buy.Value, Profit.Value), setting['Rounder'])
+		Percent.Value := Round(percent_BuyProfit(Buy.Value, Profit.Value), 2)
+	} Else If Percent.Value {
+		Sell.Value := Round(sell_BuyPercent(Buy.Value, Percent.Value), setting['Rounder'])
+		Profit.Value := Round(profit_BuyPercent(Buy.Value, Percent.Value), setting['Rounder'])
+	}
+}
+updateItemSellValueRelatives() {
+	setting := readJson()
+	Code := itemPropertiesForms['Code']['Form']
+	Sell := itemPropertiesForms['Sell Value']['Form']
+	If !Code.Value || !Sell.Value {
+		Return
+	}
+	Buy := itemPropertiesForms['Buy Value']['Form']
+	Profit := itemPropertiesForms['Profit Value']['Form']
+	Percent := itemPropertiesForms['Profit Percent']['Form']
+	If Buy.Value {
+		Profit.Value := Round(profit_BuySell(Buy.Value, Sell.Value), setting['Rounder'])
+		Percent.Value := Round(percent_BuySell(Buy.Value, Sell.Value), 2)
+	} Else If Profit.Value {
+		Buy.Value := Round(buy_SellProfit(Sell.Value, Profit.Value), setting['Rounder'])
+		Percent.Value := Round(percent_SellProfit(Sell.Value, Profit.Value), 2)
+	} Else If Percent.Value {
+		Buy.Value := Round(buy_SellPercent(Sell.Value, Percent.Value), setting['Rounder'])
+		Profit.Value := Round(profit_SellPercent(Sell.Value, Percent.Value), setting['Rounder'])
+	}
+}
 ;updateItemProfitValueRelatives() {
 ;	Code := itemProperties[1]
 ;	Profit := itemProperties[9]
-;	If !Code.ViewValue || !Profit.ViewValue {
+;	If !Code.Value || !Profit.Value {
 ;		roundItemRelatives()
 ;		Return
 ;	}
 ;	Buy := itemProperties[7]
 ;	Sell := itemProperties[8]
 ;	Percent := itemProperties[10]
-;	If Buy.ViewValue {
-;		Sell.ViewValue := sell_BuyProfit(Buy.ViewValue, Profit.ViewValue)
-;		Percent.ViewValue := percent_BuyProfit(Buy.ViewValue, Profit.ViewValue)
-;	} Else If Percent.ViewValue {
-;		Sell.ViewValue := sell_ProfitPercent(Profit.ViewValue, Percent.ViewValue)
+;	If Buy.Value {
+;		Sell.Value := sell_BuyProfit(Buy.Value, Profit.Value)
+;		Percent.Value := percent_BuyProfit(Buy.Value, Profit.Value)
+;	} Else If Percent.Value {
+;		Sell.Value := sell_ProfitPercent(Profit.Value, Percent.Value)
 ;	}
 ;	roundItemRelatives()
 ;}
 ;updateItemProfitPercentageRelatives() {
 ;	Code := itemProperties[1]
 ;	Percent := itemProperties[10]
-;	If !Code.ViewValue || !Percent.ViewValue {
+;	If !Code.Value || !Percent.Value {
 ;		roundItemRelatives()
 ;		Return
 ;	}
 ;	Buy := itemProperties[7]
 ;	Sell := itemProperties[8]
 ;	Profit := itemProperties[9]
-;	If Buy.ViewValue {
-;		Sell.ViewValue := sell_BuyPercent(Buy.ViewValue, Percent.ViewValue)
-;		Profit.ViewValue := profit_BuyPercent(Buy.ViewValue, Percent.ViewValue)
-;	} Else If Profit.ViewValue {
-;		Sell.ViewValue := sell_ProfitPercent(Profit.ViewValue, Percent.ViewValue)
+;	If Buy.Value {
+;		Sell.Value := sell_BuyPercent(Buy.Value, Percent.Value)
+;		Profit.Value := profit_BuyPercent(Buy.Value, Percent.Value)
+;	} Else If Profit.Value {
+;		Sell.Value := sell_ProfitPercent(Profit.Value, Percent.Value)
 ;	}
 ;	roundItemRelatives()
 ;}
 ;updateItemAddedValue() {
 ;	Added := itemProperties[12]
-;	If IsNumber(Added.ViewValue) {
-;		Added.ViewValue := Round(Added.ViewValue, Rounder)
+;	If IsNumber(Added.Value) {
+;		Added.Value := Round(Added.Value, Rounder)
 ;	}
 ;	showItemViewProperties()
 ;}
 searchItemInMainList(andSearch := False) {
 	Counted := 0
 	currentTask.Value := 'Looking...'
-	searchIndexes := [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+	searchIndexes := [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 14]
 	searchList.Delete()
 	setting := readJson()
 	Loop mainList.GetCount() {
@@ -449,7 +472,7 @@ searchItemInMainList(andSearch := False) {
 		hit2 := False
 		For Index in searchIndexes {
 			Col := Index
-			Needle := itemPropertiesForms.GetText(A_Index, 2)
+			Needle := itemPropertiesForms[setting['Item'][Col][1]]['Form'].Value
 			If !Needle {
 				Continue
 			}
@@ -469,9 +492,6 @@ searchItemInMainList(andSearch := False) {
 			++Counted
 		}
 		currentTask.Value := '[ ' Counted ' ] Items are found!'
-	}
-	Loop searchList.GetCount('Col') {
-		searchList.ModifyCol(A_Index, 'AutoHdr Center')
 	}
 	mainList.Visible := False
 	searchList.Visible := True
