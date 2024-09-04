@@ -94,5 +94,24 @@
 	"Rounder": "3",
 	"Version": "1.0.0",
 	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
-	"latestCurrencyCheck": "2024-08-31"
+	"latestCurrencyCheck": "2024-08-31",
+	"Sell": {
+		"General": [
+			"SellID",
+			"OpenTime",
+			"CommitTime"
+		],
+		"Details": [
+			"Code",
+			"Name",
+			"Buy Value",
+			"Sell Value",
+			"Sell Amount",
+			"Sell Quantity",
+			"Unit",
+			"Added Value",
+			"Price",
+			"Currency"
+		]
+	}
 }

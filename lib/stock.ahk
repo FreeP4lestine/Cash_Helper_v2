@@ -289,88 +289,110 @@ loadItemsDefinitions() {
 	currentTask.Value := Counted ' Item(s) loaded in ' Round((A_TickCount - StartTime) / 1000, 2) ' second(s)'
 	mainList.Redraw()
 }
-; Buy value auto update
+
+updateRelativesCheck(Ctrl, Info) {
+	If Ctrl.Value {
+		updateRelatives()
+	}
+}
+
+updateRelatives() {
+	setting := readJson()
+	Buy := itemPropertiesForms['Buy Value']['Form']
+	Sell := itemPropertiesForms['Sell Value']['Form']
+	Profit := itemPropertiesForms['Profit Value']['Form']
+	Percent := itemPropertiesForms['Profit Percent']['Form']
+	If itemPropertiesForms['Buy Value']['CForm'].Value
+		Buy.Value := ''
+	If itemPropertiesForms['Sell Value']['CForm'].Value
+		Sell.Value := ''
+	If itemPropertiesForms['Profit Value']['CForm'].Value
+		Profit.Value := ''
+	If itemPropertiesForms['Profit Percent']['CForm'].Value
+		Percent.Value := ''
+	If itemPropertiesForms['Buy Value']['CForm'].Value {
+		Try Buy.Value := buy_SellProfit(Sell.Value, Profit.Value)
+		Catch 
+			Try Buy.Value := buy_SellPercent(Sell.Value, Percent.Value)
+			Catch 
+				Try Buy.Value := buy_ProfitPercent(Profit.Value, Percent.Value)
+		Try Buy.Value := Round(Buy.Value, setting['Rounder'])
+	}
+	;---
+	If itemPropertiesForms['Sell Value']['CForm'].Value {
+		Try Sell.Value := sell_BuyProfit(Buy.Value, Profit.Value)
+		Catch 
+			Try Sell.Value := sell_BuyPercent(Buy.Value, Percent.Value)
+			Catch 
+				Try Sell.Value := sell_ProfitPercent(Profit.Value, Percent.Value)
+		Try Sell.Value := Round(Sell.Value, setting['Rounder'])
+	}
+	;---
+	If itemPropertiesForms['Profit Value']['CForm'].Value {
+		Profit.Value := ''
+		Try Profit.Value := profit_BuySell(Buy.Value, Sell.Value)
+		Catch
+			Try Profit.Value := profit_BuyPercent(Buy.Value, Percent.Value)
+			Catch
+				Try Profit.Value := profit_SellPercent(Sell.Value, Percent.Value)
+		Try Profit.Value := Round(Profit.Value, setting['Rounder'])
+	}
+	;---
+	If itemPropertiesForms['Profit Percent']['CForm'].Value {
+		Percent.Value := ''
+		Try Percent.Value := percent_BuySell(Buy.Value, Sell.Value)
+		Catch
+			Try Percent.Value := percent_BuyProfit(Buy.Value, Profit.Value)
+			Catch
+				Try Percent.Value := percent_SellProfit(Sell.Value, Profit.Value)
+		Try Percent.Value := Round(Percent.Value, 2)
+	}
+	;---
+}
+
+; Buy value formulas
 buy_SellProfit(Sell, Profit) {
-	Sell := !IsNumber(Sell) ? 0 : Sell
-	Profit := !IsNumber(Profit) ? 0 : Profit
 	Return Sell - Profit
 }
 buy_SellPercent(Sell, Percent) {
-	Sell := !IsNumber(Sell) ? 0 : Sell
-	Percent := !IsNumber(Percent) ? 0 : Percent
-	If Percent = -100 {
-		Return 0
-	}
 	Return Sell / (1 + (Percent / 100))
 }
 buy_ProfitPercent(Profit, Percent) {
-	Profit := !IsNumber(Profit) ? 0 : Profit
-	Percent := !IsNumber(Percent) ? 0 : Percent
-	If !Percent || !Profit {
-		Return 0
-	}
 	Return 1 / ((Percent / 100) * Profit)
 }
-; Sell value auto update
+; Sell value formulas
 sell_BuyProfit(Buy, Profit) {
-	Buy := !IsNumber(Buy) ? 0 : Buy
-	Profit := !IsNumber(Profit) ? 0 : Profit
 	Return Buy + Profit
 }
 sell_BuyPercent(Buy, Percent) {
-	Buy := !IsNumber(Buy) ? 0 : Buy
-	Percent := !IsNumber(Percent) ? 0 : Percent
 	Return Buy + Buy * (Percent / 100)
 }
 sell_ProfitPercent(Profit, Percent) {
-	Profit := !IsNumber(Profit) ? 0 : Profit
-	Percent := !IsNumber(Percent) ? 0 : Percent
 	Buy := buy_ProfitPercent(Profit, Percent)
 	Return Buy + Profit
 }
-; Profit value auto update
+; Profit value formulas
 profit_BuySell(Buy, Sell) {
-	Buy := !IsNumber(Buy) ? 0 : Buy
-	Sell := !IsNumber(Sell) ? 0 : Sell
 	Return Sell - Buy
 }
 profit_BuyPercent(Buy, Percent) {
-	Buy := !IsNumber(Buy) ? 0 : Buy
-	Percent := !IsNumber(Percent) ? 0 : Percent
 	Sell := sell_BuyPercent(Buy, Percent)
 	Return Sell - Buy
 }
 profit_SellPercent(Sell, Percent) {
-	Sell := !IsNumber(Sell) ? 0 : Sell
-	Percent := !IsNumber(Percent) ? 0 : Percent
 	Buy := buy_SellPercent(Sell, Percent)
 	Return Sell - Buy 
 }
-; Percetage value auto update
+; Percentage value formulas
 percent_BuySell(Buy, Sell) {
-	Buy := !IsNumber(Buy) ? 0 : Buy
-	If !Buy {
-		Return 0
-	}
-	Sell := !IsNumber(Sell) ? 0 : Sell
 	Profit := profit_BuySell(Buy, Sell)
 	Return Profit / Buy * 100
 }
 percent_BuyProfit(Buy, Profit) {
-	Buy := !IsNumber(Buy) ? 0 : Buy
-	If !Buy {
-		Return 0
-	}
-	Profit := !IsNumber(Profit) ? 0 : Profit
 	Return Profit / Buy * 100
 }
 percent_SellProfit(Sell, Profit) {
-	Sell := !IsNumber(Sell) ? 1 : Sell
-	Profit := !IsNumber(Profit) ? 0 : Profit
 	Buy := sell_BuyProfit(Sell, Profit)
-	If !Buy {
-		Return 0
-	}
 	Return Profit / Buy * 100
 }
 updateItemBuyValueRelatives() {
@@ -415,49 +437,6 @@ updateItemSellValueRelatives() {
 		Profit.Value := Round(profit_SellPercent(Sell.Value, Percent.Value), setting['Rounder'])
 	}
 }
-;updateItemProfitValueRelatives() {
-;	Code := itemProperties[1]
-;	Profit := itemProperties[9]
-;	If !Code.Value || !Profit.Value {
-;		roundItemRelatives()
-;		Return
-;	}
-;	Buy := itemProperties[7]
-;	Sell := itemProperties[8]
-;	Percent := itemProperties[10]
-;	If Buy.Value {
-;		Sell.Value := sell_BuyProfit(Buy.Value, Profit.Value)
-;		Percent.Value := percent_BuyProfit(Buy.Value, Profit.Value)
-;	} Else If Percent.Value {
-;		Sell.Value := sell_ProfitPercent(Profit.Value, Percent.Value)
-;	}
-;	roundItemRelatives()
-;}
-;updateItemProfitPercentageRelatives() {
-;	Code := itemProperties[1]
-;	Percent := itemProperties[10]
-;	If !Code.Value || !Percent.Value {
-;		roundItemRelatives()
-;		Return
-;	}
-;	Buy := itemProperties[7]
-;	Sell := itemProperties[8]
-;	Profit := itemProperties[9]
-;	If Buy.Value {
-;		Sell.Value := sell_BuyPercent(Buy.Value, Percent.Value)
-;		Profit.Value := profit_BuyPercent(Buy.Value, Percent.Value)
-;	} Else If Profit.Value {
-;		Sell.Value := sell_ProfitPercent(Profit.Value, Percent.Value)
-;	}
-;	roundItemRelatives()
-;}
-;updateItemAddedValue() {
-;	Added := itemProperties[12]
-;	If IsNumber(Added.Value) {
-;		Added.Value := Round(Added.Value, Rounder)
-;	}
-;	showItemViewProperties()
-;}
 searchItemInMainList(andSearch := False) {
 	Counted := 0
 	currentTask.Value := 'Looking...'
@@ -599,4 +578,19 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 	barcoderPicture.GetPos(,, &bW)
 	barcoderWindow.GetPos(,, &wW)
 	barcoderPicture.Move((wW - bW) / 2 - 5)
+}
+resizeControls(GuiObj, MinMax, Width, Height) {
+	; button re-pos
+	updateItem.GetPos(&uX, &uY, &uWidth, &uHeight)
+	updateItem.Move(, uY := Height - uHeight - 5)
+	; Properties forms re-pos
+	propertiesWindow.GetPos(&X, &Y, &WWidth, &WHeight)
+	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 10))))
+	; Properties list re-pos
+	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
+	mainList.Move(,, Width - X - 10, Height - Y - 5)
+	searchList.Move(,, Width - X - 10, Height - Y - 5)
+	; Log re-pos
+	currentTask.GetPos(&X, &Y, &CWidth, &CHeight)
+	currentTask.Move(,, Width - X - 10)
 }
