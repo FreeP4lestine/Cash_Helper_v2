@@ -10,11 +10,10 @@
 #Include <shared\scrollbars>
 #Include <stock>
 #Include <setting>
-CoordMode('ToolTip')
 
 setting := readJson()
+currency := readJson('setting\currency.json')
 pToken := Gdip_Startup()
-
 mainWindow := Gui('Resize MinSize400x200', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
@@ -78,7 +77,7 @@ For Property in setting['Item'] {
 			CForm := propertiesWindow.AddCheckbox('xp+145 yp+4 Checked', 'Auto')
 			CForm.OnEvent('Click', updateRelativesCheck)
 			itemPropertiesForms[Property[1]]['CForm'] := CForm
-		Case 'Thumbnail' :
+		Case 'Thumbnail':
 			Form.Opt('ReadOnly')
 			Form.Visible := False
 			propertiesWindow.SetFont('s8')
@@ -87,7 +86,7 @@ For Property in setting['Item'] {
 			itemPropertiesForms[Property[1]]['BForm'] := BForm
 			PForm := propertiesWindow.AddPicture('xp+36 yp+25 w64 h64 BackgroundFFFFFF')
 			itemPropertiesForms[Property[1]]['PForm'] := PForm
-		Case 'Code128' :
+		Case 'Code128':
 			Form.Opt('ReadOnly')
 			Form.Visible := False
 			propertiesWindow.SetFont('s8')
@@ -98,9 +97,7 @@ For Property in setting['Item'] {
 			itemPropertiesForms[Property[1]]['PForm'] := PForm
 	}
 }
-formulas := Map()
-formulas['Buy Value'] := []
-mainList := mainWindow.AddListView('xm+290 ym+80 w980 h540 -Multi BackgroundE6E6E6')
+mainList := mainWindow.AddListView('xm+290 ym+80 w980 h540 -Multi')
 searchList := mainWindow.AddListView('xp yp wp hp Hidden -Multi')
 SetExplorerTheme(mainList.Hwnd)
 SetExplorerTheme(searchList.Hwnd)

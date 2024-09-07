@@ -96,22 +96,23 @@
 	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
 	"latestCurrencyCheck": "2024-08-31",
 	"Sell": {
-		"General": [
-			"SellID",
-			"OpenTime",
-			"CommitTime"
-		],
-		"Details": [
-			"Code",
-			"Name",
-			"Buy Value",
-			"Sell Value",
-			"Sell Amount",
-			"Sell Quantity",
-			"Unit",
-			"Added Value",
-			"Price",
-			"Currency"
-		]
-	}
+		"Session": {
+			"01": "OpenTime",
+			"02": "CommitTime",
+			"03": {
+				"01": "Flag",
+				"02": "Code",
+				"03": "Name",
+				"04": "Buy Value",
+				"05": "Sell Value",
+				"06": "Sell Amount",
+				"07": "Quantity",
+				"08": "Unit",
+				"09": "Added Value",
+				"10": "Price",
+				"11": "CUR"
+			}
+		}
+	},
+	"SessAutoSave": 0
 }

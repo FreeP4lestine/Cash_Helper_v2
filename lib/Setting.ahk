@@ -1,17 +1,18 @@
-#Include shared\jxon.ahk
+;#Include shared\jxon.ahk
+#Include shared\json.ahk
 readJson(File := 'setting\setting.json') {
 	Try {
-		Json := FileRead(File)
-		Data := Jxon_Load(&Json)
+		Data := FileRead(File)
+		Data := JSON.Load(Data)
 	} Catch {
-		Json := '{}'
-		Data := Jxon_Load(&Json)
+		Data := '{}'
+		Data := JSON.Load(Data)
 	}
 	Return Data
 }
-writeJson(Json, File := 'setting\setting.json') {
-	Json := Jxon_Dump(Json, '`t')
+writeJson(Data, File := 'setting\setting.json', Indent := '`t') {
+	Data := JSON.Dump(Data, 1)
 	JS := FileOpen(File, 'w')
-	JS.Write(Json)
+	JS.Write(Data)
 	JS.Close()
 }

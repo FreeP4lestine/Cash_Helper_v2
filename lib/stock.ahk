@@ -1,4 +1,3 @@
-;
 findItemInListView(Code, List := mainList, Vis := False) {
 	foundRow := 0
 	Loop List.GetCount() {
@@ -25,7 +24,6 @@ clearForms() {
 	ItemPropertiesForms['Code128']['BForm'].Text := 'Generate'
 }
 writeItemProperties(backUp := False) {
-	setting := readJson()
 	Code := ItemPropertiesForms['Code']['Form'].Value
 	If Code = '' || Code ~= '[^A-Za-z0-9_]' {
 		MsgBox('The code is invalid', 'Create', 0x30)
@@ -57,7 +55,6 @@ writeItemProperties(backUp := False) {
 		FileCopy(setting['ItemDefLoc'] '\' Code, setting['ItemBakLoc'] '\' Code '\' A_Now)
 	}
 	item := Map()
-	currency := readJson('setting\currency.json')
 	Loop itemPropertiesForms.Count {
 		Property := setting['Item'][A_Index][1]
 		Value := ItemPropertiesForms[Property]['Form'].Value
@@ -87,8 +84,6 @@ writeItemProperties(backUp := False) {
 	MsgBox(item['Code'] (item['Name'] ? ' (' item['Name'] ') ' : '') ' is updated!', setting['Name'], 0x40)
 }
 showItemProperties(Code) {
-	setting := readJson()
-	currency := readJson('setting\currency.json')
 	item := readJson(setting['ItemDefLoc'] '\' Code '.json')
 	For Property in setting['Item'] {
 		If Property[1] = 'Currency' {
@@ -100,10 +95,13 @@ showItemProperties(Code) {
 		}
 		Switch Property[1] {
 			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
-				Try
-					itemPropertiesForms[Property[1]]['Form'].Value := Round(currency['rates'][setting['DisplayCurrency']] * item[Property[1]], setting['Rounder'])
-				Catch
-					itemPropertiesForms[Property[1]]['Form'].Value := 0
+				If item[Property[1]] {
+					Try
+						itemPropertiesForms[Property[1]]['Form'].Value := Round(currency['rates'][setting['DisplayCurrency']] * item[Property[1]], setting['Rounder'])
+					Catch
+						itemPropertiesForms[Property[1]]['Form'].Value := 0
+				}
+				Else itemPropertiesForms[Property[1]]['Form'].Value := 0
 				Case 'Thumbnail':
 					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 				If item[Property[1]] {
@@ -147,7 +145,7 @@ deleteItemProperties() {
 	If 'Yes' != MsgBox('Are you sure to remove ' Name ' ?', 'Delete', 0x30 + 0x4) {
 		Return
 	}
-	setting := readJson()
+	
 	FileDelete(setting['ItemDefLoc'] '\' Code '.json')
 	If Row := findItemInListView(Code, mainList) {
 		mainList.Delete(Row)
@@ -173,7 +171,7 @@ pickItemThumbnail() {
 	itemPropertiesForms['Thumbnail']['BForm'].Text := 'Remove'
 }
 colorizeItemsList(List, ListCLV) {
-	setting := readJson()
+	
 	Loop List.GetCount() {
 		Row := A_Index
 		backColor := !Mod(Row, 2) ? 0xFFFFFFFF : 0xFFE6E6E6
@@ -194,7 +192,6 @@ fitItemsListContent(List) {
 }
 loadItemsOldDefinitions() {
 	Default := FileSelect('D')
-	setting := readJson()
 	BackupTo := (Default = setting['ItemDefLoc']) ? Default '\olddefs' : Default
 	If !Default || !BackupTo {
 		Return
@@ -258,10 +255,12 @@ populateRow(item, currency, rounder) {
 			Case 'Thumbnail', 'Code128':
 				Value := Value != '' ? 'Yes' : ''
 			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
-				Try
-					Value := Round(Value * currency, rounder)
-				Catch
-					Value := 0
+				If Value {
+					Try
+						Value := Round(Value * currency, rounder)
+					Catch
+						Value := 0
+				} Else Value := 0
 		}
 		rowInfo.Push(Value)
 	}
@@ -271,8 +270,6 @@ loadItemsDefinitions() {
 	Counted := 0
 	StartTime := A_TickCount
 	mainList.Delete()
-	setting := readJson()
-	currency := readJson('setting\currency.json')
 	Loop Files, setting['ItemDefLoc'] '\*' {
 		If A_LoopFileExt != 'JSON' {
 			Continue
@@ -297,7 +294,6 @@ updateRelativesCheck(Ctrl, Info) {
 }
 
 updateRelatives() {
-	setting := readJson()
 	Buy := itemPropertiesForms['Buy Value']['Form']
 	Sell := itemPropertiesForms['Sell Value']['Form']
 	Profit := itemPropertiesForms['Profit Value']['Form']
@@ -396,7 +392,6 @@ percent_SellProfit(Sell, Profit) {
 	Return Profit / Buy * 100
 }
 updateItemBuyValueRelatives() {
-	setting := readJson()
 	Code := itemPropertiesForms['Code']['Form']
 	Buy := itemPropertiesForms['Buy Value']['Form']
 	If !Code.Value || !Buy.Value {
@@ -417,7 +412,6 @@ updateItemBuyValueRelatives() {
 	}
 }
 updateItemSellValueRelatives() {
-	setting := readJson()
 	Code := itemPropertiesForms['Code']['Form']
 	Sell := itemPropertiesForms['Sell Value']['Form']
 	If !Code.Value || !Sell.Value {
@@ -442,7 +436,6 @@ searchItemInMainList(andSearch := False) {
 	currentTask.Value := 'Looking...'
 	searchIndexes := [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 14]
 	searchList.Delete()
-	setting := readJson()
 	Loop mainList.GetCount() {
 		Row := A_Index
 		ok1 := True
@@ -495,7 +488,6 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 		Return
 	}
 	Overwrite := True
-	setting := readJson()
 	item := readJson(setting['ItemDefLoc'] '\' Code '.json')
 	if itemPropertiesForms['Code128']['Form'].Value != '' {
 		itemPropertiesForms['Code128']['Form'].Value := ''
@@ -511,7 +503,6 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 		}
 		MATRIX_TO_PRINT := BARCODER_GENERATE_CODE_128B(Code)
 		WIDTH_OF_IMAGE := (MATRIX_TO_PRINT.Length * Thickness) + 8
-		
 		pBitmap := Gdip_CreateBitmap(WIDTH_OF_IMAGE, HEIGHT_OF_IMAGE)
 		Gdip_SetSmoothingMode(pBitmap, 3)
 		G := Gdip_GraphicsFromImage(pBitmap)
@@ -572,7 +563,6 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 		pBitmap := Gdip_BitmapFromBase64(base64Picture)
 		Gdip_SaveBitmapToFile(pBitmap, saveLocation)
 		Gdip_DisposeImage(pBitmap)
-		
 	}
 	barcoderWindow.Show()
 	barcoderPicture.GetPos(,, &bW)
