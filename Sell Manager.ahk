@@ -26,17 +26,23 @@ mainWindow.SetFont('s25')
 mainWindow.AddText('ym+10', 'Sell Manager')
 mainWindow.MarginY := 10
 
+quickWindow := Gui('-MinimizeBox', setting['Name'])
+quickWindow.BackColor := 'White'
+quickWindow.MarginX := 5
+quickWindow.MarginY := 5
+quickWindow.SetFont('s10')
+quickText := quickWindow.AddText('w200')
+quickWindow.SetFont('s18')
+quickEdit := quickWindow.AddEdit('wp Center')
+quickRow := quickWindow.AddEdit('xp yp wp hp Hidden')
+quickCol := quickWindow.AddEdit('xp yp wp hp Hidden')
+quickCode := quickWindow.AddEdit('xp yp wp hp Hidden')
+quickOK := quickWindow.AddButton('hp yp', '✓')
+quickOK.OnEvent('Click', (*) => quickListSubmit())
 mainWindow.SetFont('s8 norm')
 ;mainWindow.MarginY := 16
-mainWindow.AddText('xm ym+100', 'Custom Quantity:')
-mainWindow.SetFont('s14')
-CQuantity := mainWindow.AddEdit('w192 Center')
 mainWindow.SetFont('s8 norm')
-mainWindow.AddText(, 'Custom Price:')
-mainWindow.SetFont('s14')
-CPrice := mainWindow.AddEdit('w192 cRed Center')
-mainWindow.SetFont('s8 norm')
-mainWindow.AddText(, 'Custom Item Price:')
+mainWindow.AddText('xm ym+100', 'Custom Item Price:')
 mainWindow.SetFont('s14')
 CItemPrice := mainWindow.AddEdit('w192 cRed Center')
 mainWindow.SetFont('s8 norm')
@@ -49,7 +55,7 @@ latestSells.ModifyCol(2, 188)
 mainWindow.SetFont('s14 norm')
 mainWindow.MarginY := 10
 mainList := mainWindow.AddListView('xm+200 ym+100 w980 h540 NoSortHdr')
-mainList.OnEvent('Click', (*) => showCustoms())
+mainList.OnNotify(-2, quickListEdit)
 SetExplorerTheme(mainList.Hwnd)
 mainListCLV := LV_Colors(mainList)
 For Each, Col in setting['Sell']['Session']['03'] {
@@ -137,12 +143,8 @@ Up::IncreaseQ()
 Down::DecreaseQ()
 #HotIf
 
-#HotIf CQuantity.Focused
-Enter::submitCustomQuantity()
-#HotIf
-
-#HotIf CPrice.Focused
-Enter::submitCustomPrice()
+#HotIf WinActive(quickWindow)
+Enter::quickListSubmit()
 #HotIf
 
 #HotIf WinActive(payCheckWindow)

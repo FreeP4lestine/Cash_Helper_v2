@@ -146,7 +146,7 @@ saveSessions() {
 		writeJson(Sells, 'setting\sessions\sessions.json', '')
 		Return
 	}
-	SellsJson := Jxon_Dump(Sells)
+	SellsJson := JSON.Dump(Sells)
 	If SellsJson != FileRead('setting\sessions\sessions.json') {
 		writeJson(Sells, 'setting\sessions\sessions.json', '')
 	}
@@ -208,42 +208,43 @@ DecreaseQ() {
 	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
 	updatePriceSum()
 }
-showCustoms() {
-	If !Row := mainList.GetNext() {
-		CQuantity.Value := ''
-		CPrice.Value := ''
-		Return
+quickListEdit(LV, L) {
+	Row := NumGet(L + (A_PtrSize * 3), 0, "Int") + 1
+	Col := NumGet(L + (A_PtrSize * 3), 4, "Int") + 1
+	Switch Col {
+		Case 7, 10:
+			quickText.Value := mainList.GetText(0, Col) ":"
+			quickEdit.Value := mainList.GetText(Row, Col)
+			quickRow.Value := Row
+			quickCol.Value := Col
+			quickCode.Value := Sells[currentSession.Value]['Items'][Row][2]
+			quickEdit.Focus()
+			quickWindow.Show()
 	}
-	CQuantity.Value := Sells[currentSession.Value]['Items'][Row][7]
-	CPrice.Value := Sells[currentSession.Value]['Items'][Row][10]
 }
-submitCustomQuantity() {
-	If !Row := mainList.GetNext() {
+quickListSubmit() {
+	If !IsNumber(quickEdit.Value) {
+		MsgBox(setting['Name'], 'Invalid', 0x30)
 		Return
 	}
-	If !IsNumber(CQuantity.Value) || CQuantity.Value <= 0 {
+	If quickRow.Value > Sells[currentSession.Value]['Items'].Length
+	|| Sells[currentSession.Value]['Items'][quickRow.Value][2] != quickCode.Value {
+		MsgBox('Target row is not found!', setting['Name'], '0x30')
 		Return
 	}
-	Sells[currentSession.Value]['Items'][Row][7] := CQuantity.Value
-	Sells[currentSession.Value]['Items'][Row] := updateQuantity(Sells[currentSession.Value]['Items'][Row])
-	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
-	updatePriceSum()
-	CQuantity.Value := ''
-}
-submitCustomPrice() {
-	If !Row := mainList.GetNext() {
-		Return
+	Switch quickCol.Value {
+		Case 7:
+			Sells[currentSession.Value]['Items'][quickRow.Value][7] := quickEdit.Value
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updateQuantity(Sells[currentSession.Value]['Items'][quickRow.Value])
+			mainList.Modify(quickRow.Value,, updateRounding(Sells[currentSession.Value]['Items'][quickRow.Value])*)
+			updatePriceSum()
+		Case 10:
+			Sells[currentSession.Value]['Items'][quickRow.Value][10] := quickEdit.Value
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updatePrice(Sells[currentSession.Value]['Items'][quickRow.Value])
+			mainList.Modify(quickRow.Value,, updateRounding(Sells[currentSession.Value]['Items'][quickRow.Value])*)
+			updatePriceSum()
 	}
-	If !IsNumber(CPrice.Value) || CPrice.Value <= 0 {
-		MsgBox('Invalid input!', 'Invalid', 0x30)
-		Return
-	}
-	Sells[currentSession.Value]['Items'][Row][10] := CPrice.Value
-	Sells[currentSession.Value]['Items'][Row] := updatePrice(Sells[currentSession.Value]['Items'][Row])
-	Sells[currentSession.Value]['Items'][Row] := updateRounding(Sells[currentSession.Value]['Items'][Row])
-	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
-	updatePriceSum()
-	CPrice.Value := ''
+	quickWindow.Hide()
 }
 commitSell() {
 	;If priceSum.Value = 'CLEAR' {
