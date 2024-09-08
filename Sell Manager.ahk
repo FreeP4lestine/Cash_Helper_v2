@@ -39,19 +39,17 @@ quickCol := quickWindow.AddEdit('xp yp wp hp Hidden')
 quickCode := quickWindow.AddEdit('xp yp wp hp Hidden')
 quickOK := quickWindow.AddButton('hp yp', '✓')
 quickOK.OnEvent('Click', (*) => quickListSubmit())
+
 mainWindow.SetFont('s8 norm')
-;mainWindow.MarginY := 16
-mainWindow.SetFont('s8 norm')
-mainWindow.AddText('xm ym+100', 'Custom Item Price:')
-mainWindow.SetFont('s14')
-CItemPrice := mainWindow.AddEdit('w192 cRed Center')
-mainWindow.SetFont('s8 norm')
-mainWindow.AddText(, 'Latest sells:')
-mainWindow.SetFont('s14')
-latestSells := mainWindow.AddListView('-E0x200 w192 h320 Center Border -Hdr', ['Code', 'Name'])
+latestSellsCount := mainWindow.AddText('cBlue xm ym+100 w192 Center', 'Latest sells:')
+mainWindow.SetFont('s10')
+latestSells := mainWindow.AddListView('-E0x200 w192 h520 -Hdr', ['Code', 'Name'])
+latestSells.OnEvent('Click', displayItemCode)
 SetExplorerTheme(latestSells.Hwnd)
-latestSells.ModifyCol(1, 0)
-latestSells.ModifyCol(2, 188)
+latestSellsCLV := LV_Colors(latestSells)
+latestSellsCLV.AlternateRows(0xFFE6E6E6)
+latestSells.ModifyCol(1, 'Center ' 0)
+latestSells.ModifyCol(2, 'Center ' 175)
 mainWindow.SetFont('s14 norm')
 mainWindow.MarginY := 10
 mainList := mainWindow.AddListView('xm+200 ym+100 w980 h540 NoSortHdr')
@@ -74,10 +72,13 @@ mainList.ModifyCol(10, 'Center ' 200)
 mainList.ModifyCol(11, 'Center ' 60)
 
 mainList.GetPos(, &Y, &W)
-mainWindow.SetFont('s18')
-enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' yp-45 w500 Center c0000ff')
-EM_SETCUEBANNER(enteredCode.Hwnd, 'Code')
+mainWindow.SetFont('s25')
+enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' yp-85 w500 Right c0000ff')
+EM_SETCUEBANNER(enteredCode.Hwnd, '#Code ')
 enteredCode.OnEvent('Change', (*) => analyzeCode())
+mainWindow.SetFont('s14')
+CItemPrice := mainWindow.AddEdit('xp+250 yp+50 w250 cRed Right')
+EM_SETCUEBANNER(CItemPrice.Hwnd, '#Price  ')
 mainWindow.SetFont('s40')
 priceSum := mainWindow.AddEdit('xm+400 w780 -E0x200 Right cRed ReadOnly BackgroundWhite')
 priceSum.SetFont('', 'Calibri')
@@ -95,10 +96,12 @@ mainWindow.MarginY := 20
 
 payCheckWindow := Gui('', setting['Name'])
 payCheckWindow.BackColor := 'White'
+payCheckWindow.OnEvent('Close', (*) => mainWindow.Opt('-Disabled'))
 payCheckWindow.MarginX := 20
 payCheckWindow.MarginY := 20
-payCheckWindow.SetFont('s30 Bold')
-commitMsg := payCheckWindow.AddText('cGray w500 Center', 'Commit the sell?')
+payCheckWindow.SetFont('s30')
+commitImg := payCheckWindow.AddPicture('xm+186', 'images\commit.png')
+commitMsg := payCheckWindow.AddText('xm cGray w500 Center', 'Commit the sell?')
 commitAmount := payCheckWindow.AddEdit('w500 Center cGreen ReadOnly BackgroundE6E6E6 -E0x200')
 commitAmountPay := payCheckWindow.AddEdit('w500 Center BackgroundWhite -E0x200 Border')
 commitAmountPay.OnEvent('Change', (*) => updateAmountPayBack())
@@ -130,6 +133,7 @@ Menus.Add('Options', OptionMenu)
 mainWindow.MenuBar := Menus
 mainWindow.Show()
 readSessionList()
+latestSellsLoad() 
 SetTimer(saveSessions, setting['SessAutoSave'])
 enteredCode.Focus()
 mainList.Redraw()
@@ -145,6 +149,10 @@ Down::DecreaseQ()
 
 #HotIf WinActive(quickWindow)
 Enter::quickListSubmit()
+#HotIf
+
+#HotIf CItemPrice.Focused
+Enter::addCustomPrice()
 #HotIf
 
 #HotIf WinActive(payCheckWindow)

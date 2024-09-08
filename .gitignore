@@ -1,9 +1,8 @@
 setting/defs/
+setting/commit/
 setting/sessions/
-setting/sessions/ItemProperties
-setting/sessions/SellCurrency
-setting/sessions/SellMethods
-setting/sessions/SellProperties
+setting/sessions/defs
+setting/sessions/sessions
 setting/currency.json
 setting/currencySymbol.json
 data/

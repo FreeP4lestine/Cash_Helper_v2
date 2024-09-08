@@ -14,12 +14,17 @@ analyzeCode() {
 			Case 'Flag':
 				tmpData.Push('')
 			Case 'Buy Value', 'Sell Value', 'Added Value':
-				If Item[Detail] = ''
-					Item[Detail] := 0
-				Try tmpData.Push(Round(Item[Detail] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']))
-				Catch
-					tmpData.Push(0)
+				If item[Detail] {
+					Try
+						Value := Round(currency['rates'][setting['DisplayCurrency']] * item[Detail], setting['Rounder'])
+					Catch
+						Value := 0
+				} Else Value := 0
+				tmpData.Push(Value)
 			Case 'Quantity':
+				If !IsNumber(Item['Sell Amount']) {
+					Item['Sell Amount'] := 1
+				}
 				tmpData.Push(Item['Sell Amount'])
 			Case 'Unit':
 				Try {
@@ -29,10 +34,7 @@ analyzeCode() {
 				} Catch
 					tmpData.Push('P')
 			Case 'Price':
-				Price := Item['Sell Value']
-				Try tmpData.Push(Round(Price + Item['Added Value'], setting['Rounder']))
-				Catch 
-					tmpData.Push(Round(Price, setting['Rounder']))
+				tmpData.Push(Round(tmpData[5] + tmpData[9], setting['Rounder']))
 			case 'CUR':
 				Try tmpData.Push(setting['DisplayCurrency'])
 				Catch 
@@ -84,6 +86,7 @@ initiateSession() {
 updateRounding(Data) {
 	Data[7] := Round(Data[7], 2)
 	Data[10] := Round(Data[10], setting['Rounder'])
+	Data[5] := Round(Data[5], setting['Rounder'])
 	Return Data
 }
 addItemToList() {
@@ -114,12 +117,9 @@ addItemToList() {
 		enteredCode.Focus()
 		Return
 	}
-	Sells[currentSession.Value]['Items'].Push([])
-	Row := Sells[currentSession.Value]['Items'].Length
-	For Each, Data in Sells[currentSession.Value]['tmp']['Data'] {
-		Sells[currentSession.Value]['Items'][Row].Push(Data)
-	}
-	addedRowColorize(Row)
+	Sells[currentSession.Value]['Items'].Push(Sells[currentSession.Value]['tmp']['Data'])
+	R := Sells[currentSession.Value]['Items'].Length
+	addedRowColorize(R)
 	Sells[currentSession.Value].Delete('tmp')
 	enteredCode.Value := ''
 	mainList.Redraw()
@@ -135,7 +135,9 @@ updatePriceSum() {
 }
 removeItemFromList() {
 	If !Row := mainList.GetNext() {
-		Return
+		If mainList.GetCount() 
+			Row := 1
+		Else Return
 	}
 	Sells[currentSession.Value]['Items'].RemoveAt(Row)
 	mainList.Delete(Row)
@@ -246,68 +248,116 @@ quickListSubmit() {
 	}
 	quickWindow.Hide()
 }
+addCustomPrice() {
+	If !IsNumber(CItemPrice.Value) || CItemPrice.Value < 0 {
+		Msgbox('Invalid custom price!', setting['Name'], 0x30)
+		Return
+	}
+	tmpData := []
+	For Each, Detail in setting['Sell']['Session']['03'] {
+		Switch Detail {
+			Case 'Code': tmpData.Push('--')
+			Case 'Name': tmpData.Push('--')
+			Case 'Sell Value': tmpData.Push(CItemPrice.Value)
+			Case 'Sell Amount': tmpData.Push(1)
+			Case 'Quantity': tmpData.Push(1)
+			Case 'Unit': tmpData.Push('P')
+			Case 'Added Value': tmpData.Push(0)
+			Case 'Price': tmpData.Push(CItemPrice.Value)
+			Case 'CUR': 
+				Try tmpData.Push(setting['DisplayCurrency'])
+				Catch 
+					tmpData.Push('TND')
+			Default: tmpData.Push('')
+		}
+	}
+	Sells[currentSession.Value]['Items'].Push(tmpData)
+	R := mainList.Add(, updateRounding(tmpData)*)
+	addedRowColorize(R)
+	updatePriceSum()
+	CItemPrice.Value := ''
+}
 commitSell() {
-	;If priceSum.Value = 'CLEAR' {
-	;	MsgBox('Nothing to sell!', 'Sell', 0x30 ' T3')
-	;	Return
-	;}
-	;payCheckWindow.Show()
-	;commitMsg.Opt('BackgroundWhite cGray')
-	;commitMsg.Value := 'Commit the sell?'
-	;commitAmount.Opt('cGreen')
-	;commitAmountPay.Opt('-ReadOnly BackgroundWhite cBlack')
-	;commitAmountPayBack.Opt('cRed')
-	;commitOK.Enabled := true
-	;commitCancel.Enabled := true
-	;commitLater.Enabled := true
-	;commitAmount.Value := priceSum.Value
-	;AC := StrSplit(priceSum.Value, ' ')
-	;commitAmountPay.Value := AC[1]
-	;commitAmountPayBack.Value := ''
-	;commitAmountPay.Focus()
-	;updateAmountPayBack()
+	If priceSum.Value = 'CLEAR' {
+		MsgBox('Nothing to sell!', 'Sell', 0x30 ' T3')
+		Return
+	}
+	mainWindow.Opt('Disabled')
+	payCheckWindow.Show()
+	commitImg.Value := 'images\commitoff.png'
+	commitMsg.Opt('BackgroundWhite cGray')
+	commitMsg.Value := 'Commit the sell?'
+	commitAmount.Opt('cGreen')
+	commitAmountPay.Opt('-ReadOnly BackgroundWhite cBlack')
+	commitAmountPayBack.Opt('cRed')
+	commitOK.Enabled := true
+	commitCancel.Enabled := true
+	commitLater.Enabled := true
+	commitAmount.Value := priceSum.Value
+	AC := StrSplit(priceSum.Value, ' ')
+	commitAmountPay.Value := AC[1]
+	commitAmountPayBack.Value := ''
+	commitAmountPay.Focus()
+	updateAmountPayBack()
 }
 updateAmountPayBack() {
-	;AC := StrSplit(priceSum.Value, ' ')
-	;If !IsNumber(commitAmountPay.Value) {
-	;	commitAmountPayBack.Value := ''
-	;	Return
-	;}
-	;commitAmountPayBack.Value := Round(commitAmountPay.Value - AC[1], Rounder) ' ' AC[2]
+	AC := StrSplit(priceSum.Value, ' ')
+	If !IsNumber(commitAmountPay.Value) {
+		commitAmountPayBack.Value := ''
+		Return
+	}
+	commitAmountPayBack.Value := Round(commitAmountPay.Value - AC[1], setting['Rounder']) ' ' AC[2]
 }
 commitSellSubmit() {
-	;writeSellProperties()
-	;commitMsg.Opt('BackgroundGreen cWhite')
-	;commitMsg.Value := '✓ Commited!'
-	;commitAmount.Opt('ReadOnly BackgroundE6E6E6 cGray')
-	;commitAmountPay.Opt('ReadOnly BackgroundE6E6E6 cGray')
-	;commitAmountPayBack.Opt('ReadOnly BackgroundE6E6E6 cGray')
-	;commitOK.Enabled := False
-	;commitCancel.Enabled := False
-	;commitLater.Enabled := False
-	;commitMsg.Focus()
-	;mainList.Delete()
-	;SellList := Map()
-	;updatePriceSum()
-	;saveSessionList()
+	If Sells[currentSession.Value].Has('tmp') {
+		Sells[currentSession.Value].Delete('tmp')
+	}
+	Sells[currentSession.Value]['CommitTime'] := A_Now
+	writeJson(Sells[currentSession.Value], 'commit\pending\' A_Now '.json')
+	commitImg.Value := 'images\commit.png'
+	commitMsg.Opt('BackgroundGreen cWhite')
+	commitMsg.Value := 'Commited!'
+	commitAmount.Opt('ReadOnly BackgroundE6E6E6 cGray')
+	commitAmountPay.Opt('ReadOnly BackgroundE6E6E6 cGray')
+	commitAmountPayBack.Opt('ReadOnly BackgroundE6E6E6 cGray')
+	commitOK.Enabled := False
+	commitCancel.Enabled := False
+	commitLater.Enabled := False
+	commitMsg.Focus()
+	mainList.Delete()
+	latestSellsSave()
+	Sells[currentSession.Value]['Items'] := []
+	updatePriceSum()
+	mainWindow.Opt('-Disabled')
+	SetTimer(commitClose, -5000)
+	commitClose() {
+		payCheckWindow.Hide()
+	}
 }
-writeSellProperties() {
-	;Time := A_Now
-	;O := FileOpen('data\pending\' Time, 'w')
-	;For Item, Sell in SellList {
-	;	O.WriteLine('[Item' A_Index ']')
-	;	For Property in SellProperties {
-	;		Switch Property.Name {
-	;			Case 'Price', 'Cost', 'Profit':
-	;				If !IsNumber(Sell[Property.Name]) {
-	;					Sell[Property.Name] := 0
-	;				}
-	;				Currency := ViewCurrency
-	;				SellCurrencyName[Currency].ConvertFactor
-	;				convertedValue := Sell[Property.Name] / SellCurrencyName[Currency].ConvertFactor, Rounder
-	;				O.WriteLine(convertedValue)
-	;			Default : O.WriteLine(Sell[Property.Name])
-	;		}
-	;	}
-	;}
+latestSellsSave() {
+	latest := readJson('commit\latestSells.json')
+	If Type(latest) = 'Map' {
+		latest := []
+	}
+	For Each, Item in Sells[currentSession.Value]['Items'] {
+		latest.InsertAt(1, [Item[2], Item[3]])
+		latestSells.Insert(1,, latest[1]*)
+	}
+	writeJson(latest, 'commit\latestSells.json')
+}
+latestSellsLoad() {
+	Count := 0
+	latest := readJson('commit\latestSells.json')
+	If Type(latest) = 'Map' {
+		latest := []
+	}
+	For Each, Item in latest {
+		latestSells.Add(, Item*)
+		Count += 1
+	}
+	latestSellsCount.Value := 'Latest sells: ( ' Count ' )'
+}
+displayItemCode(Ctrl, Item) {
+	enteredCode.Value := Ctrl.GetText(Item)
+	analyzeCode()
 }
