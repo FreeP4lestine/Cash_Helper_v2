@@ -1,8 +1,6 @@
 setting/defs/
-setting/commit/
+commit/
 setting/sessions/
-setting/sessions/defs
-setting/sessions/sessions
 setting/currency.json
 setting/currencySymbol.json
 data/
