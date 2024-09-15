@@ -77,7 +77,7 @@
 	],
 	"ItemBakLoc": "setting\\defs\\backup",
 	"ItemDefLoc": "setting\\defs",
-	"LatestCurrencyCheck": "2024-08-31",
+	"LatestCurrencyCheck": "2024-09-10",
 	"Managers": {
 		"01": "Sell Manager",
 		"02": "Review Manager",
@@ -92,9 +92,6 @@
 	},
 	"Name": "Cash Helper",
 	"Rounder": "3",
-	"Version": "1.0.0",
-	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
-	"latestCurrencyCheck": "2024-08-31",
 	"Sell": {
 		"Session": {
 			"01": "OpenTime",
@@ -111,8 +108,12 @@
 				"09": "Added Value",
 				"10": "Price",
 				"11": "CUR"
-			}
+			},
+			"04": "Username"
 		}
 	},
-	"SessAutoSave": 0
+	"SessAutoSave": 0,
+	"Version": "1.0.0",
+	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
+	"latestCurrencyCheck": "2024-08-31"
 }

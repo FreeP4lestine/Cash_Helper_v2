@@ -572,15 +572,28 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 resizeControls(GuiObj, MinMax, Width, Height) {
 	; button re-pos
 	updateItem.GetPos(&uX, &uY, &uWidth, &uHeight)
-	updateItem.Move(, uY := Height - uHeight - 5)
+	updateItem.Move(, uY := Height - uHeight - 35)
 	; Properties forms re-pos
 	propertiesWindow.GetPos(&X, &Y, &WWidth, &WHeight)
-	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 10))))
+	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 40))))
 	; Properties list re-pos
 	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
-	mainList.Move(,, Width - X - 10, Height - Y - 5)
-	searchList.Move(,, Width - X - 10, Height - Y - 5)
+	mainList.Move(,, Width - X - 40, Height - Y - 35)
+	searchList.Move(,, Width - X - 40, Height - Y - 35)
 	; Log re-pos
 	currentTask.GetPos(&X, &Y, &CWidth, &CHeight)
-	currentTask.Move(,, Width - X - 10)
+	currentTask.Move(,, Width - X - 40)
+	SetTimer(boxRedraw, 0)
+	SetTimer(boxRedraw, -500)
+	Box1.ResizeShadow()
+	Box2.ResizeShadow()
+	Box3.ResizeShadow()
+	Box4.ResizeShadow()
+}
+
+boxRedraw() {
+	Box1.RedrawShadow()
+	Box2.RedrawShadow()
+	Box3.RedrawShadow()
+	Box4.RedrawShadow()
 }

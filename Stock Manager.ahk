@@ -10,11 +10,12 @@
 #Include <shared\scrollbars>
 #Include <stock>
 #Include <setting>
+#Include <shadow>
 
 setting := readJson()
 currency := readJson('setting\currency.json')
 pToken := Gdip_Startup()
-mainWindow := Gui('Resize MinSize400x200', setting['Name'])
+mainWindow := Gui('Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 5
@@ -24,11 +25,11 @@ Quit(HGui) {
 	ExitApp()
 }
 mainWindow.OnEvent('Size', resizeControls)
-mainWindow.AddPicture(, 'images\Stock Manager.png')
+C1 := mainWindow.AddPicture('xm+20 ym+20', 'images\Stock Manager.png')
 mainWindow.SetFont('s25')
-mainWindow.AddText('ym+10', 'Stock Manager')
+C2 := mainWindow.AddText('ym+20', 'Stock Manager')
 mainWindow.SetFont('s10')
-propertiesWindow := Gui('Parent' mainWindow.Hwnd ' -Caption')
+propertiesWindow := Gui('Parent' mainWindow.Hwnd ' Border -Caption')
 propertiesWindow.BackColor := '0xFFFFFFFF'
 propertiesWindow.MarginY := 10
 SB := ScrollBar(propertiesWindow, 270, 500)
@@ -36,7 +37,9 @@ itemPropertiesForms := Map()
 For Property in setting['Item'] {
 	itemPropertiesForms[Property[1]] := Map()
 	propertiesWindow.SetFont('s8')
-	Text := propertiesWindow.AddText('x0 w70 Right', Property[1] (Property[2] ? '*' : '') ': ')
+	Text := propertiesWindow.AddText('xm+20 w70 Right', Property[1] (Property[2] ? '*' : '') ': ')
+	If A_Index = 1
+		C3 := Text
 	propertiesWindow.SetFont('s10')
 	Form := propertiesWindow.AddEdit('xp+75 yp w140 -E0X200 Border Center')
 	Form.SetFont('s12 Bold', 'Calibri')
@@ -97,8 +100,10 @@ For Property in setting['Item'] {
 			itemPropertiesForms[Property[1]]['PForm'] := PForm
 	}
 }
-mainList := mainWindow.AddListView('xm+290 ym+80 w980 h540 -Multi')
-searchList := mainWindow.AddListView('xp yp wp hp Hidden -Multi')
+Box1 := Shadow(propertiesWindow, [C3, itemPropertiesForms['Latest Update']['Form'], itemPropertiesForms['Buy Value']['CForm']])
+mainList := mainWindow.AddListView('xm+360 ym+120 w980 h540 -E0x200')
+searchList := mainWindow.AddListView('xp yp wp hp Hidden -E0x200')
+Box3 := Shadow(mainWindow, [mainList, searchList])
 SetExplorerTheme(mainList.Hwnd)
 SetExplorerTheme(searchList.Hwnd)
 mainList.OnEvent('ItemSelect', ItemSelect)
@@ -121,10 +126,12 @@ For Property in setting['Item'] {
 	searchList.InsertCol(A_Index, '100', Property[1])
 }
 mainList.GetPos(&X, &Y, &W, &H)
-currentTask := mainWindow.AddEdit('x' X + 500 ' y' Y - 25 ' w' W - 500 ' ReadOnly BackgroundWhite -E0x200 Right cGray')
-updateItem := mainWindow.AddButton('x5 y' (Y + H - 27) ' w300', 'Update')
+currentTask := mainWindow.AddEdit('x' X ' ym+20 w' W ' ReadOnly BackgroundWhite -E0x200 Right cGray')
+Box2 := Shadow(mainWindow, [C1, C2, currentTask])
+updateItem := mainWindow.AddButton('xm+10 y' (Y + H - 27) ' w300', 'Update')
+Box4 := Shadow(mainWindow, [updateItem])
 updateItem.SetFont('Bold')
-CreateImageButton(updateItem, 0, [[0xFFFFFFFF,, 0xFF008000, 3, 0xFF008000], [0xFF009F00,, 0xFFFFFFFF], [0xFF00BB00,, 0xFFFFFF00]]*)
+CreateImageButton(updateItem, 0, [[0xFFFFFFFF,, 0xFF008000, 5, 0xFF008000], [0xFF009F00,, 0xFFFFFFFF], [0xFF00BB00,, 0xFFFFFF00]]*)
 
 updateItem.OnEvent('Click', (*) => writeItemProperties(1))
 mainWindow.SetFont('s8')
@@ -138,14 +145,13 @@ HelpMenu.Add("&Find an item (And)", (*) => searchItemInMainList(1))
 HelpMenu.Add("&Find an item (Or)", (*) => searchItemInMainList())
 ViewMenu := Menu()
 ViewMenu.Add('Currency', (*) => Run('Currency Manager.ahk'))
-
 Menus := MenuBar()
 Menus.Add("File", FileMenu)
 Menus.Add("Edit", HelpMenu)
 Menus.Add("View", ViewMenu)
 mainWindow.MenuBar := Menus
 mainWindow.Show()
-propertiesWindow.Show('x5 y85 h484 w300')
+propertiesWindow.Show('x10 y120 h454 w330')
 SB.ScrollMsg(1, 0, 0x115, propertiesWindow.Hwnd)
 SB.ScrollMsg(0, 0, 0x115, propertiesWindow.Hwnd)
 loadItemsDefinitions()

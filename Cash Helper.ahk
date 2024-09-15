@@ -14,7 +14,7 @@ If !FileExist(A_AppData '\Cash Helper\setting.json') {
 }
 
 If !checkBypass() {
-	ExitApp
+	ExitApp()
 }
 
 setting := readJson()
@@ -129,7 +129,7 @@ For Each, Name in setting['Managers'] {
 }
 Gdip_Shutdown(pToken)
 RunMe(Ctrl, Info) {
-	Run(StrReplace(Ctrl.Text, '`n') '.ahk')
+	Run(StrReplace(Ctrl.Text, '`n') '.ahk ' loginUsername.Value)
 }
 mainWindow.Show()
 checkRememberProfile()

@@ -11,19 +11,28 @@ A_MaxHotkeysPerInterval := 200
 
 #Include <setting>
 #Include <sell>
+#Include <shadow>
 
 setting := readJson()
 currency := readJson('setting\currency.json')
 Sells := readJson('setting\sessions\sessions.json')
+pToken := Gdip_Startup()
+username := A_Args[1]
 
-mainWindow := Gui('', setting['Name'])
+mainWindow := Gui('Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
-mainWindow.MarginX := 20
-mainWindow.MarginY := 20
-mainWindow.OnEvent('Close', (*) => ExitApp())
-mainWindow.AddPicture(, 'images\Sell Manager.png')
-mainWindow.SetFont('s25')
-mainWindow.AddText('ym+10', 'Sell Manager')
+mainWindow.MarginX := 30
+mainWindow.MarginY := 30
+mainWindow.OnEvent('Close', Quit)
+Quit(HGui) {
+	Gdip_Shutdown(pToken)
+	ExitApp()
+}
+mainWindow.OnEvent('Size', resizeControls)
+
+C1 := mainWindow.AddPicture(, 'images\Sell Manager.png')
+mainWindow.SetFont('s25', 'Segoe UI')
+C2 := mainWindow.AddText('ym+10', 'Sell Manager')
 mainWindow.MarginY := 10
 
 quickWindow := Gui('-MinimizeBox', setting['Name'])
@@ -40,20 +49,39 @@ quickCode := quickWindow.AddEdit('xp yp wp hp Hidden')
 quickOK := quickWindow.AddButton('hp yp', '✓')
 quickOK.OnEvent('Click', (*) => quickListSubmit())
 
+C3 := mainWindow.AddText('xm ym+140 w192 h100 Hidden')
+Thumb := mainWindow.AddPicture('xp+64 yp w64 h64', 'images\Default.png')
+Code128 := mainWindow.AddPicture('xm+28 yp+70 w140 h32')
+Shadow(mainWindow, [C3, Thumb, Code128])
 mainWindow.SetFont('s8 norm')
-latestSellsCount := mainWindow.AddText('cBlue xm ym+100 w192 Center', 'Latest sells:')
+latestSellsCount := mainWindow.AddText('cBlue xm ym+285 w192 Center', 'Latest sells:')
 mainWindow.SetFont('s10')
-latestSells := mainWindow.AddListView('-E0x200 w192 h520 -Hdr', ['Code', 'Name'])
+latestSells := mainWindow.AddListView('-E0x200 w192 h326 -Hdr', ['Code', 'Name'])
 latestSells.OnEvent('Click', displayItemCode)
 SetExplorerTheme(latestSells.Hwnd)
 latestSellsCLV := LV_Colors(latestSells)
 latestSellsCLV.AlternateRows(0xFFE6E6E6)
 latestSells.ModifyCol(1, 'Center ' 0)
-latestSells.ModifyCol(2, 'Center ' 175)
+latestSells.ModifyCol(2, 'Center ' 192)
+mainWindow.SetFont('s8 norm')
+quickResume := mainWindow.AddText('Hidden cBlue w192 Center', 'Quick resume:')
+mainWindow.SetFont('s12 Bold')
+pendingBought := mainWindow.AddEdit('Hidden w192 Center ReadOnly cRed -E0x200')
+pendingSold := mainWindow.AddEdit('Hidden wp Center ReadOnly cGreen -E0x200')
+pendingProfit := mainWindow.AddEdit('Hidden wp Center ReadOnly cGreen -E0x200')
+Box2 := Shadow(mainWindow, [latestSellsCount, latestSells, quickResume, pendingBought, pendingSold, pendingProfit])
 mainWindow.SetFont('s14 norm')
 mainWindow.MarginY := 10
-mainList := mainWindow.AddListView('xm+200 ym+100 w980 h540 NoSortHdr')
-mainList.OnNotify(-2, quickListEdit)
+mainList := mainWindow.AddListView('xm+240 ym+140 w980 h422 NoSortHdr -E0x200')
+mainList.OnNotify(-3, quickListEdit)
+mainList.OnEvent('ItemSelect', thumbCheckFunc)
+thumbCheckFunc(Ctrl, Item, Selected) {
+	If !Item || !Selected {
+		Return
+	}
+	Code := Ctrl.GetText(Item, 2)
+	thumbCheck(Code)
+}
 SetExplorerTheme(mainList.Hwnd)
 mainListCLV := LV_Colors(mainList)
 For Each, Col in setting['Sell']['Session']['03'] {
@@ -73,17 +101,18 @@ mainList.ModifyCol(11, 'Center ' 60)
 
 mainList.GetPos(, &Y, &W)
 mainWindow.SetFont('s25')
-enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' yp-85 w500 Right c0000ff')
+enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' ym+10 w450 Right c0000ff BackgroundE6E6E6 -E0x200')
 EM_SETCUEBANNER(enteredCode.Hwnd, '#Code ')
 enteredCode.OnEvent('Change', (*) => analyzeCode())
 mainWindow.SetFont('s14')
-CItemPrice := mainWindow.AddEdit('xp+250 yp+50 w250 cRed Right')
+CItemPrice := mainWindow.AddEdit('xp+250 yp+55 w250 cRed Right -E0x200 BackgroundF0F0F0')
 EM_SETCUEBANNER(CItemPrice.Hwnd, '#Price  ')
+Box := Shadow(mainWindow, [C1, C2, enteredCode, CItemPrice])
 mainWindow.SetFont('s40')
-priceSum := mainWindow.AddEdit('xm+400 w780 -E0x200 Right cRed ReadOnly BackgroundWhite')
+priceSum := mainWindow.AddEdit('xm+400 ym+600 w280 -E0x200 Right cRed ReadOnly BackgroundWhite')
 priceSum.SetFont('', 'Calibri')
 mainWindow.SetFont('s10')
-prevSess := mainWindow.AddButton('xp-200 yp-10 w50 h25 Center', 'Prev')
+prevSess := mainWindow.AddButton('xm+240 yp+50 w50 h25 Center', 'Prev')
 prevSess.OnEvent('Click', (*) => prevSession())
 mainWindow.SetFont('s14')
 Session := 1
@@ -92,8 +121,10 @@ currentSession.OnEvent('Change', (*) => readSessionList())
 mainWindow.SetFont('s10')
 nextSess := mainWindow.AddButton('xp+50 yp w50 h25 Center', 'Next')
 nextSess.OnEvent('Click', (*) => nextSession())
-mainWindow.MarginY := 20
-
+mainWindow.MarginY := 30
+mainWindow.MarginX := 30
+Box3 := Shadow(mainWindow, [mainList])
+Box4 := Shadow(mainWindow, [prevSess, currentSession, nextSess, priceSum])
 payCheckWindow := Gui('', setting['Name'])
 payCheckWindow.BackColor := 'White'
 payCheckWindow.OnEvent('Close', (*) => mainWindow.Opt('-Disabled'))
@@ -115,25 +146,26 @@ commitCancel := payCheckWindow.AddButton('w500 hp-20', 'Cancel')
 commitCancel.OnEvent('Click', (*) => payCheckWindow.Hide())
 commitCancel.SetFont('s10')
 commitLater := payCheckWindow.AddButton('w500 hp', 'Commit later')
+commitLater.OnEvent('Click', (*) => commitSellSubmit(1))
 commitLater.SetFont('s10')
-payCheckWindow.MarginY := 20
 
-OptionMenu := Menu()
-OptionMenu.Add('Exit', (*) => ExitApp())
-OptionMenu.Add('Commit', (*) => ExitApp())
-OptionMenu.Add('Quick resume', (*) => ExitApp())
-OptionMenu.Add('Add item to the list', (*) => ExitApp())
-OptionMenu.Add('Increase item amount in the list', (*) => ExitApp())
-OptionMenu.Add('Decrease item amount in the list', (*) => ExitApp())
-OptionMenu.Add('Delete item from the sell list', (*) => ExitApp())
-OptionMenu.Add('Switch to the next session', (*) => ExitApp())
-OptionMenu.Add('Switch to the previous session', (*) => ExitApp())
-Menus := MenuBar()
-Menus.Add('Options', OptionMenu)
-mainWindow.MenuBar := Menus
+;OptionMenu := Menu()
+;OptionMenu.Add('Exit', (*) => ExitApp())
+;OptionMenu.Add('Commit', (*) => ExitApp())
+;OptionMenu.Add('Quick resume', (*) => ExitApp())
+;OptionMenu.Add('Add item to the list', (*) => ExitApp())
+;OptionMenu.Add('Increase item amount in the list', (*) => ExitApp())
+;OptionMenu.Add('Decrease item amount in the list', (*) => ExitApp())
+;OptionMenu.Add('Delete item from the sell list', (*) => ExitApp())
+;OptionMenu.Add('Switch to the next session', (*) => ExitApp())
+;OptionMenu.Add('Switch to the previous session', (*) => ExitApp())
+;Menus := MenuBar()
+;Menus.Add('Options', OptionMenu)
+;mainWindow.MenuBar := Menus
 mainWindow.Show()
 readSessionList()
 latestSellsLoad() 
+pendingQuickResume()
 SetTimer(saveSessions, setting['SessAutoSave'])
 enteredCode.Focus()
 mainList.Redraw()
@@ -142,10 +174,10 @@ mainList.Redraw()
 Enter::addItemToList()
 #HotIf
 
-#HotIf mainList.Focused
-Up::IncreaseQ()
-Down::DecreaseQ()
-#HotIf
+;#HotIf mainList.Focused
+;Up::IncreaseQ()
+;Down::DecreaseQ()
+;#HotIf
 
 #HotIf WinActive(quickWindow)
 Enter::quickListSubmit()
@@ -165,4 +197,5 @@ Space:: commitSell()
 Delete:: removeItemFromList()
 Left:: prevSession()
 Right:: nextSession()
+^Tab:: HideShowQuickies()
 #HotIf

@@ -62,7 +62,7 @@ updateCurrencies() {
 		Return
 	}
 	currencySymbol['symbols'][Symbol.Value] := Name.Value
-	currency['rates'][Symbol.Value] := ConvertF.Value
+	currency['rates'][Symbol.Value] := ConvertF.Value + 0
 	writeJson(currencySymbol, 'setting\currencySymbol.json')
 	writeJson(currency, 'setting\currency.json')
 	readCurrencies()
@@ -140,7 +140,16 @@ onlineUpdateCurrencies() {
 		MsgBox('Unable to return the exchange rate from server!`nThe following link copied to the clipboard`n`n' (A_Clipboard := url), 'Currency', 0x30)
 		Return
 	}
-	writeJson(exRate, 'setting\currency.json')
+	oldexRate := readJson('setting\currency.json')
+	For Key, Value in exRate {
+		If !oldexRate.Has(Key) {
+			oldexRate[Key] := Value
+		}
+	}
+	For Key, Value in exRate['rates'] {
+		oldexRate['rates'][Key] := Value
+	}
+	writeJson(oldexRate, 'setting\currency.json')
 	readCurrencies()
 	showCurrentCurrency()
 	setting['LatestCurrencyCheck'] := exRate['date']
