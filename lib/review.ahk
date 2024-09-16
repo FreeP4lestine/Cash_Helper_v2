@@ -119,8 +119,10 @@ loadPendingSells(Flag, Username := '', Date := '') {
             nonSubmittedPB.Visible := False
             nonSubmittedTxt.Text := 'Non reviewed sells [ ' review['Pointer'].Length ' ]'
         Case 1:
+            daysList.Delete()
+            review['Days'] := Map()    
             For Items in review['Pending'] {
-                If InStr(review['File'][A_Index], 'archived') || !Items.Has('Username') || Items['Username'] = '' || (Username != Items['Username'])
+                If !Items.Has('Username') || Items['Username'] = '' || (Username != Items['Username'])
                     Continue
                 addToTheList(A_Index, Items)
                 overAllUserCalculate(Items)
@@ -132,6 +134,8 @@ loadPendingSells(Flag, Username := '', Date := '') {
             nonSubmittedTxt.Text := 'Non reviewed sells [ ' review['Pointer'].Length ' ]'
         Case 2:
             For Ptr in review['Days'][Date] {
+                If InStr(review['File'][Ptr], 'archived')
+                    Continue
                 Items := review['Pending'][Ptr]
                 review['Pointer'].Push(Ptr)
                 Date := FormatTime(Items['CommitTime'], 'yyyy/MM/dd')
@@ -144,6 +148,9 @@ loadPendingSells(Flag, Username := '', Date := '') {
     }
 }
 addToTheList(Index, Items) {
+    If InStr(review['File'][Index], 'archived') {
+        Return
+    }
     review['Pointer'].Push(Index)
     Date := FormatTime(Items['CommitTime'], 'yyyy/MM/dd')
     Time := FormatTime(Items['CommitTime'], '[ HH:mm:ss ]')
