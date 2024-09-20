@@ -15,7 +15,6 @@ updateRowViewCurrency(Row := 0) {
         details.Modify(Row, , tmp*)
     }
 }
-
 autoResizeCols() {
     Loop details.GetCount('Col') {
         If A_Index = 11 {
@@ -35,47 +34,37 @@ addedRowColorize(Row) {
 }
 displayDetails() {
     details.Delete()
-    review['Items'] := [0, 0]
-    overAllItem.Text := 'Selection summary: [ 0 ]'
-    itemTotalCalculate()
-    Next := 0
-    Selected := 0
-    Sleep(250)
-    While Next := nonSubmitted.GetNext(Next) {
+    itemsBuyValue.Value := 0
+    itemsSellValue.Value := 0
+    itemsProfitValue.Value := 0
+    S := B := P := 0
+    While Next := nonSubmitted.GetNext(IsSet(Next) ? Next : 0) {
         Ptr := review['Pointer'][Next]
-        Items := review['Pending'][Ptr]
-        For Each, Item in Items['Items'] {
-            review['Items'][1] += Item[4] * Item[7] / Item[6]
-            review['Items'][2] += Item[10]
+        Sell := review['Pending'][Ptr]
+        For Each, Item in Sell.JSON['Items'] {
             Row := details.Add(, Item*)
-            updateRowViewCurrency(Row)
-            addedRowColorize(Row)
+            S += Item[5] * Item[7] / Item[6]
+            B += Item[4] * Item[7] / Item[6]
         }
-        Selected++
     }
-    If Selected = 1 {
-        openTime.Value := 'Open Time: ' FormatTime(Items['OpenTime'], 'yyyy/MM/dd HH:mm:ss')
-        commitTime.Value := 'Commit Time: ' FormatTime(Items['CommitTime'], 'yyyy/MM/dd HH:mm:ss')
-    } Else {
-        openTime.Value := 'Open Time: Multi'
-        commitTime.Value := 'Commit Time : Multi'
+    If S {
+        itemsBuyValue.Value := Round(B * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+        itemsSellValue.Value := Round(S * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+        itemsProfitValue.Value := Round((S - B) * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+    }
+    Loop details.GetCount() {
+        Row := A_Index
+        updateRowViewCurrency(Row)
+        addedRowColorize(Row)
     }
     autoResizeCols()
-    overAllItem.Text := 'Selection summary: [ ' Selected ' ]'
-    itemTotalCalculate()
 }
-itemTotalCalculate() {
-        itemsBuyValue.Value := review['Items'][1] ? Round(review['Items'][1] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-        itemsSellValue.Value := review['Items'][2] ? Round(review['Items'][2] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-        itemsProfitValue.Value := review['Items'][2] - review['Items'][1] ? Round((review['Items'][2] - review['Items'][1]) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-    }
-nItems(Dir) {
-    objFolder := ComObject("Scripting.FileSystemObject").GetFolder(Dir)
-    Return { Files: objFolder.Files.Count, Subdirs: objFolder.SubFolders.Count }
-}
-loadPendingSells(Flag, Username := '', Date := '') {
-    If Username = 'Everyone' {
-        Flag := 0
+loadAll() {
+    nonSubmitted.Delete()
+    nonSubmittedTxt.Value := 'Sells loading - Please wait...'
+    nItems(Dir) {
+        objFolder := ComObject("Scripting.FileSystemObject").GetFolder(Dir)
+        Return { Files: objFolder.Files.Count, Subdirs: objFolder.SubFolders.Count }
     }
     Try CountAll := nItems('commit\pending').Files
     Catch {
@@ -84,168 +73,167 @@ loadPendingSells(Flag, Username := '', Date := '') {
             CountAll++
         }
     }
-    nonSubmittedPB.Value := 0
-    nonSubmittedPB.Opt('Range1-' CountAll)
-    nonSubmittedPB.Visible := True
-    review['Items'] := [0, 0]
-    overAllItem.Text := 'Selection summary: [ 0 ]'
-    itemTotalCalculate()
-    review['OverAllUser'] := [0, 0]
-    totalUserUpdate()
-    overAllUser.Text := 'Current user summary: [ 0 ]'
-    nonSubmittedTxt.Text := 'Non reviewed sells [ 0 ]'
-    nonSubmitted.Delete()
+    review['Pending'] := []
     review['Pointer'] := []
+    S := B := P := 0
+    Loop Files, 'commit\pending\*.json' {
+        Sell := {File: A_LoopFileFullPath, JSON: readJson(A_LoopFileFullPath)}
+        review['Pending'].Push(Sell)
+        review['Pointer'].Push(A_Index)
+        DateTime := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd [ HH:mm:ss ]')
+        nonSubmitted.Add('icon1', DateTime ' [ ' Sell.JSON['Items'].Length ' ]')
+        For Item in Sell.JSON['Items'] {
+            S += Item[5] * Item[7] / Item[6]
+            B += Item[4] * Item[7] / Item[6]
+        }
+    }
+    nonSubmittedTxt.Value := 'Non reviewed sells'
+    If S {
+        totalBuyValue.Value := Round(B * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+        totalSellValue.Value := Round(S * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+        totalProfitValue.Value := Round((S - B) * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+    }
+    loadUsers()
+    loadDays()
+}
+loadUsers() {
+    Users.Value := 'Users loading - Please wait...'
+    Found := review['Users'] := Map()
+    usersList.Delete()
+    usersList.Add('Icon4 Select Focus', 'Everyone')
+    usersList.Modify(1,, 'Every (one / day) - ( ' review['Pending'].Length ' )')
+    For Sell in review['Pending'] {
+        If !Sell.JSON.Has('Username') || Sell.JSON['Username'] = '' {
+            If !Found.Has('--Unknown--') {
+                R := usersList.Add('Icon3', '--Unknown--')
+                Found['--Unknown--'] := {Title: '--Unknown--', Row: R, Pointer: []}
+            }
+            Found['--Unknown--'].Pointer.Push(A_Index)
+            usersList.Modify(Found['--Unknown--'].Row,, Found['--Unknown--'].Title ' (' Found['--Unknown--'].Pointer.Length ')')
+            Continue
+        }
+        If !Found.Has(Sell.JSON['Username']) {
+            R := usersList.Add('Icon3', Sell.JSON['Username'])
+            Found[Sell.JSON['Username']] := {Title: Sell.JSON['Username'], Row: R, Pointer: []}
+        }
+        Found[Sell.JSON['Username']].Pointer.Push(A_Index)
+        usersList.Modify(Found[Sell.JSON['Username']].Row,, Found[Sell.JSON['Username']].Title ' - (' Found[Sell.JSON['Username']].Pointer.Length ')')
+    }
+    Users.Value := 'Users:'
+}
+loadDays() {
+    daysList.Delete()
+    Days.Value := 'Days loading - Please wait...'
+    Found := review['Days'] := Map()
+    For Sell in review['Pending'] {
+        Day := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd')
+        If !Found.Has(Day) {
+            R := daysList.Add('Icon5', Day)
+            Found[Day] := {Title: Day, Row: R, Pointer: []}
+        }
+        Found[Day].Pointer.Push(A_Index)
+        daysList.Modify(Found[Day].Row,, Found[Day].Title ' - (' Found[Day].Pointer.Length ')')
+    }
+    Days.Value := 'Days:'
+}
+loadPendingSells(Flag) {
+    review['Users']
     Switch Flag {
-        Case 0: 
-            review['Pending'] := []
-            review['File'] := []
-            review['OverAll'] := [0, 0]
-            daysList.Delete()
-            review['Days'] := Map()
-            totalUpdate()
-            overAllTotal.Text := 'Overall Summary: [ 0 ]'
-            Loop Files, 'commit\pending\*.json' {
-                Items := readJson(A_LoopFileFullPath)
-                review['File'].Push(A_LoopFileFullPath)
-                review['Pending'].Push(Items)
-                addToTheList(A_Index, Items)
-                numberUsers(Items)
-                overAllCalculate(Items)
-                nonSubmittedPB.Value++
-            }
-            totalUpdate()
-            overAllTotal.Text := 'Overall Summary: [ ' review['Pointer'].Length ' ]'
-            nonSubmittedPB.Visible := False
-            nonSubmittedTxt.Text := 'Non reviewed sells [ ' review['Pointer'].Length ' ]'
+        Case 0: loadAll()
         Case 1:
-            daysList.Delete()
-            review['Days'] := Map()    
-            For Items in review['Pending'] {
-                If !Items.Has('Username') || Items['Username'] = '' || (Username != Items['Username'])
-                    Continue
-                addToTheList(A_Index, Items)
-                overAllUserCalculate(Items)
-                nonSubmittedPB.Value++
+            nonSubmitted.Delete()
+            R := usersList.GetNext()
+            If !R {
+                Return
             }
-            totalUserUpdate()
-            overAllUser.Text := 'Current user summary: [ ' review['Pointer'].Length ' ]'
-            nonSubmittedPB.Visible := False
-            nonSubmittedTxt.Text := 'Non reviewed sells [ ' review['Pointer'].Length ' ]'
-        Case 2:
-            For Ptr in review['Days'][Date] {
-                If InStr(review['File'][Ptr], 'archived')
+            If R = 1 {
+                loadPendingSells(0)
+                Return
+            }
+            Username := usersList.GetText(usersList.GetNext())
+            Username := StrSplit(Username, ' - ')[1]
+            review['Pointer'] := []
+            For Ptr in review['Users'][Username].Pointer {
+                Sell := review['Pending'][Ptr]
+                If InStr(Sell.File, 'archived') {
                     Continue
-                Items := review['Pending'][Ptr]
+                }
+                DateTime := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd [ HH:mm:ss ]')
+                nonSubmitted.Add('icon1', DateTime ' [ ' Sell.JSON['Items'].Length ' ]')
                 review['Pointer'].Push(Ptr)
-                Date := FormatTime(Items['CommitTime'], 'yyyy/MM/dd')
-                Time := FormatTime(Items['CommitTime'], '[ HH:mm:ss ]')
-                DateTime := Date ' ' Time
-                nonSubmitted.Add('icon1', DateTime ' [ ' Items['Items'].Length ' ]')
             }
-            nonSubmittedPB.Visible := False
-            nonSubmittedTxt.Text := 'Non reviewed sells [ ' review['Days'][Date].Length ' ]'
+        Case 2:
+            nonSubmitted.Delete()
+            R := daysList.GetNext()
+            If !R {
+                Return
+            }
+            Day := daysList.GetText(daysList.GetNext())
+            Day := StrSplit(Day, ' - ')[1]
+            review['Pointer'] := []
+            For Ptr in review['Days'][Day].Pointer {
+                Sell := review['Pending'][Ptr]
+                If InStr(Sell.File, 'archived') {
+                    Continue
+                }
+                DateTime := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd [ HH:mm:ss ]')
+                nonSubmitted.Add('icon1', DateTime ' [ ' Sell.JSON['Items'].Length ' ]')
+                review['Pointer'].Push(Ptr)
+            }
     }
-}
-addToTheList(Index, Items) {
-    If InStr(review['File'][Index], 'archived') {
-        Return
-    }
-    review['Pointer'].Push(Index)
-    Date := FormatTime(Items['CommitTime'], 'yyyy/MM/dd')
-    Time := FormatTime(Items['CommitTime'], '[ HH:mm:ss ]')
-    DateTime := Date ' ' Time
-    If !review['Days'].Has(Date) {
-        review['Days'][Date] := []
-        daysList.Add('icon5', Date)
-    }
-    review['Days'][Date].Push(Index)
-    nonSubmitted.Add('icon1', DateTime ' [ ' Items['Items'].Length ' ]')
-}
-numberUsers(Items) {
-    If Items.Has('Username')&& Items['Username'] != 'Everyone' && Items['Username'] != '' && !review['Users'].Has(Items['Username']) {
-        review['Users'][Items['Username']] := True
-        usersList.Add('Icon3', Items['Username'])
-    }
-}
-overAllCalculate(Items) {
-    For Every, Item in Items['Items'] {
-        review['OverAll'][1] += Item[4] * Item[7] / Item[6]
-        review['OverAll'][2] += Item[10]
-    }
-}
-overAllUserCalculate(Items) {
-    For Every, Item in Items['Items'] {
-        review['OverAllUser'][1] += Item[4] * Item[7] / Item[6]
-        review['OverAllUser'][2] += Item[10]
-    }
-}
-totalUpdate() {
-    totalBuyValue.Value := review['OverAll'][1] ? Round(review['OverAll'][1] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-    totalSellValue.Value := review['OverAll'][2] ? Round(review['OverAll'][2] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-    totalProfitValue.Value := review['OverAll'][2] - review['OverAll'][1] ? Round((review['OverAll'][2] - review['OverAll'][1]) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-}
-totalUserUpdate() {
-    totalUserBuyValue.Value := review['OverAllUser'][1] ? Round(review['OverAllUser'][1] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-    totalUserSellValue.Value := review['OverAllUser'][2] ? Round(review['OverAllUser'][2] * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
-    totalUserProfitValue.Value := review['OverAllUser'][2] - review['OverAllUser'][1] ? Round((review['OverAllUser'][2] - review['OverAllUser'][1]) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency'] : 0
 }
 clearSells() {
     If 'Yes' != MsgBox('Are you sure to clear all the listed sells?', 'Clear', 0x40 + 0x4)
         Return
+    details.Delete()
+    itemsBuyValue.Value := 0
+    itemsSellValue.Value := 0
+    itemsProfitValue.Value := 0
     If !DirExist('commit\archived\' N := A_Now) {
         DirCreate('commit\archived\' N)
     }
-    nonSubmittedPB.Value := 0
-    nonSubmittedPB.Opt('Range1-' review['Pointer'].Length)
-    nonSubmittedPB.Visible := True
     For Ptr in review['Pointer'] {
-        If InStr(review['File'][Ptr], 'archived') {
+        Sell := review['Pending'][Ptr]
+        If InStr(Sell.File, 'archived') {
             Continue
         }
-        FileMove(review['File'][Ptr], 'commit\archived\' N '\')
-        Items := review['Pending'][Ptr]
-        For Each, Item in Items['Items'] {
-            review['OverAll'][1] -= Item[4] * Item[7] / Item[6]
-            review['OverAll'][2] -= Item[10]
-        }
-        SplitPath(review['File'][Ptr], &OutFileName)
-        review['File'][Ptr] := 'commit\archived\' N '\' OutFileName
+        FileMove(Sell.File, 'commit\archived\' N '\')
+        SplitPath(Sell.File, &OutFileName)
+        Sell.File := 'commit\archived\' N '\' OutFileName
         nonSubmitted.Modify(A_Index, 'Icon2')
-        nonSubmittedPB.Value++
     }
-    nonSubmittedPB.Visible := False
-    review['Items'] := [0, 0]
-    itemTotalCalculate()
-    overAllItem.Text := 'Selection summary: [ 0 ]'
-    review['OverAllUser'] := [0, 0]
-    totalUserUpdate()
-    overAllUser.Text := 'Current user summary: [ 0 ]'
-    If review['OverAll'][1] < 0 {
-        review['OverAll'][1] := 0
+    reCalculateTotal()
+    reCalculateTotal() {
+        S := B := P := 0
+        For Sell in review['Pending'] {
+            If InStr(Sell.File, 'archived') {
+                Continue
+            }
+            For Item in Sell.JSON['Items'] {
+                S += Item[5] * Item[7] / Item[6]
+                B += Item[4] * Item[7] / Item[6]
+            }
+        }
+        If S {
+            totalBuyValue.Value := Round(B * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+            totalSellValue.Value := Round(S * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+            totalProfitValue.Value := Round((S - B) * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
+        }
     }
-    If review['OverAll'][2] < 0 {
-        review['OverAll'][2] := 0
-    }
-    totalUpdate()
-    overAllTotal.Text := 'Overall Summary: [ 0 ]'
+    Wait.Stop()
     MsgBox('All clear!', 'Clear', 0x40)
 }
 resizeControls(GuiObj, MinMax, Width, Height) {
     C2.Move(, , Width - 164)
     nonSubmitted.GetPos(, &Y)
-    nonSubmitted.Move(,,, Height - Y - 110)
+    nonSubmitted.Move(,,, Height - Y - 70)
     daysList.GetPos(, &Y)
     daysList.Move(,,, Height - Y - 25)
     submit.Move(, Height - 60)
     details.GetPos(&X, &Y, &CWidth, &CHeight)
-    details.Move(, , WW := Width - X - 40, Height - Y - 270)
+    details.Move(, , WW := Width - X - 40, Height - Y - 210)
     openTime.Move(, , WW // 2)
     commitTime.Move(X + WW // 2, , WW // 2)
-    overallUser.Move(, Height - 230, WW)
-    totalUserBuyValue.Move(, Height - 200, WW // 3 - 10)
-    totalUserSellValue.Move(X + WW // 3 + 10, Height - 200, WW // 3 - 10)
-    totalUserProfitValue.Move(X + WW // 3 * 2 + 10, Height - 200, WW // 3 - 10)
     overAllItem.Move(, Height - 170, WW)
     itemsBuyValue.Move(, Height - 140, WW // 3 - 10)
     itemsSellValue.Move(X + WW // 3 + 10, Height - 140, WW // 3 - 10)
@@ -257,7 +245,6 @@ resizeControls(GuiObj, MinMax, Width, Height) {
     Box1.ResizeShadow()
     Box2.ResizeShadow()
     Box3.ResizeShadow()
-    Box4.ResizeShadow()
     Box5.ResizeShadow()
     Box6.ResizeShadow()
     Box7.ResizeShadow()
@@ -269,7 +256,6 @@ boxRedraw() {
     Box1.RedrawShadow()
     Box2.RedrawShadow()
     Box3.RedrawShadow()
-    Box4.RedrawShadow()
     Box5.RedrawShadow()
     Box6.RedrawShadow()
     Box7.RedrawShadow()

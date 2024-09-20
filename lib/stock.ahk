@@ -66,6 +66,18 @@ writeItemProperties(backUp := False) {
 					item[Property] := 0
 			Case 'Latest Update':
 				item[Property] := FormatTime(A_Now, 'yyyy.MM.dd [HH:mm:ss]')
+			Case 'Related':
+				CBValue := ItemPropertiesForms[Property]['CBForm'].Text
+				EValue := ItemPropertiesForms[Property]['EForm'].Value
+				If !FileExist(setting['ItemDefLoc'] '\' CBValue '.json')
+				|| !IsNumber(EValue) {
+					item[Property] := ''
+					Continue
+				}
+				item[Property] := CBValue 'x' EValue
+				tmp := readJson(setting['ItemDefLoc'] '\' CBValue '.json')
+				tmp['Related'] := Code 'x' Round(1 / EValue, setting['Rounder'])
+				writeJson(tmp, setting['ItemDefLoc'] '\' CBValue '.json')
 			Default: item[Property] := Value
 		}
 	}
@@ -86,11 +98,17 @@ writeItemProperties(backUp := False) {
 showItemProperties(Code) {
 	item := readJson(setting['ItemDefLoc'] '\' Code '.json')
 	For Property in setting['Item'] {
-		If Property[1] = 'Currency' {
-			itemPropertiesForms[Property[1]]['Form'].Value := setting['DisplayCurrency']
+		If !item.Has(Property[1]) {
+			For Each, Ctrl in itemPropertiesForms[Property[1]] {
+				Switch Type(Ctrl) {
+					Case 'Gui.ComboBox': Ctrl.Value := 0
+					Case 'Gui.Edit': Ctrl.Value := ''
+				}
+			}
 			Continue
 		}
-		If !item.Has(Property[1]) {
+		If Property[1] = 'Currency' {
+			itemPropertiesForms[Property[1]]['Form'].Value := setting['DisplayCurrency']
 			Continue
 		}
 		Switch Property[1] {
@@ -130,6 +148,15 @@ showItemProperties(Code) {
 				} Else {
 					itemPropertiesForms[Property[1]]['PForm'].Value := ''
 					itemPropertiesForms[Property[1]]['BForm'].Text := 'Generate'
+				}
+			Case 'Related':
+				If item[Property[1]] != ''
+				&& (CF := StrSplit(item[Property[1]], 'x')).Length = 2
+				&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
+				&& IsNumber(CF[2]) {
+					itemPropertiesForms[Property[1]]['CBForm'].Text := CF[1]
+					itemPropertiesForms[Property[1]]['EForm'].Value := CF[2]
+					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 				}
 			Default: itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 		}
@@ -279,6 +306,7 @@ loadItemsDefinitions() {
 		rowInfo := populateRow(item, currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
 		mainList.Add(, rowInfo*)
 		++Counted
+		itemPropertiesForms['Related']['CBForm'].Add([item['Code']])
 	}
 	currentTask.Value := 'Loaded ' A_LoopFileName '... [ ' Counted ' ]'
 	fitItemsListContent(mainList)
@@ -286,7 +314,6 @@ loadItemsDefinitions() {
 	currentTask.Value := Counted ' Item(s) loaded in ' Round((A_TickCount - StartTime) / 1000, 2) ' second(s)'
 	mainList.Redraw()
 }
-
 updateRelativesCheck(Ctrl, Info) {
 	If Ctrl.Value {
 		updateRelatives()
@@ -434,7 +461,7 @@ updateItemSellValueRelatives() {
 searchItemInMainList(andSearch := False) {
 	Counted := 0
 	currentTask.Value := 'Looking...'
-	searchIndexes := [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 14]
+	searchIndexes := [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
 	searchList.Delete()
 	Loop mainList.GetCount() {
 		Row := A_Index
@@ -456,6 +483,7 @@ searchItemInMainList(andSearch := False) {
 		}
 		ok := andSearch ? hit1 : hit2
 		If ok {
+			;Msgbox Row
 			Info := []
 			Loop mainList.GetCount('Col') {
 				Info.Push(mainList.GetText(Row, A_Index))
@@ -570,17 +598,13 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 	barcoderPicture.Move((wW - bW) / 2 - 5)
 }
 resizeControls(GuiObj, MinMax, Width, Height) {
-	; button re-pos
 	updateItem.GetPos(&uX, &uY, &uWidth, &uHeight)
 	updateItem.Move(, uY := Height - uHeight - 35)
-	; Properties forms re-pos
 	propertiesWindow.GetPos(&X, &Y, &WWidth, &WHeight)
 	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 40))))
-	; Properties list re-pos
 	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
 	mainList.Move(,, Width - X - 40, Height - Y - 35)
 	searchList.Move(,, Width - X - 40, Height - Y - 35)
-	; Log re-pos
 	currentTask.GetPos(&X, &Y, &CWidth, &CHeight)
 	currentTask.Move(,, Width - X - 40)
 	SetTimer(boxRedraw, 0)
@@ -588,12 +612,9 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	Box1.ResizeShadow()
 	Box2.ResizeShadow()
 	Box3.ResizeShadow()
-	Box4.ResizeShadow()
 }
-
 boxRedraw() {
 	Box1.RedrawShadow()
 	Box2.RedrawShadow()
 	Box3.RedrawShadow()
-	Box4.RedrawShadow()
 }

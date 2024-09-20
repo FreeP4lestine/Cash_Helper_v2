@@ -162,7 +162,7 @@ commitLater.SetFont('s10')
 ;Menus := MenuBar()
 ;Menus.Add('Options', OptionMenu)
 ;mainWindow.MenuBar := Menus
-mainWindow.Show()
+mainWindow.Show('Maximize')
 readSessionList()
 latestSellsLoad() 
 pendingQuickResume()

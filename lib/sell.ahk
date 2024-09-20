@@ -91,6 +91,7 @@ updatePrice(Data) {
 	Data[7] := Round((Data[10] / PF) * Data[6], 2)
 	Return Data
 }
+
 initiateSession() {
 	Sells[currentSession.Value] := Map()
 	Sells[currentSession.Value]['OpenTime'] := A_Now
@@ -285,6 +286,9 @@ DecreaseQ() {
 }
 quickListEdit(LV, L) {
 	Row := NumGet(L + (A_PtrSize * 3), 0, "Int") + 1
+	If Sells[currentSession.Value]['Items'].Length < Row {
+		Return
+	}
 	Col := NumGet(L + (A_PtrSize * 3), 4, "Int") + 1
 	Switch Col {
 		Case 7, 10:
@@ -394,8 +398,49 @@ commitSellSubmit(Later := False) {
 	Sells[currentSession.Value]['Username'] := username
 	Saveto := Later ? 'commit\pending\later' : 'commit\pending'
 	writeJson(Sells[currentSession.Value], Saveto '\' Sells[currentSession.Value]['CommitTime'] '.json')
+	updateStock()
+	updateStock() {
+		For Every, SellItem in Sells[currentSession.Value]['Items'] {
+			Code := SellItem[2]
+			If FileExist(setting['ItemDefLoc'] '\' Code '.json') {
+				Item := readJson(setting['ItemDefLoc'] '\' Code '.json')
+				If !IsNumber(Item['Stock Value']) {
+					Item['Stock Value'] := 0
+				} Else {
+					Item['Stock Value'] -= SellItem[7]
+				}
+				If Item['Stock Value'] < 0 {
+					Item['Stock Value'] := 0
+				}
+				writeJson(Item, setting['ItemDefLoc'] '\' Code '.json')
+				If Item.Has('Related')
+				&& Item['Related'] != ''
+				&& (CF := StrSplit(Item['Related'], 'x')).Length = 2
+				&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
+				&& IsNumber(CF[2]) {
+					ReItem := readJson(setting['ItemDefLoc'] '\' CF[1] '.json')
+					If !IsNumber(ReItem['Stock Value']) {
+						ReItem['Stock Value'] := 0
+					} Else {
+						ReItem['Stock Value'] -= SellItem[7] * CF[2]
+					}
+					If ReItem['Stock Value'] < 0 {
+						ReItem['Stock Value'] := 0
+					}
+					writeJson(ReItem, setting['ItemDefLoc'] '\' CF[1] '.json')
+				}
+			}
+		}
+	}
 	latestSellsSave()
 	updatePriceSum()
+	pendingQuickResume()
+	saveSessions()
+	initiateSession()
+	SetTimer(commitClose, -5000)
+	commitClose() {
+		payCheckWindow.Hide()
+	}
 	commitImg.Value := 'images\commit.png'
 	commitMsg.Opt('BackgroundGreen cWhite')
 	commitMsg.Value := 'Commited!'
@@ -408,15 +453,8 @@ commitSellSubmit(Later := False) {
 	commitMsg.Focus()
 	mainList.Delete()
 	mainWindow.Opt('-Disabled')
-	pendingQuickResume()
 	Thumb.Value := 'images\Default.png'
 	Code128.Value := ''
-	saveSessions()
-	initiateSession()
-	SetTimer(commitClose, -5000)
-	commitClose() {
-		payCheckWindow.Hide()
-	}
 }
 tagUser(File) {
 	tags := readJson('commit\tags.json')

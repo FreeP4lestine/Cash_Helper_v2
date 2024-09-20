@@ -73,6 +73,11 @@
 			"Latest Update",
 			0,
 			""
+		],
+		[
+			"Related",
+			0,
+			""
 		]
 	],
 	"ItemBakLoc": "setting\\defs\\backup",

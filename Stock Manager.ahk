@@ -30,7 +30,7 @@ mainWindow.SetFont('s25')
 C2 := mainWindow.AddText('ym+20', 'Stock Manager')
 mainWindow.SetFont('s10')
 propertiesWindow := Gui('Parent' mainWindow.Hwnd ' Border -Caption')
-propertiesWindow.BackColor := '0xFFFFFFFF'
+;propertiesWindow.BackColor := '0xFFF0F0F0'
 propertiesWindow.MarginY := 10
 SB := ScrollBar(propertiesWindow, 270, 500)
 itemPropertiesForms := Map()
@@ -98,10 +98,18 @@ For Property in setting['Item'] {
 			itemPropertiesForms[Property[1]]['BForm'] := BForm
 			PForm := propertiesWindow.AddPicture('xp yp+25 w140 h32 BackgroundFFFFFF')
 			itemPropertiesForms[Property[1]]['PForm'] := PForm
-	}
+		Case 'Related':
+			Form.Opt('ReadOnly')
+			Form.Visible := False
+			propertiesWindow.SetFont('Bold s12', 'Calibri')
+			CBForm := propertiesWindow.AddComboBox('-E0X200 Border cBlue Center xp yp wp hp r10')
+			;CBForm.OnEvent('Change', (*) => generateItemCode128(3, 1))
+			itemPropertiesForms[Property[1]]['CBForm'] := CBForm
+			EForm := propertiesWindow.AddEdit('wp -E0X200 Border')
+			itemPropertiesForms[Property[1]]['EForm'] := EForm
+		}
 }
-Box1 := Shadow(propertiesWindow, [C3, itemPropertiesForms['Latest Update']['Form'], itemPropertiesForms['Buy Value']['CForm']])
-mainList := mainWindow.AddListView('xm+360 ym+120 w980 h540 -E0x200')
+mainList := mainWindow.AddListView('xm+390 ym+120 w980 h540 -E0x200')
 searchList := mainWindow.AddListView('xp yp wp hp Hidden -E0x200')
 Box3 := Shadow(mainWindow, [mainList, searchList])
 SetExplorerTheme(mainList.Hwnd)
@@ -128,11 +136,10 @@ For Property in setting['Item'] {
 mainList.GetPos(&X, &Y, &W, &H)
 currentTask := mainWindow.AddEdit('x' X ' ym+20 w' W ' ReadOnly BackgroundWhite -E0x200 Right cGray')
 Box2 := Shadow(mainWindow, [C1, C2, currentTask])
-updateItem := mainWindow.AddButton('xm+10 y' (Y + H - 27) ' w300', 'Update')
-Box4 := Shadow(mainWindow, [updateItem])
+updateItem := mainWindow.AddButton('xm+20 y' (Y + H - 27) ' w320', 'Update')
+;Box4 := Shadow(mainWindow, [updateItem])
 updateItem.SetFont('Bold')
 CreateImageButton(updateItem, 0, [[0xFFFFFFFF,, 0xFF008000, 5, 0xFF008000], [0xFF009F00,, 0xFFFFFFFF], [0xFF00BB00,, 0xFFFFFF00]]*)
-
 updateItem.OnEvent('Click', (*) => writeItemProperties(1))
 mainWindow.SetFont('s8')
 FileMenu := Menu()
@@ -150,10 +157,11 @@ Menus.Add("File", FileMenu)
 Menus.Add("Edit", HelpMenu)
 Menus.Add("View", ViewMenu)
 mainWindow.MenuBar := Menus
-mainWindow.Show()
-propertiesWindow.Show('x10 y120 h454 w330')
+propertiesWindow.Show('x40 y130 h454 w320')
 SB.ScrollMsg(1, 0, 0x115, propertiesWindow.Hwnd)
 SB.ScrollMsg(0, 0, 0x115, propertiesWindow.Hwnd)
+Box1 := Shadow(mainWindow, [updateItem, propertiesWindow])
+mainWindow.Show('Maximize')
 loadItemsDefinitions()
 
 #HotIf WinActive(mainWindow)

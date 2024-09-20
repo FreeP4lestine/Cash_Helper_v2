@@ -9,10 +9,6 @@
 If !DirExist(A_AppData '\Cash Helper') {
 	DirCreate(A_AppData '\Cash Helper')
 }
-If !FileExist(A_AppData '\Cash Helper\setting.json') {
-	FileCopy('setting\setting.json', A_AppData '\Cash Helper\setting.json')
-}
-
 If !checkBypass() {
 	ExitApp()
 }
