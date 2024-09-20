@@ -15,9 +15,12 @@ findItemInListView(Code, List := mainList, Vis := False) {
 }
 clearForms() {
 	For Property, Form in ItemPropertiesForms {
-		Form['Form'].Value := ''
-		If Form.Has('PForm') {
-			Form['PForm'].Value := ''
+		For Each, Ctrl in Form {
+			Switch Type(Ctrl) {
+				Case 'Gui.Edit': Ctrl.Value := ''
+				Case 'Gui.ComboBox': Ctrl.Value := 0
+				Case 'Gui.Picture': Ctrl.Value := ''
+			}
 		}
 	}
 	ItemPropertiesForms['Thumbnail']['BForm'].Text := 'Select'
@@ -64,6 +67,12 @@ writeItemProperties(backUp := False) {
 					item[Property] := Round( Value / currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
 				Catch
 					item[Property] := 0
+			Case 'Stock Value':
+				item[Property] := Value
+				If Value = '' || !IsNumber(Value) {
+					item[Property] := 0
+				}
+				ST := item[Property]
 			Case 'Latest Update':
 				item[Property] := FormatTime(A_Now, 'yyyy.MM.dd [HH:mm:ss]')
 			Case 'Related':
@@ -76,7 +85,8 @@ writeItemProperties(backUp := False) {
 				}
 				item[Property] := CBValue 'x' EValue
 				tmp := readJson(setting['ItemDefLoc'] '\' CBValue '.json')
-				tmp['Related'] := Code 'x' Round(1 / EValue, setting['Rounder'])
+				tmp['Related'] := Code 'x' (CF := Round(1 / EValue, setting['Rounder']))
+				tmp['Stock Value'] := Round(ST / CF, setting['Rounder'])
 				writeJson(tmp, setting['ItemDefLoc'] '\' CBValue '.json')
 			Default: item[Property] := Value
 		}
@@ -120,7 +130,7 @@ showItemProperties(Code) {
 						itemPropertiesForms[Property[1]]['Form'].Value := 0
 				}
 				Else itemPropertiesForms[Property[1]]['Form'].Value := 0
-				Case 'Thumbnail':
+			Case 'Thumbnail':
 					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 				If item[Property[1]] {
 					Try {
@@ -134,7 +144,10 @@ showItemProperties(Code) {
 					itemPropertiesForms[Property[1]]['PForm'].Value := ''
 					itemPropertiesForms[Property[1]]['BForm'].Text := 'Select'
 				}
-				Case 'Code128':
+			Case 'Stock Value':
+				If IsNumber(item[Property[1]])
+					itemPropertiesForms[Property[1]]['Form'].Value := LeadTrailZeroTrim(item[Property[1]])
+			Case 'Code128':
 					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 				If item[Property[1]] {
 					Try {
@@ -155,11 +168,36 @@ showItemProperties(Code) {
 				&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
 				&& IsNumber(CF[2]) {
 					itemPropertiesForms[Property[1]]['CBForm'].Text := CF[1]
-					itemPropertiesForms[Property[1]]['EForm'].Value := CF[2]
+					itemPropertiesForms[Property[1]]['EForm'].Value := LeadTrailZeroTrim(CF[2])
 					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
+					nameDisplay(itemPropertiesForms[Property[1]]['CBForm'], '')
 				}
 			Default: itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 		}
+	}
+}
+LeadTrailZeroTrim(N) {
+	If !InStr(N, '.') {
+		Return N
+	}
+	N := LTrim(N, '0')
+	If SubStr(N, 1, 1) = '.' {
+		N := '0' N
+	}
+	N := RTrim(N, '0')
+	If SubStr(N, -1) = '.' {
+		N := SubStr(N, 1, -1)
+	}
+	Return N
+}
+nameDisplay(Ctrl, Info) {
+	If FileExist(setting['ItemDefLoc'] '\' Ctrl.Text '.json') {
+		Item := readJson(setting['ItemDefLoc'] '\' Ctrl.Text '.json')
+		If !Item.Has('Name') {
+			itemPropertiesForms['Related']['ENForm'].Value := ''
+			Return
+		}
+		itemPropertiesForms['Related']['ENForm'].Value := Item['Name']
 	}
 }
 deleteItemProperties() {

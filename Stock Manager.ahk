@@ -46,7 +46,7 @@ For Property in setting['Item'] {
 	itemPropertiesForms[Property[1]]['Form'] := Form
 	Switch Property[1] {
 		Case 'Currency', 'Latest Update':
-			Form.Opt('ReadOnly')
+			Form.Opt('ReadOnly Backgroundd4d4d4')
 			If Property[1] = 'Latest Update' {
 				Form.SetFont('s10')
 			}
@@ -81,7 +81,7 @@ For Property in setting['Item'] {
 			CForm.OnEvent('Click', updateRelativesCheck)
 			itemPropertiesForms[Property[1]]['CForm'] := CForm
 		Case 'Thumbnail':
-			Form.Opt('ReadOnly')
+			Form.Opt('ReadOnly Backgroundd4d4d4')
 			Form.Visible := False
 			propertiesWindow.SetFont('s8')
 			BForm := propertiesWindow.AddButton('xp yp wp hp', 'Select')
@@ -90,7 +90,7 @@ For Property in setting['Item'] {
 			PForm := propertiesWindow.AddPicture('xp+36 yp+25 w64 h64 BackgroundFFFFFF')
 			itemPropertiesForms[Property[1]]['PForm'] := PForm
 		Case 'Code128':
-			Form.Opt('ReadOnly')
+			Form.Opt('ReadOnly Backgroundd4d4d4')
 			Form.Visible := False
 			propertiesWindow.SetFont('s8')
 			BForm := propertiesWindow.AddButton('xp yp wp hp', 'Generate')
@@ -103,11 +103,13 @@ For Property in setting['Item'] {
 			Form.Visible := False
 			propertiesWindow.SetFont('Bold s12', 'Calibri')
 			CBForm := propertiesWindow.AddComboBox('-E0X200 Border cBlue Center xp yp wp hp r10')
-			;CBForm.OnEvent('Change', (*) => generateItemCode128(3, 1))
+			CBForm.OnEvent('Change', nameDisplay)
 			itemPropertiesForms[Property[1]]['CBForm'] := CBForm
-			EForm := propertiesWindow.AddEdit('wp -E0X200 Border')
+			ENForm := propertiesWindow.AddEdit('wp -E0X200 Border Center ReadOnly Backgroundd4d4d4')
+			itemPropertiesForms[Property[1]]['ENForm'] := ENForm
+			EForm := propertiesWindow.AddEdit('wp -E0X200 Border Center')
 			itemPropertiesForms[Property[1]]['EForm'] := EForm
-		}
+	}
 }
 mainList := mainWindow.AddListView('xm+390 ym+120 w980 h540 -E0x200')
 searchList := mainWindow.AddListView('xp yp wp hp Hidden -E0x200')

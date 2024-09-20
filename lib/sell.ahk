@@ -1,3 +1,32 @@
+loadDefinitions() {
+	Global allItems
+	Loop Files, setting['ItemDefLoc'] '\*.json' {
+		Code := SubStr(A_LoopFileName, 1, -5)
+		allItems[Code] := readJson(A_LoopFileFullPath)
+	}
+}
+searchCode() {
+	Global searchItems
+	Needle := Trim(enteredCode.Value, ' ')
+	Needle := Trim(Needle, '`t')
+	searchList.Delete()
+	searchItems := []
+	If (Needle = '') {
+		Return
+	}
+	For Code, Item in allItems {
+		If InStr(Code, Needle) || InStr(Item['Name'], Needle) {
+			searchList.Add([Item['Name']])
+			searchItems.Push(Item)
+		}
+	}
+	If searchItems.Length >= 1 {
+		ControlShowDropDown searchList
+		enteredCode.Visible := False
+		searchList.Visible := True
+	}
+	Return searchItems
+}
 analyzeCode() {
 	If Sells[currentSession.Value].Has('tmp') {
 		mainList.Delete(Sells[currentSession.Value]['tmp']['Row'])
@@ -6,7 +35,7 @@ analyzeCode() {
 	Thumb.Value := 'images\Default.png'
 	Code := Trim(enteredCode.Value, ' ')
 	Code := Trim(Code, '`t')
-	If (Code = '') || (Item := readJson(setting['ItemDefLoc'] '\' Code '.json')).Count = 0 {
+	If (Code = '') || !allItems.Has(Code) || (Item := allItems[Code]).Count = 0 {
 		Return
 	}
 	tmpData := []
@@ -52,16 +81,32 @@ analyzeCode() {
 	Sells[currentSession.Value]['tmp']['Data'] := tmpData
 }
 thumbCheck(Code) {
+	Stock.Value := ''
+	Thumb.Value := 'images\Default.png'
+	Code128.Value := ''
 	If (Code = '') || (Item := readJson(setting['ItemDefLoc'] '\' Code '.json')).Count = 0 {
 		Return
 	}
-	Thumb.Value := 'images\Default.png'
-	Code128.Value := ''
+	Stock.Value := LeadTrailZeroTrim(Item['Stock Value'])
 	Code128.Move(,, 140, 32)
 	If item['Thumbnail']
 		Try Thumb.Value := 'HBITMAP:*' hBitmapFromB64(item['Thumbnail'])
 	If item['Code128']
 		Try Code128.Value := 'HBITMAP:*' hBitmapFromB64(item['Code128'])
+}
+LeadTrailZeroTrim(N) {
+	If !InStr(N, '.') {
+		Return N
+	}
+	N := LTrim(N, '0')
+	If SubStr(N, 1, 1) = '.' {
+		N := '0' N
+	}
+	N := RTrim(N, '0')
+	If SubStr(N, -1) = '.' {
+		N := SubStr(N, 1, -1)
+	}
+	Return N
 }
 tmpRowColorize(Row) {
 	mainListCLV.Row(Row, , 0xFF999999)
@@ -142,7 +187,7 @@ updateRowViewCurrency(Row := 0, isSum := False, isQuickResume := False) {
 	}
 }
 updateRowView(Data) {
-	Data[7] := Round(Data[7], 2)
+	Data[7] := LeadTrailZeroTrim(Round(Data[7], setting['Rounder']))
 	Data[10] := Round(Data[10], setting['Rounder'])
 	Data[5] := Round(Data[5], setting['Rounder'])
 	Return Data
@@ -315,12 +360,14 @@ quickListSubmit() {
 		Case 7:
 			Sells[currentSession.Value]['Items'][quickRow.Value][7] := quickEdit.Value
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateQuantity(Sells[currentSession.Value]['Items'][quickRow.Value])
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
 			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
 			updatePriceSum()
 			updateRowViewCurrency(quickRow.Value, True)
 		Case 10:
 			Sells[currentSession.Value]['Items'][quickRow.Value][10] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updatePrice(Sells[currentSession.Value]['Items'][quickRow.Value])
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
 			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
 			updatePriceSum()
 			updateRowViewCurrency(quickRow.Value, True)
@@ -433,10 +480,10 @@ commitSellSubmit(Later := False) {
 		}
 	}
 	latestSellsSave()
-	updatePriceSum()
+	initiateSession()
 	pendingQuickResume()
 	saveSessions()
-	initiateSession()
+	updatePriceSum()
 	SetTimer(commitClose, -5000)
 	commitClose() {
 		payCheckWindow.Hide()
@@ -455,6 +502,7 @@ commitSellSubmit(Later := False) {
 	mainWindow.Opt('-Disabled')
 	Thumb.Value := 'images\Default.png'
 	Code128.Value := ''
+	Stock.Value := ''
 }
 tagUser(File) {
 	tags := readJson('commit\tags.json')
@@ -547,6 +595,7 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	priceSum.Move(Width - 310, Height - 109)
 	enteredCode.GetPos(&X, &Y, &CWidth, &CHeight)
 	enteredCode.Move(Width - 480)
+	searchList.Move(Width - 480)
 	CItemPrice.GetPos(&X, &Y, &CWidth, &CHeight)
 	CItemPrice.Move(Width - 280)
 	SetTimer(boxRedraw, 0)

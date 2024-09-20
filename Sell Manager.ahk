@@ -16,8 +16,10 @@ A_MaxHotkeysPerInterval := 200
 setting := readJson()
 currency := readJson('setting\currency.json')
 Sells := readJson('setting\sessions\sessions.json')
+allItems := Map()
+searchItems := []
 pToken := Gdip_Startup()
-username := A_Args[1]
+username := 'A_Args[1]'
 
 mainWindow := Gui('Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
@@ -29,12 +31,10 @@ Quit(HGui) {
 	ExitApp()
 }
 mainWindow.OnEvent('Size', resizeControls)
-
 C1 := mainWindow.AddPicture(, 'images\Sell Manager.png')
 mainWindow.SetFont('s25', 'Segoe UI')
 C2 := mainWindow.AddText('ym+10', 'Sell Manager')
 mainWindow.MarginY := 10
-
 quickWindow := Gui('-MinimizeBox', setting['Name'])
 quickWindow.BackColor := 'White'
 quickWindow.MarginX := 5
@@ -48,10 +48,11 @@ quickCol := quickWindow.AddEdit('xp yp wp hp Hidden')
 quickCode := quickWindow.AddEdit('xp yp wp hp Hidden')
 quickOK := quickWindow.AddButton('hp yp', '✓')
 quickOK.OnEvent('Click', (*) => quickListSubmit())
-
 C3 := mainWindow.AddText('xm ym+140 w192 h100 Hidden')
-Thumb := mainWindow.AddPicture('xp+64 yp w64 h64', 'images\Default.png')
-Code128 := mainWindow.AddPicture('xm+28 yp+70 w140 h32')
+Thumb := mainWindow.AddPicture('xm+20 yp w64 h64', 'images\Default.png')
+Stock := mainWindow.AddEdit('xp+80 yp+10 w60 r1 BackgroundWhite cRed ReadOnly -E0x200 Center')
+Stock.SetFont('s15')
+Code128 := mainWindow.AddPicture('xm+20 yp+70 w140 h32')
 Shadow(mainWindow, [C3, Thumb, Code128])
 mainWindow.SetFont('s8 norm')
 latestSellsCount := mainWindow.AddText('cBlue xm ym+285 w192 Center', 'Latest sells:')
@@ -76,6 +77,8 @@ mainList := mainWindow.AddListView('xm+240 ym+140 w980 h422 NoSortHdr -E0x200')
 mainList.OnNotify(-3, quickListEdit)
 mainList.OnEvent('ItemSelect', thumbCheckFunc)
 thumbCheckFunc(Ctrl, Item, Selected) {
+	Stock.Value := ''
+	Thumb.Value := 'images\Default.png'
 	If !Item || !Selected {
 		Return
 	}
@@ -104,6 +107,21 @@ mainWindow.SetFont('s25')
 enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' ym+10 w450 Right c0000ff BackgroundE6E6E6 -E0x200')
 EM_SETCUEBANNER(enteredCode.Hwnd, '#Code ')
 enteredCode.OnEvent('Change', (*) => analyzeCode())
+searchList := mainWindow.AddComboBox('xp yp wp hp Hidden r10')
+searchList.OnEvent('Change', searchAnalyzeCode)
+searchAnalyzeCode(Ctrl, Info) {
+	If Ctrl.Value && IsDigit(Ctrl.Value '') && Ctrl.Value <= searchItems.Length {
+		enteredCode.Value := searchItems[Ctrl.Value]['Code']
+		analyzeCode()
+	}
+	enteredCode.Visible := True
+	searchList.Visible := False
+}
+searchList.OnCommand(CBN_CLOSEUP := 8, (*) => searchListHide())
+searchListHide() {
+	enteredCode.Visible := True
+	searchList.Visible := False
+}
 mainWindow.SetFont('s14')
 CItemPrice := mainWindow.AddEdit('xp+250 yp+55 w250 cRed Right -E0x200 BackgroundF0F0F0')
 EM_SETCUEBANNER(CItemPrice.Hwnd, '#Price  ')
@@ -163,12 +181,12 @@ commitLater.SetFont('s10')
 ;Menus.Add('Options', OptionMenu)
 ;mainWindow.MenuBar := Menus
 mainWindow.Show('Maximize')
+loadDefinitions()
 readSessionList()
 latestSellsLoad() 
 pendingQuickResume()
 SetTimer(saveSessions, setting['SessAutoSave'])
 enteredCode.Focus()
-mainList.Redraw()
 
 #HotIf enteredCode.Focused
 Enter::addItemToList()
@@ -198,4 +216,5 @@ Delete:: removeItemFromList()
 Left:: prevSession()
 Right:: nextSession()
 ^Tab:: HideShowQuickies()
+^F:: searchCode()
 #HotIf
