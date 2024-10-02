@@ -8,10 +8,20 @@ A_MaxHotkeysPerInterval := 200
 #Include <shared\explorertheme>
 #Include <shared\incelledit>
 #Include <shared\cuebanner>
-
 #Include <setting>
 #Include <sell>
 #Include <shadow>
+
+If A_Args.Length != 1 || A_Args[1] = '' {
+	MsgBox('No user input!', 'Login', 0x30)
+	ExitApp()
+}
+usersetting := readJson(A_AppData '\Cash Helper\users.json')
+If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
+	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
+	ExitApp()
+}
+username := A_Args[1]
 
 setting := readJson()
 currency := readJson('setting\currency.json')
@@ -19,8 +29,6 @@ Sells := readJson('setting\sessions\sessions.json')
 allItems := Map()
 searchItems := []
 pToken := Gdip_Startup()
-username := 'A_Args[1]'
-
 mainWindow := Gui('Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 30
@@ -55,7 +63,7 @@ Stock.SetFont('s15')
 Code128 := mainWindow.AddPicture('xm+20 yp+70 w140 h32')
 Shadow(mainWindow, [C3, Thumb, Code128])
 mainWindow.SetFont('s8 norm')
-latestSellsCount := mainWindow.AddText('cBlue xm ym+285 w192 Center', 'Latest sells:')
+latestSellsCount := mainWindow.AddText('cBlue xm ym+295 w192 Center', 'Latest sells:')
 mainWindow.SetFont('s10')
 latestSells := mainWindow.AddListView('-E0x200 w192 h326 -Hdr', ['Code', 'Name'])
 latestSells.OnEvent('Click', displayItemCode)
@@ -75,16 +83,8 @@ mainWindow.SetFont('s14 norm')
 mainWindow.MarginY := 10
 mainList := mainWindow.AddListView('xm+240 ym+140 w980 h422 NoSortHdr -E0x200')
 mainList.OnNotify(-3, quickListEdit)
-mainList.OnEvent('ItemSelect', thumbCheckFunc)
-thumbCheckFunc(Ctrl, Item, Selected) {
-	Stock.Value := ''
-	Thumb.Value := 'images\Default.png'
-	If !Item || !Selected {
-		Return
-	}
-	Code := Ctrl.GetText(Item, 2)
-	thumbCheck(Code)
-}
+mainList.OnEvent('ItemSelect', (*) => thumbCheck())
+mainList.OnEvent('Click', (*) => thumbCheck())
 SetExplorerTheme(mainList.Hwnd)
 mainListCLV := LV_Colors(mainList)
 For Each, Col in setting['Sell']['Session']['03'] {
@@ -126,8 +126,8 @@ mainWindow.SetFont('s14')
 CItemPrice := mainWindow.AddEdit('xp+250 yp+55 w250 cRed Right -E0x200 BackgroundF0F0F0')
 EM_SETCUEBANNER(CItemPrice.Hwnd, '#Price  ')
 Box := Shadow(mainWindow, [C1, C2, enteredCode, CItemPrice])
-mainWindow.SetFont('s40')
-priceSum := mainWindow.AddEdit('xm+400 ym+600 w280 -E0x200 Right cRed ReadOnly BackgroundWhite')
+mainWindow.SetFont('s35')
+priceSum := mainWindow.AddEdit('xm+350 ym+600 w330 -E0x200 Right cRed ReadOnly BackgroundWhite')
 priceSum.SetFont('', 'Calibri')
 mainWindow.SetFont('s10')
 prevSess := mainWindow.AddButton('xm+240 yp+50 w50 h25 Center', 'Prev')
@@ -192,10 +192,9 @@ enteredCode.Focus()
 Enter::addItemToList()
 #HotIf
 
-;#HotIf mainList.Focused
-;Up::IncreaseQ()
-;Down::DecreaseQ()
-;#HotIf
+#HotIf mainList.Focused
+
+#HotIf
 
 #HotIf WinActive(quickWindow)
 Enter::quickListSubmit()
@@ -217,4 +216,6 @@ Left:: prevSession()
 Right:: nextSession()
 ^Tab:: HideShowQuickies()
 ^F:: searchCode()
+PgUp::IncreaseQ()
+PgDn::DecreaseQ()
 #HotIf

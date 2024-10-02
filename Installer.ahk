@@ -9,7 +9,6 @@ IG.AddButton('w300', 'Install').OnEvent('Click', Setup)
 IG.Show()
 Setup(Ctrl, Info) {
     Ctrl.Enabled := False
-    
     Dirs := [InstallDir := A_ProgramFiles '\Cash Helper v2'
            , InstallDir '\commit'
            , InstallDir '\commit\pending'
@@ -18,6 +17,7 @@ Setup(Ctrl, Info) {
            , InstallDir '\setting\defs'
            , InstallDir '\images\box'
            , InstallDir '\lib\shared'
+           , InstallDir '\lib\shared\v1'
            , InstallDir '\lib\inc'
            , InstallDir '\setting\sessions']
     For Dir in Dirs {
@@ -39,6 +39,7 @@ Setup(Ctrl, Info) {
     FileInstall('Updates Check.ahk', A_ProgramFiles '\Cash Helper v2\Updates Check.ahk', 1)
     FileInstall('lib\class_image.ahk', A_ProgramFiles '\Cash Helper v2\lib\class_image.ahk', 1)
     FileInstall('lib\currency.ahk', A_ProgramFiles '\Cash Helper v2\lib\currency.ahk', 1)
+    FileInstall('lib\loading.ahk', A_ProgramFiles '\Cash Helper v2\lib\loading.ahk', 1)
     FileInstall('lib\profile.ahk', A_ProgramFiles '\Cash Helper v2\lib\profile.ahk', 1)
     FileInstall('lib\review.ahk', A_ProgramFiles '\Cash Helper v2\lib\review.ahk', 1)
     FileInstall('lib\sell.ahk', A_ProgramFiles '\Cash Helper v2\lib\sell.ahk', 1)
@@ -65,18 +66,24 @@ Setup(Ctrl, Info) {
     FileInstall('lib\shared\cuebanner.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\cuebanner.ahk', 1)
     FileInstall('lib\shared\explorertheme.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\explorertheme.ahk', 1)
     FileInstall('lib\shared\gdip.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\gdip.ahk', 1)
+    FileInstall('lib\shared\imageput.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\imageput.ahk', 1)
     FileInstall('lib\shared\incelledit.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\incelledit.ahk', 1)
     FileInstall('lib\shared\json.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\json.ahk', 1)
     FileInstall('lib\shared\jxon.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\jxon.ahk', 1)
     FileInstall('lib\shared\lv_colors.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\lv_colors.ahk', 1)
     FileInstall('lib\shared\scrollbars.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\scrollbars.ahk', 1)
+    FileInstall('lib\shared\v1\chart.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\v1\chart.ahk', 1)
+    FileInstall('lib\shared\v1\gdip.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\v1\gdip.ahk', 1)
+    FileInstall('lib\shared\v1\plot.ahk', A_ProgramFiles '\Cash Helper v2\lib\shared\v1\plot.ahk', 1)
     FileInstall('images\About.png', A_ProgramFiles '\Cash Helper v2\images\About.png', 1)
     FileInstall('images\About_click.png', A_ProgramFiles '\Cash Helper v2\images\About_click.png', 1)
     FileInstall('images\About_disabled.png', A_ProgramFiles '\Cash Helper v2\images\About_disabled.png', 1)
     FileInstall('images\About_hover.png', A_ProgramFiles '\Cash Helper v2\images\About_hover.png', 1)
     FileInstall('images\About_normal.png', A_ProgramFiles '\Cash Helper v2\images\About_normal.png', 1)
+    FileInstall('images\amount.png', A_ProgramFiles '\Cash Helper v2\images\amount.png', 1)
     FileInstall('images\archived.png', A_ProgramFiles '\Cash Helper v2\images\archived.png', 1)
     FileInstall('images\box.png', A_ProgramFiles '\Cash Helper v2\images\box.png', 1)
+    FileInstall('images\clear.png', A_ProgramFiles '\Cash Helper v2\images\clear.png', 1)
     FileInstall('images\commit.png', A_ProgramFiles '\Cash Helper v2\images\commit.png', 1)
     FileInstall('images\commitoff.png', A_ProgramFiles '\Cash Helper v2\images\commitoff.png', 1)
     FileInstall('images\Credit Manager.png', A_ProgramFiles '\Cash Helper v2\images\Credit Manager.png', 1)
@@ -89,12 +96,18 @@ Setup(Ctrl, Info) {
     FileInstall('images\Currency Manager_disabled.png', A_ProgramFiles '\Cash Helper v2\images\Currency Manager_disabled.png', 1)
     FileInstall('images\Currency Manager_hover.png', A_ProgramFiles '\Cash Helper v2\images\Currency Manager_hover.png', 1)
     FileInstall('images\Currency Manager_normal.png', A_ProgramFiles '\Cash Helper v2\images\Currency Manager_normal.png', 1)
+    FileInstall('images\day.png', A_ProgramFiles '\Cash Helper v2\images\day.png', 1)
     FileInstall('images\Default.png', A_ProgramFiles '\Cash Helper v2\images\Default.png', 1)
     FileInstall('images\Discounts Manager.png', A_ProgramFiles '\Cash Helper v2\images\Discounts Manager.png', 1)
     FileInstall('images\Discounts Manager_click.png', A_ProgramFiles '\Cash Helper v2\images\Discounts Manager_click.png', 1)
     FileInstall('images\Discounts Manager_disabled.png', A_ProgramFiles '\Cash Helper v2\images\Discounts Manager_disabled.png', 1)
     FileInstall('images\Discounts Manager_hover.png', A_ProgramFiles '\Cash Helper v2\images\Discounts Manager_hover.png', 1)
     FileInstall('images\Discounts Manager_normal.png', A_ProgramFiles '\Cash Helper v2\images\Discounts Manager_normal.png', 1)
+    FileInstall('images\filter.png', A_ProgramFiles '\Cash Helper v2\images\filter.png', 1)
+    FileInstall('images\get.png', A_ProgramFiles '\Cash Helper v2\images\get.png', 1)
+    FileInstall('images\give.png', A_ProgramFiles '\Cash Helper v2\images\give.png', 1)
+    FileInstall('images\hour.png', A_ProgramFiles '\Cash Helper v2\images\hour.png', 1)
+    FileInstall('images\month.png', A_ProgramFiles '\Cash Helper v2\images\month.png', 1)
     FileInstall('images\pending.png', A_ProgramFiles '\Cash Helper v2\images\pending.png', 1)
     FileInstall('images\Report Bug.png', A_ProgramFiles '\Cash Helper v2\images\Report Bug.png', 1)
     FileInstall('images\Report Bug_click.png', A_ProgramFiles '\Cash Helper v2\images\Report Bug_click.png', 1)
@@ -136,6 +149,9 @@ Setup(Ctrl, Info) {
     FileInstall('images\User Manager_disabled.png', A_ProgramFiles '\Cash Helper v2\images\User Manager_disabled.png', 1)
     FileInstall('images\User Manager_hover.png', A_ProgramFiles '\Cash Helper v2\images\User Manager_hover.png', 1)
     FileInstall('images\User Manager_normal.png', A_ProgramFiles '\Cash Helper v2\images\User Manager_normal.png', 1)
+    FileInstall('images\user.png', A_ProgramFiles '\Cash Helper v2\images\user.png', 1)
+    FileInstall('images\users.png', A_ProgramFiles '\Cash Helper v2\images\users.png', 1)
+    FileInstall('images\year.png', A_ProgramFiles '\Cash Helper v2\images\year.png', 1)
     FileInstall('images\box\bottom.png', A_ProgramFiles '\Cash Helper v2\images\box\bottom.png', 1)
     FileInstall('images\box\bottomleft.png', A_ProgramFiles '\Cash Helper v2\images\box\bottomleft.png', 1)
     FileInstall('images\box\bottomright.png', A_ProgramFiles '\Cash Helper v2\images\box\bottomright.png', 1)
@@ -144,9 +160,8 @@ Setup(Ctrl, Info) {
     FileInstall('images\box\top.png', A_ProgramFiles '\Cash Helper v2\images\box\top.png', 1)
     FileInstall('images\box\topleft.png', A_ProgramFiles '\Cash Helper v2\images\box\topleft.png', 1)
     FileInstall('images\box\topright.png', A_ProgramFiles '\Cash Helper v2\images\box\topright.png', 1)
-    FileInstall('setting\currency.json', A_ProgramFiles '\Cash Helper v2\setting\currency.json', 1)
-    FileInstall('setting\currencySymbol.json', A_ProgramFiles '\Cash Helper v2\setting\currencySymbol.json', 1)
-    FileInstall('setting\setting.json', A_ProgramFiles '\Cash Helper v2\setting\setting.json', 1)
+
+    FileCreateShortcut(InstallDir '\Cash Helper.ahk', A_Desktop '\Cash Helper v2.lnk', InstallDir,,, A_AhkPath,, 1)
     If 'Yes' = MsgBox('Installation complete!', 'Run now?', 0x40 + 0x4) {
         Run(InstallDir '\Cash Helper.ahk')
     }

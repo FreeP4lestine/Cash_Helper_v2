@@ -1,6 +1,5 @@
 {
 	"Author": "Chandool Muhammad",
-	"Bypass": "GoodGuy",
 	"DisplayCurrency": "TND",
 	"FirstUse": 1,
 	"Item": [
@@ -118,13 +117,5 @@
 		}
 	},
 	"SessAutoSave": 0,
-	"Extra": [
-		"Clears",
-		"Cost",
-		"Sell",
-		"Profit"
-	],
-	"Version": "1.0.0",
-	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
-	"latestCurrencyCheck": "2024-08-31"
+	"Version": "1.0.0"
 }

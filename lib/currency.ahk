@@ -193,3 +193,37 @@ setDefaultCurrency() {
 	currencySymbol := readJson('setting\currencySymbol.json')
 	MsgBox(currencySymbol['symbols'][Symbol.Value] ' is now the default currecny', 'Default Currency', 0x40)
 }
+
+resizeControls(GuiObj, MinMax, Width, Height) {
+	C1.Move(,, Width - 160)
+	mainList.Move(,, Width - 420, Height - 310)
+	C12.Move(Width - 335)
+	C13.Move(Width - 335)
+	C14.Move(Width - 335)
+	Symbol.Move(Width - 335)
+	Name.Move(Width - 335)
+	ConvertF.Move(Width - 335)
+	Default.Move(Width - 335)
+	Update.Move(Width - 335)
+	onlineUpdate.Move(Width - 335)
+	Get.Move(Width - 335)
+	NewAPI.Move(Width - 335)
+	Delete.Move(Width - 335)
+	W := Width // 3 - 10
+	C15.Move(, Height - 50)
+	Rounder.Move(, Height - 50)
+	Link.Move(W, Height - 50, W)
+	LatestCheck.Move(W * 2, Height - 50, W)
+    Box1.ResizeShadow()
+    Box2.ResizeShadow()
+	Box3.ResizeShadow()
+	Box4.ResizeShadow()
+    SetTimer(boxRedraw, 0)
+    SetTimer(boxRedraw, -500)
+}
+boxRedraw() {
+    Box1.RedrawShadow()
+    Box2.RedrawShadow()
+	Box3.RedrawShadow()
+	Box4.RedrawShadow()
+}

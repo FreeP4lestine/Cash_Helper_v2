@@ -17,11 +17,12 @@ updateRowViewCurrency(Row := 0) {
 }
 autoResizeCols() {
     Loop details.GetCount('Col') {
-        If A_Index = 11 {
+        If A_Index = 11 || A_Index = 1 {
             Continue
         }
         details.ModifyCol(A_Index, 'Center AutoHdr')
     }
+    details.ModifyCol(1, '0')
     details.ModifyCol(11, 'Center 50')
 }
 addedRowColorize(Row) {
@@ -150,10 +151,10 @@ loadPendingSells(Flag) {
                 loadPendingSells(0)
                 Return
             }
-            Username := usersList.GetText(usersList.GetNext())
-            Username := StrSplit(Username, ' - ')[1]
+            UsernameA := usersList.GetText(usersList.GetNext())
+            UsernameA := StrSplit(UsernameA, ' - ')[1]
             review['Pointer'] := []
-            For Ptr in review['Users'][Username].Pointer {
+            For Ptr in review['Users'][UsernameA].Pointer {
                 Sell := review['Pending'][Ptr]
                 If InStr(Sell.File, 'archived') {
                     Continue
@@ -220,7 +221,6 @@ clearSells() {
             totalProfitValue.Value := Round((S - B) * currency['rates'][Setting['DisplayCurrency']], setting['Rounder']) ' ' Setting['DisplayCurrency']
         }
     }
-    Wait.Stop()
     MsgBox('All clear!', 'Clear', 0x40)
 }
 resizeControls(GuiObj, MinMax, Width, Height) {

@@ -12,6 +12,17 @@
 #Include <setting>
 #Include <shadow>
 
+If A_Args.Length != 1 || A_Args[1] = '' {
+	MsgBox('No user input!', 'Login', 0x30)
+	ExitApp()
+}
+usersetting := readJson(A_AppData '\Cash Helper\users.json')
+If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
+	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
+	ExitApp()
+}
+username := A_Args[1]
+
 setting := readJson()
 currency := readJson('setting\currency.json')
 pToken := Gdip_Startup()
@@ -29,15 +40,14 @@ C1 := mainWindow.AddPicture('xm+20 ym+20', 'images\Stock Manager.png')
 mainWindow.SetFont('s25')
 C2 := mainWindow.AddText('ym+20', 'Stock Manager')
 mainWindow.SetFont('s10')
-propertiesWindow := Gui('Parent' mainWindow.Hwnd ' Border -Caption')
-;propertiesWindow.BackColor := '0xFFF0F0F0'
+propertiesWindow := Gui('Parent' mainWindow.Hwnd ' -Caption')
+propertiesWindow.BackColor := '0xFFFFFFFF'
 propertiesWindow.MarginY := 10
-SB := ScrollBar(propertiesWindow, 270, 500)
 itemPropertiesForms := Map()
 For Property in setting['Item'] {
 	itemPropertiesForms[Property[1]] := Map()
 	propertiesWindow.SetFont('s8')
-	Text := propertiesWindow.AddText('xm+20 w70 Right', Property[1] (Property[2] ? '*' : '') ': ')
+	Text := propertiesWindow.AddText('xm w70 Right', Property[1] (Property[2] ? '*' : '') ': ')
 	If A_Index = 1
 		C3 := Text
 	propertiesWindow.SetFont('s10')
@@ -111,7 +121,8 @@ For Property in setting['Item'] {
 			itemPropertiesForms[Property[1]]['EForm'] := EForm
 	}
 }
-mainList := mainWindow.AddListView('xm+390 ym+120 w980 h540 -E0x200')
+SB := ScrollBar(propertiesWindow, 270, 500)
+mainList := mainWindow.AddListView('xm+400 ym+125 w980 h540 -E0x200')
 searchList := mainWindow.AddListView('xp yp wp hp Hidden -E0x200')
 Box3 := Shadow(mainWindow, [mainList, searchList])
 SetExplorerTheme(mainList.Hwnd)
@@ -160,8 +171,6 @@ Menus.Add("Edit", HelpMenu)
 Menus.Add("View", ViewMenu)
 mainWindow.MenuBar := Menus
 propertiesWindow.Show('x40 y130 h454 w320')
-SB.ScrollMsg(1, 0, 0x115, propertiesWindow.Hwnd)
-SB.ScrollMsg(0, 0, 0x115, propertiesWindow.Hwnd)
 Box1 := Shadow(mainWindow, [updateItem, propertiesWindow])
 mainWindow.Show('Maximize')
 loadItemsDefinitions()

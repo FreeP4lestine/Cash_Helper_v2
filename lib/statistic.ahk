@@ -1,21 +1,236 @@
-updateRowViewCurrency(Row := 0) {
-	If Row {
-		tmp := []
-		For Each, Col in setting['Sell']['Session']['03'] {
-			Value := details.GetText(Row, Each)
-			Switch Col {
-				Case 'Buy Value', 'Sell Value', 'Added Value', 'Price':
-					Value := Round(Value * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) 
-					tmp.Push(Value)
-				Case 'CUR':
-					tmp.Push(setting['DisplayCurrency'])
-				Default: tmp.Push(Value)
-			}
-		}
-		details.Modify(Row,, tmp*)
-	}
+resizeControls(GuiObj, MinMax, Width, Height) {
+    C2.Move(,, Width - 164)
+    ;filtersList.Move(,,, Height - 300)
+    ;filteredList.Move(,,, Height - 300)
+    details.Move(,, Width - 80, Height - 300)
+    Box1.ResizeShadow()
+    ;Box2.ResizeShadow()
+    Box3.ResizeShadow()
+    SetTimer(boxRedraw, 0)
+	SetTimer(boxRedraw, -500)
 }
-
+boxRedraw() {
+    Box1.RedrawShadow()
+    ;Box2.RedrawShadow()
+    Box3.RedrawShadow()
+}
+loadAll() {
+    Loop Files, 'commit\archived\*', 'D' {
+        DateTime := FormatTime(A_LoopFileName, 'yyyy/MM/dd [ HH:mm:ss ]')
+        R := details.Add(, DateTime ': ')
+        detailsCLV.Cell(R, 1,, 0xFF000080)
+        Loop Files, 'commit\archived\' A_LoopFileName '\*.json' {
+            SellID := A_Index
+            Items := readJson(A_LoopFileFullPath)
+            C := S := P := Q := 0
+            For Item in Items['Items'] {
+                Co := Item[4] * Item[7]
+                Se := Item[5] * Item[7]
+                Qa := Item[7] / Item[6]
+                C += Co
+                S += Se
+                Q += Qa
+                Item.InsertAt(1, [DateTime, Co, Se, Se - Co]*)
+                If SellID = 1 {
+                    details.Modify(R,, Item*)
+                }
+                Else R := details.Add(, Item*)
+                ;--R
+                addedRowColorize(R, 4)
+                updateRowViewCurrency(R, 4)
+                detailsCLV.Cell(R, 2,, 0xFFFF0000)
+                detailsCLV.Cell(R, 3,, 0xFF008000)
+                detailsCLV.Cell(R, 4,, 0xFF008000)
+            }
+            P := S - C
+        }
+    }
+    autoResizeCols()
+}
+;loadFilters(Flag := 0) {
+;    Switch Flag {
+;        Case 0:
+;            C := S := P := Q := 0
+;            Loop Files, 'commit\archived\*', 'D' {
+;                DateTime := FormatTime(A_LoopFileName, 'yyyy/MM/dd [ HH:mm:ss ]')
+;                If !statistic['clears'].Has(DateTime)
+;                    statistic['clears'][DateTime] := []
+;                Loop Files, 'commit\archived\' A_LoopFileName '\*.json' {
+;                    Items := readJson(A_LoopFileFullPath)
+;                    statistic['clears'][DateTime].Push(Items)
+;                    Name := SubStr(A_LoopFileName, 1, -5)
+;                    Year := FormatTime(Name, 'yyyy')
+;                    If !statistic['year'].Has(Year)
+;                        statistic['year'][Year] := []
+;                    statistic['year'][Year].Push(Items)
+;                    Month := FormatTime(Name, 'yyyy/MM')
+;                    If !statistic['month'].Has(Month)
+;                        statistic['month'][Month] := []
+;                    statistic['month'][Month].Push(Items)
+;                    Day := FormatTime(Name, 'yyyy/MM/dd')
+;                    If !statistic['day'].Has(Day)
+;                        statistic['day'][Day] := []
+;                    statistic['day'][Day].Push(Items)
+;                    Hour := FormatTime(Name, 'yyyy/MM/dd [ HH ]')
+;                    If !statistic['hour'].Has(Hour)
+;                        statistic['hour'][Hour] := []
+;                    statistic['hour'][Hour].Push(Items)
+;                    If !Items.Has('Username') || Items['Username'] = '' {
+;                        If !statistic['user'].Has('--Unknown--') {
+;                            statistic['user']['--Unknown--'] := []
+;                        }
+;                        statistic['user']['--Unknown--'].Push(Items)
+;                    } Else {
+;                        If !statistic['user'].Has(Items['Username']) {
+;                            statistic['user'][Items['Username']] := []
+;                        }
+;                        statistic['user'][Items['Username']].Push(Items)
+;                    }
+;                    For Item in Items['Items'] {
+;                        If !statistic['items'].Has(Item[2]) {
+;                            statistic['items'][Item[2]] := {C: 0, S: 0, Q: 0}
+;                        }
+;                        Co := Item[4] * Item[7]
+;                        Se := Item[5] * Item[7]
+;                        Qa := Item[7] / Item[6]
+;                        statistic['items'][Item[2]].C += Co
+;                        statistic['items'][Item[2]].S += Se
+;                        statistic['items'][Item[2]].Q += Qa
+;                        C += Co
+;                        S += Se
+;                        Q += Qa
+;                    }
+;                }
+;            }
+;            P := S - C
+;            filtersList.Modify(1,, filtersList.GetText(1) ' - ( ' statistic['clears'].Count ' )')
+;            filtersList.Modify(2,, filtersList.GetText(2) ' - ( ' statistic['year'].Count ' )')
+;            filtersList.Modify(3,, filtersList.GetText(3) ' - ( ' statistic['month'].Count ' )')
+;            filtersList.Modify(4,, filtersList.GetText(4) ' - ( ' statistic['day'].Count ' )')
+;            filtersList.Modify(5,, filtersList.GetText(5) ' - ( ' statistic['user'].Count ' )')
+;            filtersList.Modify(6,, filtersList.GetText(6) ' - ( ' statistic['hour'].Count ' )')
+;            filtersList.Modify(7,, filtersList.GetText(7) ' - ( ' statistic['items'].Count ' )')
+;            filtersList.Modify(8,, filtersList.GetText(8) ' - ( ' statistic['items'].Count ' )')
+;            filtersList.Modify(9,, filtersList.GetText(9) ' - ( ' statistic['items'].Count ' )')
+;            filtersList.Modify(10,, filtersList.GetText(10) ' - ( ' statistic['items'].Count ' )')
+;        }
+;}
+;displayFiltersDetails() {
+;    filteredList.Delete()
+;    CSPA := cSPASort(statistic['items'])
+;    Switch filtersList.GetNext() {
+;        Case 1:
+;            For Clear in statistic['clears'] {
+;                filteredList.Add('Icon4', Clear)
+;            }
+;        Case 2:
+;            For Year in statistic['year'] {
+;                filteredList.Add('Icon5', Year)
+;            }
+;        Case 3:
+;            For Month in statistic['month'] {
+;                filteredList.Add('Icon6', Month)
+;            }
+;        Case 4:
+;            For Day in statistic['day'] {
+;                filteredList.Add('Icon7', Day)
+;            }
+;        Case 5:
+;            For User in statistic['user'] {
+;                filteredList.Add('Icon3', User)
+;            }
+;        Case 6:
+;            For Hour in statistic['hour'] {
+;                filteredList.Add('Icon8', Hour)
+;            }
+;        Case 7:
+;            For Each, Item in CSPA[1] {
+;                filteredList.Add('Icon10', Item[2] ' [ ' Round(Item[1], setting['Rounder']) ' ]')
+;            }
+;        Case 8:
+;            For Each, Item in CSPA[2] {
+;                filteredList.Add('Icon9', Item[2] ' [ ' Round(Item[1], setting['Rounder']) ' ]')
+;            }
+;        Case 9:
+;            For Each, Item in CSPA[3] {
+;                filteredList.Add('Icon9', Item[2] ' [ ' Round(Item[1], setting['Rounder']) ' ]')
+;            }
+;        Case 10:
+;            For Each, Item in CSPA[4] {
+;                filteredList.Add('Icon11', Item[2] ' [ ' LeadTrailZeroTrim(Round(Item[1], setting['Rounder'])) ' ]')
+;            }
+;    }
+;}
+LeadTrailZeroTrim(N) {
+	If !InStr(N, '.') {
+		Return N
+	}
+	N := LTrim(N, '0')
+	If SubStr(N, 1, 1) = '.' {
+		N := '0' N
+	}
+	N := RTrim(N, '0')
+	If SubStr(N, -1) = '.' {
+		N := SubStr(N, 1, -1)
+	}
+	Return N
+}
+cSPASort(Items) {
+    Costs := []
+    Sells := []
+    Profits := []
+    Quantitys := []
+    For Item, Detail in statistic['items'] {
+        Costs.Push([Detail.C, Item])
+        Sells.Push([Detail.S, Item])
+        Profits.Push([Detail.S - Detail.C, Item])
+        Quantitys.Push([Detail.Q, Item])
+    }
+    Costs := sortDecrease(Costs)
+    Sells := sortDecrease(Sells)
+    Profits := sortDecrease(Profits)
+    Quantitys := sortDecrease(Quantitys)
+    Return [Costs, Sells, Profits, Quantitys]
+}
+sortDecrease(List) {
+    Loop List.Length {
+        Max := List[O := A_Index][1]
+        Loop List.Length - O {
+            Val := List[O + (I := A_Index)][1]
+            If Val > Max {
+                Aux := List[O]
+                List[O] := List[O + I]
+                List[O + I] := Aux
+                Max := Val
+            }
+        }
+    }
+    Return List
+}
+updateRowViewCurrency(Row := 0, StartCol := 0) {
+    If Row {
+        tmp := ['']
+        Loop StartCol - 1 {
+            Value := details.GetText(Row, 1 + A_Index)
+            If IsNumber(Value) {
+                Value := Round(Value * currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
+            }
+            tmp.Push(Value)
+        }
+        For Each, Col in setting['Sell']['Session']['03'] {
+            Value := details.GetText(Row, StartCol + Each)
+            Switch Col {
+                Case 'Buy Value', 'Sell Value', 'Added Value', 'Price':
+                    Value := Round(Value * currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
+                    tmp.Push(Value)
+                Case 'CUR':
+                    tmp.Push(setting['DisplayCurrency'])
+                Default: tmp.Push(Value)
+            }
+        }
+        details.Modify(Row,, tmp*)
+    }
+}
 autoResizeCols() {
     Loop details.GetCount('Col') {
         If A_Index = 11 {
@@ -25,180 +240,41 @@ autoResizeCols() {
     }
     details.ModifyCol(11, 'Center 50')
 }
-addedRowColorize(Row) {
-	detailsCLV.Row(Row, , 0xFF000000)
-	detailsCLV.Cell(Row, 2,, 0xFF0000FF)
-	detailsCLV.Cell(Row, 4,, 0xFF804000)
-	detailsCLV.Cell(Row, 5,, 0xFF008040)
-	detailsCLV.Cell(Row, 10,, 0xFFFF0000)
-	detailsCLV.Cell(Row, 11, 0xFFFFC080)
+addedRowColorize(Row, StartCol := 0) {
+    detailsCLV.Row(Row, , 0xFF000000)
+    detailsCLV.Cell(Row, StartCol + 2, , 0xFF0000FF)
+    detailsCLV.Cell(Row, StartCol + 4, , 0xFFFF0000)
+    detailsCLV.Cell(Row, StartCol + 5, , 0xFF008040)
+    detailsCLV.Cell(Row, StartCol + 10, , 0xFF008000)
+    detailsCLV.Cell(Row, StartCol + 11, 0xFFFFC080)
 }
-displayUserSells(User) {
-    Count := 0, Count2 := 0
-    B := S := P := 0
-    nonSubmitted.Delete()
-    details.Delete()
-    overall.Text := 'Selection summary: ( ' Count  ' )'
-    overallUser.Text := 'Current user summary: ( ' Count2  ' )'
-    nonSubmittedTxt.Text := 'Non reviewed sells ( ' Count  ' )'
-    Bought.Value := B
-    Sold.Value := S
-    Profit.Value := P
-    BoughtUser.Value := B
-    SoldUser.Value := S
-    ProfitUser.Value := P
-    review['List'] := []
-    Switch User {
-        Case 'Everyone': loadNonSubmitted()
-        Default:
-            For Each, _Items in review['nonreview'] {
-                Items := _Items['Items']
-                If !Items.Has('Username') || User != Items['Username'] {
-                    Continue
-                }
-                review['List'].Push(Items)
-                DateTime := SubStr(A_LoopFileName, 1, -5)
-                DateTime := FormatTime(DateTime, 'yyyy/MM/dd [HH:mm:ss]')
-                C := 0
-                For Item in Items['Items'] {
-                    B += Item[4] * Item[7] / Item[6]
-                    S += Item[10]
-                    C++
-                    Count2++
-                }
-                nonSubmitted.Add('icon1','( ' C ' ) '  DateTime )
-                Count++
-                nonSubmittedTxt.Text := 'Non reviewed sells ( ' Count  ' )'
-            }
-            If !Count {
-                Return
-            }
-            overallUser.Text := 'Current user summary: ( ' Count2  ' )'
-            BoughtUser.Value := Round(B * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-            SoldUser.Value := Round(S * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-            ProfitUser.Value := Round((S - B) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-    }
-}
-displayDetails() {
-    details.Delete()
-    B := S := P := 0
-    Count := 0
-    Count2 := 0
-    next := 0
-    While next := nonSubmitted.GetNext(next) {
-        Items := review['List'][next]
-        For Item in Items['Items'] {
-            R := details.Add(, Item*)
-            B += Item[4] * Item[7] / Item[6]
-            S += Item[10]
-            updateRowViewCurrency(R)
-            addedRowColorize(R)
-            Count++
-        }
-        Count2++
-    }
-    If Count2 = 1 {
-        openTime.Value := 'Open Time: ' FormatTime(Items['OpenTime'], 'yyyy/MM/dd HH:mm:ss')
-        commitTime.Value := 'Commit Time: ' FormatTime(Items['CommitTime'], 'yyyy/MM/dd HH:mm:ss')
-    } Else {
-        openTime.Value := 'Open Time: Multi'
-        commitTime.Value := 'Commit Time : Multi'
-    }
-    autoResizeCols()
-    overall.Text := 'Selection summary: ( ' Count  ' )'
-    Bought.Value := Round(B * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-	Sold.Value := Round(S * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-	Profit.Value := Round((S - B) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-}
-loadNonSubmitted() {
-    users := readJson(A_AppData '\Cash Helper\users.json')
-    For User, Info in users['Registered'] {
-        If review['Users'].Has(User) {
-            Continue
-        }
-        If Info['b64Thumbnail'] {
-            Try Ico := IL_Add(IL, 'HBITMAP:*' hBitmapFromB64(Info['b64Thumbnail']))
-            Catch
-                Ico := -1
-        } Else Ico := -1
-        usersList.Add('Icon' Ico, User)
-        review['Users'][User] := ''
-    }
-    Count := 0, Count2 := 0
-    B := S := P := 0
-    nonSubmitted.Delete()
-    nonSubmittedTxt.Text := 'Non reviewed sells ( ' Count  ' )'
-    overallTotal.Text := 'Overall Summary: ( ' Count2  ' )'
-    BoughtTotal.Value := Round(B * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-	SoldTotal.Value := Round(S * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-	ProfitTotal.Value := Round((S - B) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-    review['nonreview'] := []
-    review['List'] := []
-    Loop Files, 'commit\archived\*.json', 'R' {
-        review['nonreview'].Push(Map())
-        review['nonreview'][A_Index]['File'] := A_LoopFileFullPath
-        DateTime := SubStr(A_LoopFileName, 1, -5)
-        DateTime := FormatTime(DateTime, 'yyyy/MM/dd [HH:mm:ss]')
-        Items := readJson(review['nonreview'][A_Index]['File'])
-        If Items.Has('Username') && Items['Username'] != '' && !review['Users'].Has(Items['Username']) {
-            review['Users'][Items['Username']] := ''
-            usersList.Add('Icon-1', Items['Username'])
-        }
-        review['nonreview'][A_Index]['Items'] := Items
-        review['List'].Push(Items)
-        C := 0
-        For Item in Items['Items'] {
-            B += Item[4] * Item[7] / Item[6]
-            S += Item[10]
-            C++
-            Count2++
-        }
-        nonSubmitted.Add('icon1','( ' C ' ) '  DateTime )
-        Count++
-        nonSubmittedTxt.Text := 'Non reviewed sells ( ' Count  ' )'
-    }
-    overallTotal.Text := 'Overall Summary: ( ' Count2  ' )'
-    BoughtTotal.Value := Round(B * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-	SoldTotal.Value := Round(S * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-	ProfitTotal.Value := Round((S - B) * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) ' ' setting['DisplayCurrency']
-    usersList.AutoSize(2)
-    Box5.ResizeShadow()
-    Box5.RedrawShadow()
-}
-resizeControls(GuiObj, MinMax, Width, Height) {
-    C2.Move(,, Width - 164)
-    nonSubmitted.GetPos(, &Y)
-    nonSubmitted.Move(,,, Height - Y - 28)
-    details.GetPos(&X, &Y, &CWidth, &CHeight)
-    details.Move(,, WW := Width - X - 40, Height - Y - 270)
-    openTime.Move(,, WW // 2)
-    commitTime.Move(X + WW // 2,, WW // 2)
-    overallUser.Move(, Height - 230, WW)
-    BoughtUser.Move(, Height - 200, WW // 3 - 10)
-    SoldUser.Move(X + WW // 3 + 10, Height - 200 , WW // 3 - 10)
-    ProfitUser.Move(X + WW // 3 * 2 + 10, Height - 200 , WW // 3 - 10)
-    overall.Move(, Height - 170, WW)
-    Bought.Move(, Height - 140, WW // 3 - 10)
-    Sold.Move(X + WW // 3 + 10, Height - 140 , WW // 3 - 10)
-    Profit.Move(X + WW // 3 * 2 + 10, Height - 140 , WW // 3 - 10)
-    overallTotal.Move(, Height - 100, WW)
-    BoughtTotal.Move(, Height - 70 , WW // 3 - 10)
-    SoldTotal.Move(X + WW // 3 + 10, Height - 70 , WW // 3 - 10)
-    ProfitTotal.Move(X + WW // 3 * 2, Height - 70 , WW // 3 - 10)
-    Box1.ResizeShadow()
-    Box2.ResizeShadow()
-    Box3.ResizeShadow()
-    Box5.ResizeShadow()
-    Box6.ResizeShadow()
-    Box7.ResizeShadow()
-    SetTimer(boxRedraw, 0)
-	SetTimer(boxRedraw, -500)
-}
-boxRedraw() {
-    Box1.RedrawShadow()
-    Box2.RedrawShadow()
-    Box3.RedrawShadow()
-    Box5.RedrawShadow()
-    Box6.RedrawShadow()
-    Box7.RedrawShadow()
-}
+;displayDetails() {
+;    filteredList.Enabled := False
+;    details.Enabled := False
+;    details.Delete()
+;    If !R := filteredList.GetNext() {
+;        Return
+;    }
+;    Key := filteredList.GetText(R)
+;    Switch filtersList.GetNext() {
+;        Case 1: Selections := statistic['clears']
+;        Case 2: Selections := statistic['year']
+;        Case 3: Selections := statistic['month']
+;        Case 4: Selections := statistic['day']
+;        Case 5: Selections := statistic['user']
+;        Case 6: Selections := statistic['hour']
+;        Default: Selections := []
+;    }
+;    For Items in Selections[Key] {
+;        For Item in Items['Items']
+;            details.Add(, Item*)
+;    }
+;    Loop details.GetCount() {
+;        Row := A_Index
+;        updateRowViewCurrency(Row)
+;        addedRowColorize(Row)
+;    }
+;    autoResizeCols()
+;    filteredList.Enabled := True
+;    details.Enabled := True
+;}

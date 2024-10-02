@@ -7,35 +7,54 @@
 #Include <shared\connected>
 #Include <currency>
 #Include <setting>
+#Include <shadow>
+
+If A_Args.Length != 1 || A_Args[1] = '' {
+	MsgBox('No user input!', 'Login', 0x30)
+	ExitApp()
+}
+usersetting := readJson(A_AppData '\Cash Helper\users.json')
+If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
+	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
+	ExitApp()
+}
+username := A_Args[1]
 
 setting := readJson()
 
-mainWindow := Gui('', setting['Name'])
+mainWindow := Gui('Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 20
-mainWindow.OnEvent('Close', (*) => ExitApp())
-loginThumbnail := mainWindow.AddPicture(, 'images\Currency Manager.png')
+mainWindow.OnEvent('Close', (*) => Quit)
+Quit(HGui) {
+	ExitApp()
+}
+mainWindow.OnEvent('Size', resizeControls)
+loginThumbnail := mainWindow.AddPicture('xm+20 ym+20', 'images\Currency Manager.png')
 mainWindow.SetFont('s25')
-mainWindow.AddText('ym+10', 'Currency Manager')
+C1 := mainWindow.AddText('ym+20', 'Currency Manager')
 mainWindow.MarginY := 10
 mainWindow.SetFont('s10 Bold', 'Calibri')
-mainWindow.AddText('xm', '*Note: The reference currency is the Tunisian Dinar!')
+C2 := mainWindow.AddText('xm+20', '*Note: The reference currency is the Tunisian Dinar!')
 mainWindow.MarginY := 2
-mainWindow.AddText(, '*Exp.: ')
-mainWindow.AddText('yp cRed', 'TND')
-mainWindow.AddText('yp', ' = ')
+C3 := mainWindow.AddText(, '*Exp.: ')
+C4 := mainWindow.AddText('yp cRed', 'TND')
+C5 := mainWindow.AddText('yp', ' = ')
 FormulaResult := mainWindow.AddText('yp cBlue', '1.000')
 FormulaResult.SetFont('Underline Italic')
-mainWindow.AddText('yp', '  x ')
-mainWindow.AddText('yp cRed', 'USD')
-mainWindow.AddText('xm', '`t   = ')
-mainWindow.AddText('yp cBlue', 'Factor').SetFont('Underline Italic')
-mainWindow.AddText('yp', ' x ')
-mainWindow.AddText('yp cRed', 'USD')
+C6 := mainWindow.AddText('yp', '  x ')
+C7 := mainWindow.AddText('yp cRed', 'USD')
+C8 := mainWindow.AddText('xm+20', '`t   = ')
+C9 := mainWindow.AddText('yp cBlue', 'Factor')
+C9.SetFont('Underline Italic')
+C10 := mainWindow.AddText('yp', ' x ')
+C11 := mainWindow.AddText('yp cRed', 'USD')
+Box1 := Shadow(mainWindow, [loginThumbnail, C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11])
 mainWindow.MarginY := 20
 mainWindow.SetFont('Norm s12')
-mainList := mainWindow.AddListView('xm w500 h400 -ReadOnly NoSort', ['Symbol', 'Name', 'Factor'])
+mainList := mainWindow.AddListView('xm+20 w500 h400 -E0x200 -ReadOnly NoSort', ['Symbol', 'Name', 'Factor'])
+Box3 := Shadow(mainWindow, [mainList])
 mainList.OnEvent('Click', (*) => showCurrentCurrency())
 mainList.ModifyCol(1, '100 Center')
 mainList.ModifyCol(2, '200 Center')
@@ -43,17 +62,18 @@ mainList.ModifyCol(3, '195 Center')
 SetExplorerTheme(mainList.Hwnd)
 mainListCLV := LV_Colors(mainList)
 mainWindow.SetFont('Norm s10')
-mainWindow.AddText(, 'Round Values By:')
+C15 := mainWindow.AddText('xm+20', 'Round Values By:')
 Rounder := mainWindow.AddEdit('xp+100 cBlue yp-3 w50 Number Center', setting['Rounder'])
 Rounder.OnEvent('Change', (*) => updateRoundValue())
-mainWindow.AddLink('xp+260 yp', '<a href="https://apilayer.com/marketplace/exchangerates_data-api">Exchange Rates Data API</a>').SetFont('Bold')
+Link := mainWindow.AddLink('xp+260 yp', '<a href="https://apilayer.com/marketplace/exchangerates_data-api">Exchange Rates Data API</a>')
+Link.SetFont('Bold')
 mainWindow.MarginY := 10
 mainList.GetPos(, &Y)
-mainWindow.AddText('xm+520 y' Y, 'Symbol:')
+C12 := mainWindow.AddText('xm+520 y' Y, 'Symbol:')
 Symbol := mainWindow.AddEdit('w300')
-mainWindow.AddText(, 'Name:')
+C13 := mainWindow.AddText(, 'Name:')
 Name := mainWindow.AddEdit('w300')
-mainWindow.AddText(, 'Convert Factor:')
+C14 := mainWindow.AddText(, 'Convert Factor:')
 ConvertF := mainWindow.AddEdit('w300 cBlue')
 mainWindow.SetFont('Bold s12')
 Default := mainWindow.AddButton('xp yp+30 w300', 'Set As Default')
@@ -71,9 +91,11 @@ NewAPI.OnEvent('Click', (*) => newAPIKey())
 Delete := mainWindow.AddButton('wp hp', 'Delete')
 Delete.SetFont('Norm s10')
 Delete.OnEvent('Click', (*) => deleteCurrency())
-LatestCheck := mainWindow.AddText('xp wp yp+50 cRed Right', '...')
+LatestCheck := mainWindow.AddText('xp wp yp+50 cRed Center', '...')
+Box2 := Shadow(mainWindow, [C12, C13, C14, Symbol, Name, ConvertF, Default, Update, onlineUpdate, Get, NewAPI, Delete])
 LatestCheck.SetFont('s10')
+Box4 := Shadow(mainWindow, [LatestCheck, C15, Rounder, Link])
 mainWindow.MarginY := 20
-mainWindow.Show()
+mainWindow.Show('Maximize')
 readCurrencies()
 latestCurrencyCheck()

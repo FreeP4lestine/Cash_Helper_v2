@@ -146,7 +146,7 @@ showItemProperties(Code) {
 				}
 			Case 'Stock Value':
 				If IsNumber(item[Property[1]])
-					itemPropertiesForms[Property[1]]['Form'].Value := LeadTrailZeroTrim(item[Property[1]])
+					itemPropertiesForms[Property[1]]['Form'].Value := LeadTrailZeroTrim(Round(item[Property[1]], 3))
 			Case 'Code128':
 					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 				If item[Property[1]] {
@@ -326,6 +326,10 @@ populateRow(item, currency, rounder) {
 					Catch
 						Value := 0
 				} Else Value := 0
+			Case 'Stock':
+				If !IsNumber(Value) {
+					Value := 0
+				} Else Value := LeadTrailZeroTrim(Round(Value, 3))
 		}
 		rowInfo.Push(Value)
 	}
@@ -639,7 +643,7 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	updateItem.GetPos(&uX, &uY, &uWidth, &uHeight)
 	updateItem.Move(, uY := Height - uHeight - 35)
 	propertiesWindow.GetPos(&X, &Y, &WWidth, &WHeight)
-	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 40))))
+	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 20))))
 	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
 	mainList.Move(,, Width - X - 40, Height - Y - 35)
 	searchList.Move(,, Width - X - 40, Height - Y - 35)

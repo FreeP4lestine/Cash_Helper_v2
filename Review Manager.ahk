@@ -9,7 +9,18 @@
 #Include <review>
 #Include <setting>
 #Include <shadow>
-#Include <loading>
+
+If A_Args.Length != 1 || A_Args[1] = '' {
+	MsgBox('No user input!', 'Login', 0x30)
+	ExitApp()
+}
+usersetting := readJson(A_AppData '\Cash Helper\users.json')
+If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
+	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
+	ExitApp()
+}
+username := A_Args[1]
+
 setting := readJson()
 currency := readJson('setting\currency.json')
 review := Map()
@@ -48,9 +59,7 @@ Box5 := Shadow(mainWindow, [Users, usersList])
 usersList.SetImageList(IL, 0)
 usersList.OnEvent('Click', displayUserSellsFunc)
 displayUserSellsFunc(Ctrl, Info) {
-    Wait.Start()
     loadPendingSells(1)
-    Wait.Stop()
 }
 mainWindow.SetFont('Bold s10')
 Days := mainWindow.AddText('xm+20 ym+310 w250 Center', 'Days:')
@@ -59,9 +68,7 @@ daysList := mainWindow.AddListMenu('wp LV0x40 h150 BackgroundWhite', ['Days'])
 daysList.SetImageList(IL, 0)
 daysList.OnEvent('Click', displayDateSellsFunc)
 displayDateSellsFunc(Ctrl, Info) {
-    Wait.Start()
     loadPendingSells(2)
-    Wait.Stop()
 }
 Box8 := Shadow(mainWindow, [Days, daysList])
 mainWindow.SetFont('s10 Bold')
@@ -77,9 +84,7 @@ mainWindow.SetFont('s12')
 details := mainWindow.AddListView('xm+630 ym+210 w850 h180 NoSortHdr -E0x200')
 nonSubmitted.OnEvent('Click', displayDetailsFunc)
 displayDetailsFunc(Ctrl, Info) {
-    Wait.Start()
     displayDetails()
-    Wait.Stop()
 }
 For Each, Col in setting['Sell']['Session']['03'] {
     details.InsertCol(Each, , Col)
@@ -106,15 +111,10 @@ mainWindow.SetFont('s12 norm')
 submit := mainWindow.AddButton('xm+325 ym+640 w250', 'Clear!')
 submit.OnEvent('Click', clearSellsFunc)
 clearSellsFunc(Ctrl, Info) {
-    Wait.Start()
     clearSells()
 }
 submit.SetFont('Bold')
 CreateImageButton(submit, 0, [[0xFFFFFFFF,, 0xFF008000, 5, 0xFF008000], [0xFF009F00,, 0xFFFFFFFF], [0xFF00BB00,, 0xFFFFFF00]]*)
 Box1 := Shadow(mainWindow, [nonSubmitted, nonSubmittedPB, nonSubmittedTxt, submit])
 mainWindow.Show('Maximize')
-Wait := Loading()
-Shadow(Wait.HGui, [Wait.Titl, Wait.Dots])
-Wait.Start()
 loadAll()
-Wait.Stop()

@@ -80,14 +80,17 @@ analyzeCode() {
 	Sells[currentSession.Value]['tmp']['Row'] := Row
 	Sells[currentSession.Value]['tmp']['Data'] := tmpData
 }
-thumbCheck(Code) {
+thumbCheck(Code := '') {
 	Stock.Value := ''
 	Thumb.Value := 'images\Default.png'
 	Code128.Value := ''
+	If (Code = '') && R := mainList.GetNext() {
+		Code := mainList.GetText(R, 2)
+	}
 	If (Code = '') || (Item := readJson(setting['ItemDefLoc'] '\' Code '.json')).Count = 0 {
 		Return
 	}
-	Stock.Value := LeadTrailZeroTrim(Item['Stock Value'])
+	Stock.Value := LeadTrailZeroTrim(Round(Item['Stock Value'], 3))
 	Code128.Move(,, 140, 32)
 	If item['Thumbnail']
 		Try Thumb.Value := 'HBITMAP:*' hBitmapFromB64(item['Thumbnail'])
@@ -188,6 +191,7 @@ updateRowViewCurrency(Row := 0, isSum := False, isQuickResume := False) {
 }
 updateRowView(Data) {
 	Data[7] := LeadTrailZeroTrim(Round(Data[7], setting['Rounder']))
+	Data[9] := Round(Data[9], setting['Rounder'])
 	Data[10] := Round(Data[10], setting['Rounder'])
 	Data[5] := Round(Data[5], setting['Rounder'])
 	Return Data
@@ -305,18 +309,19 @@ prevSession() {
 	readSessionList()
 }
 IncreaseQ() {
-	If !Row := mainList.GetNext() {
+	If !(Row := mainList.GetNext()) && !(Row := mainList.GetCount()) {
 		Return
 	}
 	Sells[currentSession.Value]['Items'][Row][7] += Sells[currentSession.Value]['Items'][Row][6]
 	Sells[currentSession.Value]['Items'][Row] := updateQuantity(Sells[currentSession.Value]['Items'][Row])
 	Sells[currentSession.Value]['Items'][Row] := updateRowView(Sells[currentSession.Value]['Items'][Row])
 	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
+	saveSessions()
 	updatePriceSum()
 	updateRowViewCurrency(Row, True)
 }
 DecreaseQ() {
-	If !Row := mainList.GetNext() {
+	If !(Row := mainList.GetNext()) && !(Row := mainList.GetCount()) {
 		Return
 	}
 	Sells[currentSession.Value]['Items'][Row][7] -= Sells[currentSession.Value]['Items'][Row][6]
@@ -326,6 +331,7 @@ DecreaseQ() {
 	Sells[currentSession.Value]['Items'][Row] := updateQuantity(Sells[currentSession.Value]['Items'][Row])
 	Sells[currentSession.Value]['Items'][Row] := updateRowView(Sells[currentSession.Value]['Items'][Row])
 	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
+	saveSessions()
 	updatePriceSum()
 	updateRowViewCurrency(Row, True)
 }
@@ -336,7 +342,7 @@ quickListEdit(LV, L) {
 	}
 	Col := NumGet(L + (A_PtrSize * 3), 4, "Int") + 1
 	Switch Col {
-		Case 7, 10:
+		Case 3, 5, 7, 10:
 			quickText.Value := mainList.GetText(0, Col) ":"
 			quickEdit.Value := mainList.GetText(Row, Col)
 			quickRow.Value := Row
@@ -347,25 +353,44 @@ quickListEdit(LV, L) {
 	}
 }
 quickListSubmit() {
-	If !IsNumber(quickEdit.Value) {
-		MsgBox(setting['Name'], 'Invalid', 0x30)
-		Return
-	}
 	If quickRow.Value > Sells[currentSession.Value]['Items'].Length
 	|| Sells[currentSession.Value]['Items'][quickRow.Value][2] != quickCode.Value {
 		MsgBox('Target row is not found!', setting['Name'], '0x30')
 		Return
 	}
 	Switch quickCol.Value {
+		Case 3:
+			Sells[currentSession.Value]['Items'][quickRow.Value][3] := quickEdit.Value
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
+			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
+		Case 5:
+		If !IsNumber(quickEdit.Value) {
+			MsgBox('Entered value is not a number!', setting['Name'], 0x30)
+			Return
+		}
+		Sells[currentSession.Value]['Items'][quickRow.Value][5] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updatePrice(Sells[currentSession.Value]['Items'][quickRow.Value])
+			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
+			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
+			updatePriceSum()
+			updateRowViewCurrency(quickRow.Value, True)
 		Case 7:
-			Sells[currentSession.Value]['Items'][quickRow.Value][7] := quickEdit.Value
+		If !IsNumber(quickEdit.Value) {
+			MsgBox('Entered value is not a number!', setting['Name'], 0x30)
+			Return
+		}
+		Sells[currentSession.Value]['Items'][quickRow.Value][7] := quickEdit.Value
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateQuantity(Sells[currentSession.Value]['Items'][quickRow.Value])
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
 			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
 			updatePriceSum()
 			updateRowViewCurrency(quickRow.Value, True)
 		Case 10:
-			Sells[currentSession.Value]['Items'][quickRow.Value][10] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
+		If !IsNumber(quickEdit.Value) {
+			MsgBox('Entered value is not a number!', setting['Name'], 0x30)
+			Return
+		}
+		Sells[currentSession.Value]['Items'][quickRow.Value][10] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updatePrice(Sells[currentSession.Value]['Items'][quickRow.Value])
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
 			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
@@ -504,14 +529,6 @@ commitSellSubmit(Later := False) {
 	Code128.Value := ''
 	Stock.Value := ''
 }
-tagUser(File) {
-	tags := readJson('commit\tags.json')
-	If !tags.has(username) {
-		tags[username] := []
-	}
-	tags[username].Push(File)
-	writeJson(tags, 'commit\tags.json')
-}
 latestSellsSave() {
 	latest := readJson('commit\latestSells.json')
 	If Type(latest) = 'Map' {
@@ -591,8 +608,7 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	prevSess.Move(, Height - 89)
 	currentSession.Move(, Height - 89)
 	nextSess.Move(, Height - 89)
-	priceSum.GetPos(&X, &Y, &CWidth, &CHeight)
-	priceSum.Move(Width - 310, Height - 109)
+	priceSum.Move(Width - 360, Height - 109)
 	enteredCode.GetPos(&X, &Y, &CWidth, &CHeight)
 	enteredCode.Move(Width - 480)
 	searchList.Move(Width - 480)
