@@ -2,7 +2,7 @@ resizeControls(GuiObj, MinMax, Width, Height) {
     C2.Move(,, Width - 164)
     ;filtersList.Move(,,, Height - 300)
     ;filteredList.Move(,,, Height - 300)
-    details.Move(,, Width - 80, Height - 300)
+    details.Move(,,, Height - 230)
     Box1.ResizeShadow()
     ;Box2.ResizeShadow()
     Box3.ResizeShadow()
@@ -14,38 +14,145 @@ boxRedraw() {
     ;Box2.RedrawShadow()
     Box3.RedrawShadow()
 }
-loadAll() {
-    Loop Files, 'commit\archived\*', 'D' {
-        DateTime := FormatTime(A_LoopFileName, 'yyyy/MM/dd [ HH:mm:ss ]')
-        R := details.Add(, DateTime ': ')
-        detailsCLV.Cell(R, 1,, 0xFF000080)
-        Loop Files, 'commit\archived\' A_LoopFileName '\*.json' {
-            SellID := A_Index
-            Items := readJson(A_LoopFileFullPath)
-            C := S := P := Q := 0
-            For Item in Items['Items'] {
-                Co := Item[4] * Item[7]
-                Se := Item[5] * Item[7]
-                Qa := Item[7] / Item[6]
-                C += Co
-                S += Se
-                Q += Qa
-                Item.InsertAt(1, [DateTime, Co, Se, Se - Co]*)
-                If SellID = 1 {
-                    details.Modify(R,, Item*)
+loadAll(Flag := 1) {
+    details.Delete()
+    statistic['clears'] := []
+    statistic['year'] := []
+    statistic['month'] := []
+    statistic['day'] := []
+    statistic['user'] := []
+    statistic['hour'] := []
+    C4.Enabled := False
+    Switch Flag {
+        Case 1:
+            If statistic['items'].Length {
+                For Sell in statistic['items'] {
+                    DateTime := Sell['CommitTime']
+                    DateTime := FormatTime(DateTime, 'yyyy/MM/dd [ HH:mm:ss ]')
+                    details.Add('Icon' . 2, '#' A_Index ' | ' DateTime) 
                 }
-                Else R := details.Add(, Item*)
-                ;--R
-                addedRowColorize(R, 4)
-                updateRowViewCurrency(R, 4)
-                detailsCLV.Cell(R, 2,, 0xFFFF0000)
-                detailsCLV.Cell(R, 3,, 0xFF008000)
-                detailsCLV.Cell(R, 4,, 0xFF008000)
+            } Else Loop Files, 'commit\archived\*.json', 'R' {
+                statistic['items'].Push(Items := readJson(A_LoopFileFullPath))
+                DateTime := Items['CommitTime']
+                DateTime := FormatTime(DateTime, 'yyyy/MM/dd [ HH:mm:ss ]')
+                details.Add('Icon' . 2, '#' A_Index ' | ' DateTime)
             }
-            P := S - C
-        }
+        Case 2:
+            statistic['clears'] := []
+            Loop Files, 'commit\archived\*', 'D' {
+                statistic['clears'].Push(A_LoopFileFullPath)
+                DateTime := A_LoopFileName
+                DateTime := FormatTime(DateTime, 'yyyy/MM/dd [ HH:mm:ss ]')
+                R := details.Add('Icon' . 3, '#' A_Index ' | ' DateTime)
+                C := 0
+                Loop Files, A_LoopFileFullPath '\*.json'
+                    ++C
+                details.Modify(R,, '#' A_Index ' | ' DateTime ' (' C ')')
+            }
+        Case 3:
+            statistic['year'] := []
+            tmp := Map()
+            For Sell in statistic['items'] {
+                DateTime := Sell['CommitTime']
+                Date := FormatTime(DateTime, 'yyyy')
+                If !tmp.Has(Date) {
+                    tmp[Date] := 1
+                    statistic['year'].Push([])
+                    R := details.Add('Icon' . 4, '#' tmp.Count ' | ' Date)
+                }
+                statistic['year'][tmp.Count].Push(Sell)
+                details.Modify(R,, '#' tmp.Count ' | ' Date ' (' statistic['year'][tmp.Count].Length ')')
+            }
+        Case 4:
+            statistic['month'] := []
+            tmp := Map()
+            For Sell in statistic['items'] {
+                DateTime := Sell['CommitTime']
+                Month := FormatTime(DateTime, 'yyyy/MM')
+                If !tmp.Has(Month) {
+                    tmp[Month] := 1
+                    statistic['month'].Push([])
+                    R := details.Add('Icon' . 5, '#' tmp.Count ' | ' Month)
+                }
+                statistic['month'][tmp.Count].Push(Sell)
+                details.Modify(R,, '#' tmp.Count ' | ' Month ' (' statistic['month'][tmp.Count].Length ')')
+            }
+        Case 5:
+                statistic['day'] := []
+            tmp := Map()
+            For Sell in statistic['items'] {
+                DateTime := Sell['CommitTime']
+                Day := FormatTime(DateTime, 'yyyy/MM/dd')
+                If !tmp.Has(Day) {
+                    tmp[Day] := 1
+                    statistic['day'].Push([])
+                    R := details.Add('Icon' . 6, '#' tmp.Count ' | ' Day)
+                }
+                statistic['day'][tmp.Count].Push(Sell)
+                details.Modify(R,, '#' tmp.Count ' | ' Day ' (' statistic['day'][tmp.Count].Length ')')
+            }
+        Case 6:
+            statistic['user'] := []
+            tmp := Map()
+            For Sell in statistic['items'] {
+                DateTime := Sell['CommitTime']
+                Hour := FormatTime(DateTime, 'yyyy/MM/dd [ HH:00:00 ]')
+                If !tmp.Has(Hour) {
+                    tmp[Hour] := 1
+                    statistic['hour'].Push([])
+                    R := details.Add('Icon' . 7, '#' tmp.Count ' | ' Hour)
+                }
+                statistic['hour'][tmp.Count].Push(Sell)
+                details.Modify(R,, '#' tmp.Count ' | ' Hour ' (' statistic['hour'][tmp.Count].Length ')')
+            }
+        Case 7:
+            statistic['hour'] := []
+            tmp := Map()
+            details.Add('Icon' . 8, '#1 | Unknown')
+            tmp['Unknown'] := 1
+            statistic['user'].Push([])
+            For Sell in statistic['items'] {
+                If Sell.Has('Username') && Sell['Username'] != '' {
+                    If !tmp.Has(Username) {
+                        tmp[Username] := 1
+                        statistic['user'].Push([])
+                        R := details.Add('Icon' . 8, '#' tmp.Count ' | ' Username)
+                    }
+                    statistic['user'][tmp.Count].Push(Sell)
+                    details.Modify(R,, '#' tmp.Count ' | ' Username ' (' statistic['user'][tmp.Count].Length ')')
+                } Else {
+                    statistic['user'][1].Push(Sell)
+                    details.Modify(1,, '#' tmp.Count ' | Unknown (' statistic[1][tmp.Count].Length ')')
+                }
+            }
     }
-    autoResizeCols()
+    C4.Enabled := True
+    ;Loop Files, 'commit\archived\' A_LoopFileName '\*.json' {
+        ;    SellID := A_Index
+        ;    Items := readJson(A_LoopFileFullPath)
+        ;    C := S := P := Q := 0
+        ;    For Item in Items['Items'] {
+        ;        Co := Item[4] * Item[7]
+        ;        Se := Item[5] * Item[7]
+        ;        Qa := Item[7] / Item[6]
+        ;        C += Co
+        ;        S += Se
+        ;        Q += Qa
+        ;        Item.InsertAt(1, [DateTime, Co, Se, Se - Co]*)
+        ;        If SellID = 1 {
+        ;            details.Modify(R,, Item*)
+        ;        }
+        ;        Else R := details.Add(, Item*)
+        ;        ;--R
+        ;        addedRowColorize(R, 4)
+        ;        updateRowViewCurrency(R, 4)
+        ;        detailsCLV.Cell(R, 2,, 0xFFFF0000)
+        ;        detailsCLV.Cell(R, 3,, 0xFF008000)
+        ;        detailsCLV.Cell(R, 4,, 0xFF008000)
+        ;    }
+        ;    P := S - C
+        ;}
+    ;autoResizeCols()
 }
 ;loadFilters(Flag := 0) {
 ;    Switch Flag {
@@ -234,11 +341,11 @@ updateRowViewCurrency(Row := 0, StartCol := 0) {
 autoResizeCols() {
     Loop details.GetCount('Col') {
         If A_Index = 11 {
+            details.ModifyCol(11, 'Center 50')
             Continue
         }
         details.ModifyCol(A_Index, 'Center AutoHdr')
     }
-    details.ModifyCol(11, 'Center 50')
 }
 addedRowColorize(Row, StartCol := 0) {
     detailsCLV.Row(Row, , 0xFF000000)

@@ -2,6 +2,12 @@
 	"Author": "Chandool Muhammad",
 	"Bypass": "GoodGuy",
 	"DisplayCurrency": "TND",
+	"Extra": [
+		"Clears",
+		"Cost",
+		"Sell",
+		"Profit"
+	],
 	"FirstUse": 1,
 	"Item": [
 		[
@@ -82,7 +88,7 @@
 	],
 	"ItemBakLoc": "setting\\defs\\backup",
 	"ItemDefLoc": "setting\\defs",
-	"LatestCurrencyCheck": "2024-09-10",
+	"LatestCurrencyCheck": "2024-10-15",
 	"Managers": {
 		"01": "Sell Manager",
 		"02": "Review Manager",
@@ -118,12 +124,6 @@
 		}
 	},
 	"SessAutoSave": 0,
-	"Extra": [
-		"Clears",
-		"Cost",
-		"Sell",
-		"Profit"
-	],
 	"Version": "1.0.0",
 	"exAPI": "m2xtQ5fEZWgiYidKQcQRn8s95MqPj4NF",
 	"latestCurrencyCheck": "2024-08-31"
