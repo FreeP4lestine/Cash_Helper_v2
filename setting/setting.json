@@ -88,7 +88,7 @@
 	],
 	"ItemBakLoc": "setting\\defs\\backup",
 	"ItemDefLoc": "setting\\defs",
-	"LatestCurrencyCheck": "2024-10-15",
+	"LatestCurrencyCheck": "2025-01-17",
 	"Managers": {
 		"01": "Sell Manager",
 		"02": "Review Manager",

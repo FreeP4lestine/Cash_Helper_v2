@@ -1,10 +1,10 @@
 #Requires AutoHotkey v2
 #SingleInstance Force
 
+#Include <profile>
+#Include <setting>
 #Include <shared\gdip>
 #Include <shared\createimagebutton>
-#Include <setting>
-#Include <profile>
 
 If !DirExist(A_AppData '\Cash Helper') {
 	DirCreate(A_AppData '\Cash Helper')

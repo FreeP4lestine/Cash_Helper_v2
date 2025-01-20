@@ -161,7 +161,7 @@ commitOK.OnEvent('Click', (*) => commitSellSubmit())
 commitOK.SetFont('Bold')
 payCheckWindow.MarginY := 5
 commitCancel := payCheckWindow.AddButton('w500 hp-20', 'Cancel')
-commitCancel.OnEvent('Click', (*) => payCheckWindow.Hide())
+commitCancel.OnEvent('Click', (*) => (mainWindow.Opt('-Disabled'), payCheckWindow.Hide()))
 commitCancel.SetFont('s10')
 commitLater := payCheckWindow.AddButton('w500 hp', 'Commit later')
 commitLater.OnEvent('Click', (*) => commitSellSubmit(1))
