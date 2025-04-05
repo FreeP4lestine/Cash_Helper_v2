@@ -70,6 +70,8 @@ class Shadow {
         This.TopRight.C.Move(This.Box.X + This.Box.Width - 16, This.Box.Y - 4)
         This.BottomRight.C.Move(This.Box.X + This.Box.Width - 14, This.Box.Y + This.Box.Height - 15)
         This.BottomLeft.C.Move(This.Box.X - 8, This.Box.Y + This.Box.Height - 16)
+        This.RedrawShadow()
+        
     }
     RedrawShadow() {
         This.Left.C.Redraw()
@@ -80,5 +82,10 @@ class Shadow {
         This.TopRight.C.Redraw()
         This.BottomRight.C.Redraw()
         This.BottomLeft.C.Redraw()
+    }
+    RedrawControls() {
+        For Control in This.Ctrl {
+            Control.Redraw()
+        }
     }
 }

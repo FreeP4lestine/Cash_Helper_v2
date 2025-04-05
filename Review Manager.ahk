@@ -9,14 +9,13 @@
 #Include <review>
 #Include <setting>
 #Include <shadow>
+#Include <imagebuttons>
 
 If A_Args.Length != 1 || A_Args[1] = '' {
-	MsgBox('No user input!', 'Login', 0x30)
 	ExitApp()
 }
 usersetting := readJson(A_AppData '\Cash Helper\users.json')
 If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
-	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
 	ExitApp()
 }
 username := A_Args[1]
@@ -74,8 +73,15 @@ Box8 := Shadow(mainWindow, [Days, daysList])
 mainWindow.SetFont('s10 Bold')
 openTime := mainWindow.AddEdit('xm+630 ym+140 w425 Left ReadOnly BackgroundWhite -E0x200')
 commitTime := mainWindow.AddEdit('xm+755 ym+140 w425 Right ReadOnly BackgroundWhite -E0x200')
+
 box6 := Shadow(mainWindow, [openTime, commitTime])
-nonSubmittedTxt := mainWindow.AddText('xm+325 ym+140 w250 cred Center', 'Non reviewed sells')
+Invoice := mainWindow.AddButton('xm+325 ym+140 w125', 'Invoice')
+Invoice.OnEvent('Click', (*) => (R := nonSubmitted.GetNext()) && Run('Invoice.ahk -f ' review['Pending'][review['Pointer'][R]].File))
+CreateImageButton(Invoice, 0, IBGray1*)
+CancelSell := mainWindow.AddButton('xp+125 yp w125 Disabled', 'Cancel')
+CancelSell.OnEvent('Click', (*) => CancelSellNow())
+CreateImageButton(CancelSell, 0, IBRed1*)
+nonSubmittedTxt := mainWindow.AddText('xp-125 yp+40 w250 cred Center', 'Non reviewed sells')
 mainWindow.SetFont('norm')
 nonSubmittedPB := mainWindow.AddProgress('wp h18 Hidden -Smooth')
 nonSubmitted := mainWindow.AddListMenu('wp LV0x40 BackgroundF0F0F0 Multi h424', ['Not Submitted'])
@@ -115,6 +121,7 @@ clearSellsFunc(Ctrl, Info) {
 }
 submit.SetFont('Bold')
 CreateImageButton(submit, 0, [[0xFFFFFFFF,, 0xFF008000, 5, 0xFF008000], [0xFF009F00,, 0xFFFFFFFF], [0xFF00BB00,, 0xFFFFFF00]]*)
-Box1 := Shadow(mainWindow, [nonSubmitted, nonSubmittedPB, nonSubmittedTxt, submit])
+Box1 := Shadow(mainWindow, [nonSubmitted, nonSubmittedPB, nonSubmittedTxt, submit, Invoice])
+
 mainWindow.Show('Maximize')
 loadAll()

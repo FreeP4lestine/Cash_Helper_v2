@@ -1,12 +1,11 @@
 ;#Include shared\jxon.ahk
 #Include shared\json.ahk
-readJson(File := 'setting\setting.json') {
+readJson(File := 'setting\setting.json', CatchVal := Map()) {
 	Try {
 		Data := FileRead(File)
 		Data := JSON.Load(Data)
 	} Catch {
-		Data := '{}'
-		Data := JSON.Load(Data)
+		Data := CatchVal
 	}
 	Return Data
 }

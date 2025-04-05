@@ -2,8 +2,8 @@ class AutoHotkeyUxGui extends Gui {
     __new(title, opt:='') {
         super.__new(opt, title, this)
         this.SetFont('s9', "Segoe UI")
-        this.OnEvent('Escape', 'Destroy')
-        this.OnEvent('Close', 'Destroy')
+        ;this.OnEvent('Escape', 'Destroy')
+        ;this.OnEvent('Close', 'Destroy')
     }
     
     AddListMenu(options:='', columns:=unset) {

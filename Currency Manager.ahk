@@ -10,12 +10,10 @@
 #Include <shadow>
 
 If A_Args.Length != 1 || A_Args[1] = '' {
-	MsgBox('No user input!', 'Login', 0x30)
 	ExitApp()
 }
 usersetting := readJson(A_AppData '\Cash Helper\users.json')
 If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
-	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
 	ExitApp()
 }
 username := A_Args[1]

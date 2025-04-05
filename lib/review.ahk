@@ -84,7 +84,7 @@ loadAll() {
         DateTime := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd [ HH:mm:ss ]')
         nonSubmitted.Add('icon1', DateTime ' [ ' Sell.JSON['Items'].Length ' ]')
         For Item in Sell.JSON['Items'] {
-            S += Item[5] * Item[7] / Item[6]
+            S += Item[10]
             B += Item[4] * Item[7] / Item[6]
         }
     }
@@ -260,4 +260,27 @@ boxRedraw() {
     Box6.RedrawShadow()
     Box7.RedrawShadow()
     Box8.RedrawShadow()
+}
+
+CancelSellNow() {
+    Msgbox nonSubmitted.GetNext(IsSet(R) ? R : 0)
+    If !R := nonSubmitted.GetNext() {
+        Loop Files, 'commits\pending\*.json' {
+            Data := readJson(A_LoopFileFullPath)
+            RechargeStock(Data)
+            FileDelete(A_LoopFileFullPath)
+        }
+    } Else While (R := nonSubmitted.GetNext(IsSet(R) ? R : 0)) {
+        Msgbox File := review['Pending'][review['Pointer'][R]].File
+        Data := readJson(File)
+        RechargeStock(Data)
+        FileDelete(File)
+    }
+    RechargeStock(Items) {
+        For Item in Items['Items'] {
+            Code := Item[2]
+            Def := readJson('setting\Defs\' Code '.json')
+            Def['Stock Value'] += Item[7]
+        }
+    }
 }

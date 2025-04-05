@@ -1,14 +1,10 @@
+.vscode
 setting/defs/
 commit/
 setting/sessions/
 setting/currency.json
 setting/currencySymbol.json
-data/
-OldData/
 sumatra/
-v3/
 wkhtmltox/
-test123.html
-test123.pdf
-Cash Helper v1-001/
-Cash Helper v1-002/
+release/
+invoice/

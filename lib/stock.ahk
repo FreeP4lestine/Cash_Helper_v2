@@ -1,3 +1,16 @@
+newGroupCreate() {
+	UserInput := InputBox('Enter group name', 'Group', 'w400 h85', 'NewGroup')
+	If UserInput.Result != 'OK'
+		Return
+	If UserInput.Value = '' {
+		MsgBox('Nothing was entered', 'Group', 0x30)
+		NewGroupCreate()
+	}
+	If !(UserInput.Value ~= '^[A-Za-z0-9_ ]+$') {
+		MsgBox('The name must be alphanumeric! [ A-Z, a-z, 0-9, _, ] ', 'Group', 0x30)
+		NewGroupCreate()
+	}
+}
 findItemInListView(Code, List := mainList, Vis := False) {
 	foundRow := 0
 	Loop List.GetCount() {
@@ -62,11 +75,16 @@ writeItemProperties(backUp := False) {
 		Property := setting['Item'][A_Index][1]
 		Value := ItemPropertiesForms[Property]['Form'].Value
 		Switch Property {
-			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
+			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value', 'Discount Value':
 				Try
 					item[Property] := Round( Value / currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
 				Catch
 					item[Property] := 0
+			Case 'Sell Amount':
+				item[Property] := Value
+				If Value = '' || !IsNumber(Value) {
+					item[Property] := 1
+				}
 			Case 'Stock Value':
 				item[Property] := Value
 				If Value = '' || !IsNumber(Value) {
@@ -122,7 +140,7 @@ showItemProperties(Code) {
 			Continue
 		}
 		Switch Property[1] {
-			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
+			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value', 'Discount Value':
 				If item[Property[1]] {
 					Try
 						itemPropertiesForms[Property[1]]['Form'].Value := Round(currency['rates'][setting['DisplayCurrency']] * item[Property[1]], setting['Rounder'])
@@ -319,7 +337,7 @@ populateRow(item, currency, rounder) {
 		Switch Property[1] {
 			Case 'Thumbnail', 'Code128':
 				Value := Value != '' ? 'Yes' : ''
-			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value':
+			Case 'Buy Value', 'Sell Value', 'Profit Value', 'Added Value', 'Discount Value':
 				If Value {
 					Try
 						Value := Round(Value * currency, rounder)
@@ -645,6 +663,7 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	propertiesWindow.GetPos(&X, &Y, &WWidth, &WHeight)
 	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 20))))
 	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
+	GroupPath.Move(,, Width - X - 40)
 	mainList.Move(,, Width - X - 40, Height - Y - 35)
 	searchList.Move(,, Width - X - 40, Height - Y - 35)
 	currentTask.GetPos(&X, &Y, &CWidth, &CHeight)

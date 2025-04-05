@@ -43,7 +43,7 @@ analyzeCode() {
 		Switch Detail {
 			Case 'Flag':
 				tmpData.Push('')
-			Case 'Buy Value', 'Sell Value', 'Added Value':
+			Case 'Buy Value', 'Sell Value', 'Added Value', 'Discount Value':
 				If item[Detail] {
 					Try
 						Value := Round(item[Detail], setting['Rounder'])
@@ -240,7 +240,7 @@ addItemToList() {
 updatePriceSum() {
 	Sum := 0
 	For Code, Item in Sells[currentSession.Value]['Items'] {
-		Sum += Item[10]
+		Sum += Item[10] - Item[12] * Item[7] / Item[6]
 	}
 	priceSum.Value := Sum > 0 ? Round(Sum, setting['Rounder']) ' ' setting['DisplayCurrency'] : 'CLEAR'
 }
@@ -420,6 +420,7 @@ addCustomPrice() {
 				Try tmpData.Push(setting['DisplayCurrency'])
 				Catch 
 					tmpData.Push('TND')
+			Case 'Discount Value': tmpData.Push(0)
 			Default: tmpData.Push('')
 		}
 	}
@@ -447,6 +448,7 @@ commitSell() {
 	commitOK.Enabled := true
 	commitCancel.Enabled := true
 	commitLater.Enabled := true
+	Invoice.Enabled := False
 	commitAmount.Value := priceSum.Value
 	AC := StrSplit(priceSum.Value, ' ')
 	commitAmountPay.Value := AC[1]
@@ -462,54 +464,71 @@ updateAmountPayBack() {
 	}
 	commitAmountPayBack.Value := Round(commitAmountPay.Value - AC[1], setting['Rounder']) ' ' AC[2]
 }
+commitLaterSell() {
+	If CommitLaterNameList.Text = '' || CommitLaterNameList.Text ~= '[^a-zA-Z0-9 ]' {
+		MsgBox('Make sure the name you enter is not empty and does not contain any character other than [ a-z, A-Z, 0-9 and space]', setting['Name'], 0x30)
+		Return
+	}
+	Location := 'commit\pending\later\' CommitLaterNameList.Text
+	If !DirExist(Location)
+		DirCreate(Location)
+	writeJson(Sells[currentSession.Value], Location '\' Sells[currentSession.Value]['CommitTime'] '.json')
+	InvoiceLocation.Value := Location '\' Sells[currentSession.Value]['CommitTime'] '.json'
+	FileOpen(Location '\' Sells[currentSession.Value]['CommitTime'] '.placeholder', 'w').Close()
+	updateStock()
+	latestSellsSave()
+	initiateSession()
+	saveSessions()
+	updatePriceSum()
+	;SetTimer(commitClose, -5000)
+	commitClose() {
+		payCheckWindow.Hide()
+	}
+	commitImg.Value := 'images\commit.png'
+	commitMsg.Opt('BackgroundGreen cWhite')
+	commitMsg.Value := 'Commited!'
+	commitAmount.Opt('ReadOnly BackgroundE6E6E6 cGray')
+	commitAmountPay.Opt('ReadOnly BackgroundE6E6E6 cGray')
+	commitAmountPayBack.Opt('ReadOnly BackgroundE6E6E6 cGray')
+	commitOK.Enabled := False
+	commitCancel.Enabled := False
+	Invoice.Enabled := True
+	commitLater.Enabled := False
+	commitMsg.Focus()
+	mainList.Delete()
+	mainWindow.Opt('-Disabled')
+	Thumb.Value := 'images\Default.png'
+	Code128.Value := ''
+	Stock.Value := ''
+	CommitLaterName.Hide()
+	payCheckWindow.Opt('-Disabled')
+	payCheckWindow.Show()
+}
 commitSellSubmit(Later := False) {
 	If Sells[currentSession.Value].Has('tmp') {
 		Sells[currentSession.Value].Delete('tmp')
 	}
 	Sells[currentSession.Value]['CommitTime'] := A_Now
 	Sells[currentSession.Value]['Username'] := username
+	If Later {
+		payCheckWindow.Opt('Disabled')
+		CommitLaterName.Show()
+		CommitLaterNameList.Delete()
+		Loop Files, 'commit\pending\later\*', 'D' {
+			CommitLaterNameList.Add([A_LoopFileName])
+		}
+		Return
+	} Else Saveto := 'commit\pending'
 	Saveto := Later ? 'commit\pending\later' : 'commit\pending'
 	writeJson(Sells[currentSession.Value], Saveto '\' Sells[currentSession.Value]['CommitTime'] '.json')
+	InvoiceLocation.Value := Saveto '\' Sells[currentSession.Value]['CommitTime'] '.json'
 	updateStock()
-	updateStock() {
-		For Every, SellItem in Sells[currentSession.Value]['Items'] {
-			Code := SellItem[2]
-			If FileExist(setting['ItemDefLoc'] '\' Code '.json') {
-				Item := readJson(setting['ItemDefLoc'] '\' Code '.json')
-				If !IsNumber(Item['Stock Value']) {
-					Item['Stock Value'] := 0
-				} Else {
-					Item['Stock Value'] -= SellItem[7]
-				}
-				If Item['Stock Value'] < 0 {
-					Item['Stock Value'] := 0
-				}
-				writeJson(Item, setting['ItemDefLoc'] '\' Code '.json')
-				If Item.Has('Related')
-				&& Item['Related'] != ''
-				&& (CF := StrSplit(Item['Related'], 'x')).Length = 2
-				&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
-				&& IsNumber(CF[2]) {
-					ReItem := readJson(setting['ItemDefLoc'] '\' CF[1] '.json')
-					If !IsNumber(ReItem['Stock Value']) {
-						ReItem['Stock Value'] := 0
-					} Else {
-						ReItem['Stock Value'] -= SellItem[7] * CF[2]
-					}
-					If ReItem['Stock Value'] < 0 {
-						ReItem['Stock Value'] := 0
-					}
-					writeJson(ReItem, setting['ItemDefLoc'] '\' CF[1] '.json')
-				}
-			}
-		}
-	}
 	latestSellsSave()
 	initiateSession()
 	pendingQuickResume()
 	saveSessions()
 	updatePriceSum()
-	SetTimer(commitClose, -5000)
+	;SetTimer(commitClose, -5000)
 	commitClose() {
 		payCheckWindow.Hide()
 	}
@@ -522,12 +541,46 @@ commitSellSubmit(Later := False) {
 	commitOK.Enabled := False
 	commitCancel.Enabled := False
 	commitLater.Enabled := False
+	Invoice.Enabled := True
 	commitMsg.Focus()
 	mainList.Delete()
 	mainWindow.Opt('-Disabled')
 	Thumb.Value := 'images\Default.png'
 	Code128.Value := ''
 	Stock.Value := ''
+}
+updateStock() {
+	For Every, SellItem in Sells[currentSession.Value]['Items'] {
+		Code := SellItem[2]
+		If FileExist(setting['ItemDefLoc'] '\' Code '.json') {
+			Item := readJson(setting['ItemDefLoc'] '\' Code '.json')
+			If !IsNumber(Item['Stock Value']) {
+				Item['Stock Value'] := 0
+			} Else {
+				Item['Stock Value'] -= SellItem[7]
+			}
+			If Item['Stock Value'] < 0 {
+				Item['Stock Value'] := 0
+			}
+			writeJson(Item, setting['ItemDefLoc'] '\' Code '.json')
+			If Item.Has('Related')
+			&& Item['Related'] != ''
+			&& (CF := StrSplit(Item['Related'], 'x')).Length = 2
+			&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
+			&& IsNumber(CF[2]) {
+				ReItem := readJson(setting['ItemDefLoc'] '\' CF[1] '.json')
+				If !IsNumber(ReItem['Stock Value']) {
+					ReItem['Stock Value'] := 0
+				} Else {
+					ReItem['Stock Value'] -= SellItem[7] * CF[2]
+				}
+				If ReItem['Stock Value'] < 0 {
+					ReItem['Stock Value'] := 0
+				}
+				writeJson(ReItem, setting['ItemDefLoc'] '\' CF[1] '.json')
+			}
+		}
+	}
 }
 latestSellsSave() {
 	latest := readJson('commit\latestSells.json')
@@ -603,17 +656,17 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	pendingProfit.GetPos(&X, &Y, &CWidth, &CHeight)
 	pendingProfit.Move(, Height - 58)
 	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
-	mainList.Move(,, W := Width - 30 - X, Height - 160 - Y)
+	mainList.Move(,, W := Width - 30 - X, Height - 150 - Y)
 	prevSess.GetPos(&X, &Y, &CWidth, &CHeight)
-	prevSess.Move(, Height - 89)
-	currentSession.Move(, Height - 89)
-	nextSess.Move(, Height - 89)
-	priceSum.Move(Width - 360, Height - 109)
+	prevSess.Move(, Height - 79)
+	currentSession.Move(, Height - 77)
+	nextSess.Move(, Height - 79)
+	priceSum.Move(Width - 360, Height - 99)
 	enteredCode.GetPos(&X, &Y, &CWidth, &CHeight)
-	enteredCode.Move(Width - 480)
-	searchList.Move(Width - 480)
+	enteredCode.Move(330,, Width - 360)
+	searchList.Move(330,, Width - 360)
 	CItemPrice.GetPos(&X, &Y, &CWidth, &CHeight)
-	CItemPrice.Move(Width - 280)
+	CItemPrice.Move(330,, Width - 360)
 	SetTimer(boxRedraw, 0)
 	SetTimer(boxRedraw, -500)
 	Box.ResizeShadow()

@@ -250,7 +250,7 @@ ShowDetails(Ctrl, Item, Selected) {
         Items := ItemsList[Next]
         For Each, Item in Items['Items'] {
             Row := sellDetails.Add(, Item*)
-            S += Item[5] * Item[7] / Item[6]
+            S += Item[10]
             B += Item[4] * Item[7] / Item[6]
         }
     }

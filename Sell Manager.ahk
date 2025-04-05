@@ -8,24 +8,25 @@ A_MaxHotkeysPerInterval := 200
 #Include <shared\explorertheme>
 #Include <shared\incelledit>
 #Include <shared\cuebanner>
+#Include <imagebuttons>
 #Include <setting>
 #Include <sell>
 #Include <shadow>
 
+FileEncoding('UTF-8')
+
 If A_Args.Length != 1 || A_Args[1] = '' {
-	MsgBox('No user input!', 'Login', 0x30)
 	ExitApp()
 }
 usersetting := readJson(A_AppData '\Cash Helper\users.json')
 If !usersetting.Has('Registered') || !usersetting['Registered'].Has(A_Args[1]) {
-	Msgbox('<' A_Args[1] '> does not exist!', 'Login', 0x30)
 	ExitApp()
 }
 username := A_Args[1]
-
 setting := readJson()
 currency := readJson('setting\currency.json')
 Sells := readJson('setting\sessions\sessions.json')
+
 allItems := Map()
 searchItems := []
 pToken := Gdip_Startup()
@@ -61,7 +62,6 @@ Thumb := mainWindow.AddPicture('xm+20 yp w64 h64', 'images\Default.png')
 Stock := mainWindow.AddEdit('xp+80 yp+10 w60 r1 BackgroundWhite cRed ReadOnly -E0x200 Center')
 Stock.SetFont('s15')
 Code128 := mainWindow.AddPicture('xm+20 yp+70 w140 h32')
-Shadow(mainWindow, [C3, Thumb, Code128])
 mainWindow.SetFont('s8 norm')
 latestSellsCount := mainWindow.AddText('cBlue xm ym+295 w192 Center', 'Latest sells:')
 mainWindow.SetFont('s10')
@@ -78,7 +78,7 @@ mainWindow.SetFont('s12 Bold')
 pendingBought := mainWindow.AddEdit('Hidden w192 Center ReadOnly cRed -E0x200')
 pendingSold := mainWindow.AddEdit('Hidden wp Center ReadOnly cGreen -E0x200')
 pendingProfit := mainWindow.AddEdit('Hidden wp Center ReadOnly cGreen -E0x200')
-Box2 := Shadow(mainWindow, [latestSellsCount, latestSells, quickResume, pendingBought, pendingSold, pendingProfit])
+Box2 := Shadow(mainWindow, [C3, Thumb, Code128, latestSellsCount, latestSells, quickResume, pendingBought, pendingSold, pendingProfit])
 mainWindow.SetFont('s14 norm')
 mainWindow.MarginY := 10
 mainList := mainWindow.AddListView('xm+240 ym+140 w980 h422 NoSortHdr -E0x200')
@@ -101,11 +101,12 @@ mainList.ModifyCol(8, '')
 mainList.ModifyCol(9, 'Center ' 150)
 mainList.ModifyCol(10, 'Center ' 200)
 mainList.ModifyCol(11, 'Center ' 60)
+mainList.ModifyCol(12, 'Center ' 200)
 
 mainList.GetPos(, &Y, &W)
 mainWindow.SetFont('s25')
-enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' ym+10 w450 Right c0000ff BackgroundE6E6E6 -E0x200')
-EM_SETCUEBANNER(enteredCode.Hwnd, '#Code ')
+enteredCode := mainWindow.AddEdit('xm+' (W - 500 + 200) ' ym+10 w450 Right c0000ff -E0x200')
+EM_SETCUEBANNER(enteredCode.Hwnd, '→ Code')
 enteredCode.OnEvent('Change', (*) => analyzeCode())
 searchList := mainWindow.AddComboBox('xp yp wp hp Hidden r10')
 searchList.OnEvent('Change', searchAnalyzeCode)
@@ -123,21 +124,22 @@ searchListHide() {
 	searchList.Visible := False
 }
 mainWindow.SetFont('s14')
-CItemPrice := mainWindow.AddEdit('xp+250 yp+55 w250 cRed Right -E0x200 BackgroundF0F0F0')
-EM_SETCUEBANNER(CItemPrice.Hwnd, '#Price  ')
+CItemPrice := mainWindow.AddEdit('xp+250 yp+55 w250 cRed Right -E0x200')
+EM_SETCUEBANNER(CItemPrice.Hwnd, '→ Price')
 Box := Shadow(mainWindow, [C1, C2, enteredCode, CItemPrice])
 mainWindow.SetFont('s35')
 priceSum := mainWindow.AddEdit('xm+350 ym+600 w330 -E0x200 Right cRed ReadOnly BackgroundWhite')
 priceSum.SetFont('', 'Calibri')
-mainWindow.SetFont('s10')
-prevSess := mainWindow.AddButton('xm+240 yp+50 w50 h25 Center', 'Prev')
+mainWindow.SetFont('s12')
+prevSess := mainWindow.AddButton('xm+240 yp+50 w70  Center', '← Prev')
+CreateImageButton(prevSess, 0, IBGray1*)
 prevSess.OnEvent('Click', (*) => prevSession())
 mainWindow.SetFont('s14')
-Session := 1
-currentSession := mainWindow.AddEdit('xp+50 yp w50 h25 Center Number -E0x200', 1)
+currentSession := mainWindow.AddEdit('xp+70 yp w70 Center Number -E0x200', Session := 1)
 currentSession.OnEvent('Change', (*) => readSessionList())
-mainWindow.SetFont('s10')
-nextSess := mainWindow.AddButton('xp+50 yp w50 h25 Center', 'Next')
+mainWindow.SetFont('s12')
+nextSess := mainWindow.AddButton('xp+70 yp w70  Center', 'Next →')
+CreateImageButton(nextSess, 0, IBGray1*)
 nextSess.OnEvent('Click', (*) => nextSession())
 mainWindow.MarginY := 30
 mainWindow.MarginX := 30
@@ -160,12 +162,28 @@ commitOK := payCheckWindow.AddButton('w500 hp', 'Commit')
 commitOK.OnEvent('Click', (*) => commitSellSubmit())
 commitOK.SetFont('Bold')
 payCheckWindow.MarginY := 5
-commitCancel := payCheckWindow.AddButton('w500 hp-20', 'Cancel')
-commitCancel.OnEvent('Click', (*) => (mainWindow.Opt('-Disabled'), payCheckWindow.Hide()))
-commitCancel.SetFont('s10')
-commitLater := payCheckWindow.AddButton('w500 hp', 'Commit later')
+
+commitLater := payCheckWindow.AddButton('w250 hp-20', 'Commit later')
 commitLater.OnEvent('Click', (*) => commitSellSubmit(1))
 commitLater.SetFont('s10')
+
+Invoice := payCheckWindow.AddButton('xp+250 yp w250 hp Disabled', 'Invoice')
+InvoiceLocation := payCheckWindow.AddEdit('xp yp wp hp Hidden')
+Invoice.OnEvent('Click', (*) => Run('Invoice.ahk -f ' InvoiceLocation.Value))
+Invoice.SetFont('s10')
+
+commitCancel := payCheckWindow.AddButton('xm w500 hp', 'Cancel')
+commitCancel.OnEvent('Click', (*) => (mainWindow.Opt('-Disabled'), payCheckWindow.Hide()))
+commitCancel.SetFont('s10')
+
+CommitLaterName := Gui(, setting['Name'])
+CommitLaterName.OnEvent('Close', (*) => payCheckWindow.Opt('-Disabled'))
+commitLaterName.SetFont('s15', 'Segoe UI')
+LaterClient := CommitLaterName.AddText('w400 Center', 'Commit later for:')
+CommitLaterNameList := CommitLaterName.AddComboBox('w400')
+LaterClientOK := CommitLaterName.AddButton('xm+100 w200', 'OK')
+LaterClientOK.OnEvent('Click', (*) => commitLaterSell())
+
 
 ;OptionMenu := Menu()
 ;OptionMenu.Add('Exit', (*) => ExitApp())

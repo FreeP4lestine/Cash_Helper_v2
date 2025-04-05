@@ -1,6 +1,13 @@
 {
 	"Author": "Chandool Muhammad",
-	"Bypass": "GoodGuy",
+	"Bypass": "GG",
+	"ClientInfo": [
+		"Nom du client",
+		"Addresse",
+		"Code Postal",
+		"Ville",
+		"Pays"
+	],
 	"DisplayCurrency": "TND",
 	"Extra": [
 		"Clears",
@@ -27,7 +34,7 @@
 		],
 		[
 			"Currency",
-			0,
+			1,
 			""
 		],
 		[
@@ -37,7 +44,7 @@
 		],
 		[
 			"Sell Amount",
-			0,
+			1,
 			""
 		],
 		[
@@ -62,12 +69,17 @@
 		],
 		[
 			"Stock Value",
-			0,
+			1,
 			""
 		],
 		[
 			"Added Value",
-			0,
+			1,
+			""
+		],
+		[
+			"Discount Value",
+			1,
 			""
 		],
 		[
@@ -101,6 +113,15 @@
 		"10": "Report Bug",
 		"11": "About"
 	},
+	"MyInfo": [
+		"Logo",
+		"Nom de l'entreprise",
+		"Addresse",
+		"Code Postal",
+		"Ville / Pays",
+		"Num\u00C3\u00A9ro de t\u00C3\u00A9l\u00C3\u00A9phone",
+		"E-mail"
+	],
 	"Name": "Cash Helper",
 	"Rounder": "3",
 	"Sell": {
@@ -118,7 +139,8 @@
 				"08": "Unit",
 				"09": "Added Value",
 				"10": "Price",
-				"11": "CUR"
+				"11": "CUR",
+				"12": "Discount Value"
 			},
 			"04": "Username"
 		}
