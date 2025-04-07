@@ -67,7 +67,7 @@ analyzeCode() {
 				tmpData.Push(Round(tmpData[5] + tmpData[9], setting['Rounder']))
 			case 'CUR':
 				Try tmpData.Push(setting['DisplayCurrency'])
-				Catch 
+				Catch
 					tmpData.Push('TND')
 			Default: tmpData.Push(Item[Detail])
 		}
@@ -91,7 +91,7 @@ thumbCheck(Code := '') {
 		Return
 	}
 	Stock.Value := LeadTrailZeroTrim(Round(Item['Stock Value'], 3))
-	Code128.Move(,, 140, 32)
+	Code128.Move(, , 140, 32)
 	If item['Thumbnail']
 		Try Thumb.Value := 'HBITMAP:*' hBitmapFromB64(item['Thumbnail'])
 	If item['Code128']
@@ -114,19 +114,19 @@ LeadTrailZeroTrim(N) {
 tmpRowColorize(Row) {
 	mainListCLV.Row(Row, , 0xFF999999)
 	mainListCLV.Cell(Row, 1, 0xFFCCCCCC)
-	mainListCLV.Cell(Row, 2,, 0xFF999999)
-	mainListCLV.Cell(Row, 4,, 0xFF999999)
-	mainListCLV.Cell(Row, 5,, 0xFF999999)
-	mainListCLV.Cell(Row, 10,, 0xFF999999)
-	mainListCLV.Cell(Row, 11,, 0xFFCCCCCC)
+	mainListCLV.Cell(Row, 2, , 0xFF999999)
+	mainListCLV.Cell(Row, 4, , 0xFF999999)
+	mainListCLV.Cell(Row, 5, , 0xFF999999)
+	mainListCLV.Cell(Row, 10, , 0xFF999999)
+	mainListCLV.Cell(Row, 11, , 0xFFCCCCCC)
 }
 addedRowColorize(Row) {
 	mainListCLV.Row(Row, , 0xFF000000)
 	mainListCLV.Cell(Row, 1, 0xFF000000)
-	mainListCLV.Cell(Row, 2,, 0xFF0000FF)
-	mainListCLV.Cell(Row, 4,, 0xFF804000)
-	mainListCLV.Cell(Row, 5,, 0xFF008040)
-	mainListCLV.Cell(Row, 10,, 0xFFFF0000)
+	mainListCLV.Cell(Row, 2, , 0xFF0000FF)
+	mainListCLV.Cell(Row, 4, , 0xFF804000)
+	mainListCLV.Cell(Row, 5, , 0xFF008040)
+	mainListCLV.Cell(Row, 10, , 0xFFFF0000)
 	mainListCLV.Cell(Row, 11, 0xFFFFC080)
 }
 updateQuantity(Data) {
@@ -154,7 +154,7 @@ updateRowViewCurrency(Row := 0, isSum := False, isQuickResume := False) {
 			Value := mainList.GetText(Row, Each)
 			Switch Col {
 				Case 'Buy Value', 'Sell Value', 'Added Value', 'Price':
-					Value := Round(Value * currency['rates'][setting['DisplayCurrency']], setting['Rounder']) 
+					Value := Round(Value * currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
 					tmp.Push(Value)
 				Case 'CUR':
 					tmp.Push(setting['DisplayCurrency'])
@@ -162,9 +162,9 @@ updateRowViewCurrency(Row := 0, isSum := False, isQuickResume := False) {
 			}
 		}
 		tmp[4] := '--'
-		mainList.Modify(Row,, tmp*)
+		mainList.Modify(Row, , tmp*)
 	}
-	If isSum{
+	If isSum {
 		If priceSum.Value != 'CLEAR' {
 			priceSum.Value := StrSplit(priceSum.Value, ' ')[1]
 			If IsNumber(priceSum.Value)
@@ -216,7 +216,7 @@ addItemToList() {
 		Sells[currentSession.Value]['Items'][Row][7] += Sells[currentSession.Value]['tmp']['Data'][7]
 		Sells[currentSession.Value]['Items'][Row] := updateQuantity(Sells[currentSession.Value]['Items'][Row])
 		Sells[currentSession.Value]['Items'][Row] := updateRowView(Sells[currentSession.Value]['Items'][Row])
-		mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
+		mainList.Modify(Row, , Sells[currentSession.Value]['Items'][Row]*)
 		enteredCode.Value := ''
 		mainList.Delete(Sells[currentSession.Value]['tmp']['Row'])
 		Sells[currentSession.Value].Delete('tmp')
@@ -246,7 +246,7 @@ updatePriceSum() {
 }
 removeItemFromList() {
 	If !Row := mainList.GetNext() {
-		If mainList.GetCount() 
+		If mainList.GetCount()
 			Row := 1
 		Else Return
 	}
@@ -315,7 +315,7 @@ IncreaseQ() {
 	Sells[currentSession.Value]['Items'][Row][7] += Sells[currentSession.Value]['Items'][Row][6]
 	Sells[currentSession.Value]['Items'][Row] := updateQuantity(Sells[currentSession.Value]['Items'][Row])
 	Sells[currentSession.Value]['Items'][Row] := updateRowView(Sells[currentSession.Value]['Items'][Row])
-	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
+	mainList.Modify(Row, , Sells[currentSession.Value]['Items'][Row]*)
 	saveSessions()
 	updatePriceSum()
 	updateRowViewCurrency(Row, True)
@@ -330,7 +330,7 @@ DecreaseQ() {
 	}
 	Sells[currentSession.Value]['Items'][Row] := updateQuantity(Sells[currentSession.Value]['Items'][Row])
 	Sells[currentSession.Value]['Items'][Row] := updateRowView(Sells[currentSession.Value]['Items'][Row])
-	mainList.Modify(Row,, Sells[currentSession.Value]['Items'][Row]*)
+	mainList.Modify(Row, , Sells[currentSession.Value]['Items'][Row]*)
 	saveSessions()
 	updatePriceSum()
 	updateRowViewCurrency(Row, True)
@@ -354,50 +354,106 @@ quickListEdit(LV, L) {
 }
 quickListSubmit() {
 	If quickRow.Value > Sells[currentSession.Value]['Items'].Length
-	|| Sells[currentSession.Value]['Items'][quickRow.Value][2] != quickCode.Value {
-		MsgBox('Target row is not found!', setting['Name'], '0x30')
-		Return
+		|| Sells[currentSession.Value]['Items'][quickRow.Value][2] != quickCode.Value {
+			MsgBox('Target row is not found!', setting['Name'], '0x30')
+			Return
 	}
 	Switch quickCol.Value {
 		Case 3:
 			Sells[currentSession.Value]['Items'][quickRow.Value][3] := quickEdit.Value
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
-			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
+			mainList.Modify(quickRow.Value, , Sells[currentSession.Value]['Items'][quickRow.Value]*)
 		Case 5:
-		If !IsNumber(quickEdit.Value) {
-			MsgBox('Entered value is not a number!', setting['Name'], 0x30)
-			Return
-		}
-		Sells[currentSession.Value]['Items'][quickRow.Value][5] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
+			If !IsNumber(quickEdit.Value) {
+				MsgBox('Entered value is not a number!', setting['Name'], 0x30)
+				Return
+			}
+			Sells[currentSession.Value]['Items'][quickRow.Value][5] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updatePrice(Sells[currentSession.Value]['Items'][quickRow.Value])
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
-			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
+			mainList.Modify(quickRow.Value, , Sells[currentSession.Value]['Items'][quickRow.Value]*)
 			updatePriceSum()
 			updateRowViewCurrency(quickRow.Value, True)
 		Case 7:
-		If !IsNumber(quickEdit.Value) {
-			MsgBox('Entered value is not a number!', setting['Name'], 0x30)
-			Return
-		}
-		Sells[currentSession.Value]['Items'][quickRow.Value][7] := quickEdit.Value
+			If !IsNumber(quickEdit.Value) {
+				MsgBox('Entered value is not a number!', setting['Name'], 0x30)
+				Return
+			}
+			Sells[currentSession.Value]['Items'][quickRow.Value][7] := quickEdit.Value
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateQuantity(Sells[currentSession.Value]['Items'][quickRow.Value])
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
-			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
+			mainList.Modify(quickRow.Value, , Sells[currentSession.Value]['Items'][quickRow.Value]*)
 			updatePriceSum()
 			updateRowViewCurrency(quickRow.Value, True)
 		Case 10:
-		If !IsNumber(quickEdit.Value) {
-			MsgBox('Entered value is not a number!', setting['Name'], 0x30)
-			Return
-		}
-		Sells[currentSession.Value]['Items'][quickRow.Value][10] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
+			If !IsNumber(quickEdit.Value) {
+				MsgBox('Entered value is not a number!', setting['Name'], 0x30)
+				Return
+			}
+			Sells[currentSession.Value]['Items'][quickRow.Value][10] := quickEdit.Value / currency['rates'][setting['DisplayCurrency']]
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updatePrice(Sells[currentSession.Value]['Items'][quickRow.Value])
 			Sells[currentSession.Value]['Items'][quickRow.Value] := updateRowView(Sells[currentSession.Value]['Items'][quickRow.Value])
-			mainList.Modify(quickRow.Value,, Sells[currentSession.Value]['Items'][quickRow.Value]*)
+			mainList.Modify(quickRow.Value, , Sells[currentSession.Value]['Items'][quickRow.Value]*)
 			updatePriceSum()
 			updateRowViewCurrency(quickRow.Value, True)
 	}
 	quickWindow.Hide()
+}
+QuickEditStock() {
+	If !Sells[currentSession.Value]['Items'].Length || !checkBypass(1) || 'Yes' != MsgBox('Do you wish to update the stock using this custom list of sells?', 'Continue?', 0x40 + 0x4)
+		Return
+	Changes := ''
+	For Each, Row in Sells[currentSession.Value]['Items'] {
+		Code := Row[2]
+		Changes .= '`nCode: [ ' Code ' ]`n-----------`n'
+		If !FileExist('setting\defs\' Code '.json')
+			Continue
+		Name := Row[3]
+		BuyValue := Row[4]
+		SellValue := Row[5]
+		Product := readJson('setting\defs\' Code '.json')
+		Changes .= Product['Name'] ' ---> ' Name '`n'
+		Product['Name'] := Name
+		Changes .= Product['Buy Value'] ' ---> ' BuyValue '`n'
+		Product['Buy Value'] := BuyValue
+		Changes .= Product['Sell Value'] ' ---> ' SellValue '`n'
+		Product['Sell Value'] := SellValue
+		writeJson(Product, 'setting\defs\' Code '.json')
+	}
+	Dummy := Gui()
+	Dummy.MarginX := 0
+	Dummy.MarginY := 0
+	Dummy.SetFont('s14 Bold', 'Calibri')
+	Dummy.AddEdit('ReadOnly w400 r20 BackgroundWhite cBlue -HScroll -VScroll', Changes)
+	Dummy.AddText().Focus()
+	loadDefinitions()
+	Dummy.Show()
+	WinWaitClose(Dummy)
+	Dummy.Destroy()
+	checkBypass(Prompt := 0) {
+		setting := readJson()
+		If !setting.Has('Bypass') || !setting["Bypass"] {
+			Key := InputBox('Enter a bypass key, make sure to remember it!', 'Bypass key', 'w400 h100', A_UserName)
+			If Key.Result != 'OK' {
+				Msgbox('The bypass key is required!', 'Bypass', 0x30)
+				Return False
+			}
+			setting["FirstUse"] := True
+			setting["Bypass"] := Key.Value
+			writeJson(setting)
+		}
+		If Prompt {
+			Key := InputBox('Enter the bypass key', 'Bypass key', 'w400 h100')
+			If Key.Result != 'OK' {
+				Return False
+			}
+			If Key.Value !== setting["Bypass"] {
+				Msgbox('Wrong bypass key!', 'Bypass', 0x30)
+				Return False
+			}
+		}
+		Return True
+	}
 }
 addCustomPrice() {
 	If !IsNumber(CItemPrice.Value) || CItemPrice.Value < 0 {
@@ -416,9 +472,9 @@ addCustomPrice() {
 			Case 'Unit': tmpData.Push('P')
 			Case 'Added Value': tmpData.Push(0)
 			Case 'Price': tmpData.Push(CItemPrice.Value / currency['rates'][setting['DisplayCurrency']])
-			Case 'CUR': 
+			Case 'CUR':
 				Try tmpData.Push(setting['DisplayCurrency'])
-				Catch 
+				Catch
 					tmpData.Push('TND')
 			Case 'Discount Value': tmpData.Push(0)
 			Default: tmpData.Push('')
@@ -564,20 +620,20 @@ updateStock() {
 			}
 			writeJson(Item, setting['ItemDefLoc'] '\' Code '.json')
 			If Item.Has('Related')
-			&& Item['Related'] != ''
-			&& (CF := StrSplit(Item['Related'], 'x')).Length = 2
-			&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
-			&& IsNumber(CF[2]) {
-				ReItem := readJson(setting['ItemDefLoc'] '\' CF[1] '.json')
-				If !IsNumber(ReItem['Stock Value']) {
-					ReItem['Stock Value'] := 0
-				} Else {
-					ReItem['Stock Value'] -= SellItem[7] * CF[2]
-				}
-				If ReItem['Stock Value'] < 0 {
-					ReItem['Stock Value'] := 0
-				}
-				writeJson(ReItem, setting['ItemDefLoc'] '\' CF[1] '.json')
+				&& Item['Related'] != ''
+				&& (CF := StrSplit(Item['Related'], 'x')).Length = 2
+				&& FileExist(setting['ItemDefLoc'] '\' CF[1] '.json')
+				&& IsNumber(CF[2]) {
+					ReItem := readJson(setting['ItemDefLoc'] '\' CF[1] '.json')
+					If !IsNumber(ReItem['Stock Value']) {
+						ReItem['Stock Value'] := 0
+					} Else {
+						ReItem['Stock Value'] -= SellItem[7] * CF[2]
+					}
+					If ReItem['Stock Value'] < 0 {
+						ReItem['Stock Value'] := 0
+					}
+					writeJson(ReItem, setting['ItemDefLoc'] '\' CF[1] '.json')
 			}
 		}
 	}
@@ -591,7 +647,7 @@ latestSellsSave() {
 		If Item[2] = '--'
 			Continue
 		latest.InsertAt(1, [Item[2], Item[3]])
-		latestSells.Insert(1,, latest[1]*)
+		latestSells.Insert(1, , latest[1]*)
 		If latest.Length > 100 {
 			latest.RemoveAt(101)
 			latestSells.Delete(101)
@@ -624,7 +680,7 @@ pendingQuickResume() {
 	pendingBought.Value := Round(Bought, setting['Rounder']) ' ' setting['DisplayCurrency']
 	pendingSold.Value := Round(Sold, setting['Rounder']) ' ' setting['DisplayCurrency']
 	pendingProfit.Value := Round(Sold - Bought, setting['Rounder']) ' ' setting['DisplayCurrency']
-	updateRowViewCurrency(,, True)
+	updateRowViewCurrency(, , True)
 }
 HideShowQuickies() {
 	Static Display := False
@@ -646,7 +702,7 @@ displayItemCode(Ctrl, Item) {
 }
 resizeControls(GuiObj, MinMax, Width, Height) {
 	latestSells.GetPos(&X, &Y, &CWidth, &CHeight)
-	latestSells.Move(,,, Height - 190 - Y)
+	latestSells.Move(, , , Height - 190 - Y)
 	quickResume.GetPos(&X, &Y, &CWidth, &CHeight)
 	quickResume.Move(, Height - 172)
 	pendingBought.GetPos(&X, &Y, &CWidth, &CHeight)
@@ -656,17 +712,17 @@ resizeControls(GuiObj, MinMax, Width, Height) {
 	pendingProfit.GetPos(&X, &Y, &CWidth, &CHeight)
 	pendingProfit.Move(, Height - 58)
 	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
-	mainList.Move(,, W := Width - 30 - X, Height - 150 - Y)
+	mainList.Move(, , W := Width - 30 - X, Height - 150 - Y)
 	prevSess.GetPos(&X, &Y, &CWidth, &CHeight)
 	prevSess.Move(, Height - 79)
 	currentSession.Move(, Height - 77)
 	nextSess.Move(, Height - 79)
 	priceSum.Move(Width - 360, Height - 99)
 	enteredCode.GetPos(&X, &Y, &CWidth, &CHeight)
-	enteredCode.Move(330,, Width - 360)
-	searchList.Move(330,, Width - 360)
+	enteredCode.Move(330, , Width - 360)
+	searchList.Move(330, , Width - 360)
 	CItemPrice.GetPos(&X, &Y, &CWidth, &CHeight)
-	CItemPrice.Move(330,, Width - 360)
+	CItemPrice.Move(330, , Width - 360)
 	SetTimer(boxRedraw, 0)
 	SetTimer(boxRedraw, -500)
 	Box.ResizeShadow()

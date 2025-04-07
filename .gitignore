@@ -1,10 +1,6 @@
 .vscode
-setting/defs/
-commit/
-setting/sessions/
-setting/currency.json
-setting/currencySymbol.json
-sumatra/
-wkhtmltox/
-release/
-invoice/
+setting
+commit
+invoice
+sumatra
+wkhtmltox

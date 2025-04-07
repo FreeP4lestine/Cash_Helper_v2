@@ -2,13 +2,13 @@
 #SingleInstance Force
 A_HotkeyInterval := 2000
 A_MaxHotkeysPerInterval := 200
-#Include <shared\gdip>
-#Include <shared\createimagebutton>
+
+#Include <GuiEx\GuiEx>
+
 #Include <shared\lv_colors>
 #Include <shared\explorertheme>
 #Include <shared\incelledit>
 #Include <shared\cuebanner>
-#Include <imagebuttons>
 #Include <setting>
 #Include <sell>
 #Include <shadow>
@@ -30,7 +30,7 @@ Sells := readJson('setting\sessions\sessions.json')
 allItems := Map()
 searchItems := []
 pToken := Gdip_Startup()
-mainWindow := Gui('Resize MinSize800x600', setting['Name'])
+mainWindow := GuiEx('-DPIScale Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 30
 mainWindow.MarginY := 30
@@ -236,4 +236,5 @@ Right:: nextSession()
 ^F:: searchCode()
 PgUp::IncreaseQ()
 PgDn::DecreaseQ()
+^s::QuickEditStock()
 #HotIf

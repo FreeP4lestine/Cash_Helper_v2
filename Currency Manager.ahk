@@ -20,7 +20,7 @@ username := A_Args[1]
 
 setting := readJson()
 
-mainWindow := Gui('Resize MinSize800x600', setting['Name'])
+mainWindow := Gui('-DPIScale Resize MinSize800x600', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 20

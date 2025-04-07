@@ -7,6 +7,7 @@
 
 Class GuiEx extends Gui {
     Proportion := Map()
+    ProportionGuis := []
     AddPicEx(
         Option := '',
         Value := '',
@@ -112,7 +113,7 @@ Class GuiEx extends Gui {
         WWidth := Width
         WHeight := Height
         If !WWidth := WWidth
-            GuiObj.GetPos(&WX, &WY, &WWidth, &WHeight)
+            GuiObj.GetClientPos(&WX, &WY, &WWidth, &WHeight)
         If !This.Proportion.Count {
             For Control in GuiObj {
                 Control.GetPos(&X, &Y, &Width, &Height)
@@ -157,17 +158,8 @@ Class GuiEx extends Gui {
                         ]
                         Control.Move(Coords*)
                         Control.Redraw()
-                    } Else {
-                        Coords := [
-                            WWidth * Ratio[1],
-                            WHeight * Ratio[2],
-                            WWidth * Ratio[3],
-                            WHeight * Ratio[4]
-                        ]
-                        Control.Move(Coords*)
-                        Control.Redraw()
+                        Continue
                     }
-                Default:
                     Coords := [
                         WWidth * Ratio[1],
                         WHeight * Ratio[2],
@@ -176,16 +168,48 @@ Class GuiEx extends Gui {
                     ]
                     Control.Move(Coords*)
                     Control.Redraw()
-
+                ;Case 'GuiEx':
+                ;    Coords := [
+                ;        WWidth * Ratio[1],
+                ;        WHeight * Ratio[2],
+                ;        WWidth * Ratio[3],
+                ;        WHeight * Ratio[4]
+                ;    ]
+                ;    ToolTip Coords[3]
+                ;    Control.Move(Coords*)
+                ;    ;Control.Redraw()
+                Default:
+                    Coords := [
+                        WWidth * Ratio[1],
+                        WHeight * Ratio[2],
+                        WWidth * Ratio[3],
+                        WHeight * Ratio[4]
+                    ]
+                    Control.Move(Coords*)
+                    If Type(Control) != 'GuiEx'
+                        Control.Redraw()
             }
         }
     }
+    AddGuiToProportion() {
+        For G in This.ProportionGuis {
+            This.GetClientPos(&WX, &WY, &WWidth, &WHeight)
+            G.GetPos(&X, &Y, &Width, &Height)
+            This.Proportion[G] := [
+                X / WWidth,
+                Y / WHeight,
+                Width / WWidth,
+                Height / WHeight
+            ]
+        }
+    }
     AddScrollGui() {
-        G := Gui('Parent' mainWindow.Hwnd ' -Caption')
+        G := GuiEx('-DPIScale Parent' mainWindow.Hwnd ' -Caption')
         G.BackColor := 'FFFFFF'
         G.MarginX := 10
         G.MarginY := 10
         SB := ScrollBar(G, 1, 1)
+        This.ProportionGuis.Push(G)
         Return G
     }
     AddComboBoxEx(

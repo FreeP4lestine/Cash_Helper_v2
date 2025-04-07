@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+
+<head>
+    <style>
+        .sender {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: absolute;
+            top: 118px;
+            left: 16px;
+            font-size: 18px;
+        }
+
+        .reciever {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: right;
+            position: absolute;
+            top: 118px;
+            right: 16px;
+            font-size: 18px;
+        }
+
+        .invoice {
+            position: absolute;
+            text-align: right;
+            top: 8px;
+            right: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1 {
+            font-size: 20px;
+        }
+
+        h2 {
+            font-size: 12px;
+            margin-left: 5px;
+            font-weight: normal;
+        }
+
+        .head {
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            border: 1px solid rgb(140 140 140);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            width: 99%;
+            position: absolute;
+            top: 320px;
+        }
+
+        caption {
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        thead,
+        tfoot {
+            background-color: rgb(228 240 245);
+            
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px 10px;
+            text-align: center;
+            
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        td:last-of-type {
+            text-align: center;
+        }
+
+        tbody>tr:nth-of-type(even) {
+            background-color: rgb(237 238 242);
+        }
+
+        tfoot {
+            font-weight: bold;
+            text-align: right;
+            display: table-row-group
+        }
+
+        thead {
+            display: table-row-group;
+            font-size: 16px;
+            background-color: lightblue;
+        }
+        tfoot th {
+            background-color: lightblue;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="logo"><img src="data:image/png;base64,#LOGO#"></div>
+    <div class="sender">
+        <h1>#Nom de l'entreprise#</h1>
+        <h2>#Entreprise Addresse#</h2>
+        <h2>#Entreprise Code Postal#</h2>
+        <h2>#Entreprise Ville / Pays#</h2>
+        <h2>#Entreprise Numéro de téléphone#</h2>
+        <h2>#Entreprise E-mail#</h2>
+    </div>
+    <div class="reciever">
+        <h2>#Nom du client#</h2>
+        <h2>#Client Addresse#</h2>
+        <h2>#Client Code Postal#</h2>
+        <h2>#Client Ville#</h2>
+    </div>
+    <div class="invoice">
+        <h1>#Facture Numéro#</h1>
+        <h1>#Date#</h1>
+    </div>
+    <table class="list-product">
+        <caption>
+            Liste de produits
+        </caption>
+        <thead>
+            <tr>
+                <th scope="col">Description</th>
+                <th scope="col">Qté</th>
+                <th scope="col">Prix Unitaire</th>
+                <th scope="col">TVA</th>
+                <th scope="col">Total HT</th>
+            </tr>
+        </thead>
+        <tbody id="content">
+            #ITEMS#
+        </tbody>
+        <tfoot>
+            <tr>
+                <th scope="row" colspan="4">Total net HT</th>
+                <td>#Total net HT#</td>
+            </tr>
+            <tr>
+                <th scope="row" colspan="4">TVA</th>
+                <td>#TVA2#</td>
+            </tr>
+            <tr>
+                <th scope="row" colspan="4">Remise</th>
+                <td>#Remise#</td>
+            </tr>
+            <tr>
+                <th scope="row" colspan="4">Total TTC</th>
+                <td>#Total TTC#</td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+
+</html>

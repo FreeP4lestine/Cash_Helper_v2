@@ -18,7 +18,7 @@ setting := readJson()
 
 pToken := Gdip_Startup()
 
-mainWindow := GuiEx('Resize', setting['Name'])
+mainWindow := GuiEx('-DPIScale Resize', setting['Name'])
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 20
 mainWindow.MarginY := 20
@@ -73,7 +73,7 @@ ControlBorder(
 	20
 )
 
-createWindow := GuiEx('Resize', setting['Name'])
+createWindow := GuiEx('-DPIScale Resize', setting['Name'])
 createWindow.BackColor := 'White'
 createWindow.MarginX := 20
 createWindow.MarginY := 20
@@ -168,7 +168,7 @@ ControlBorder(
 	20
 )
 
-welcomeWindow := GuiEx('Resize', setting['Name'])
+welcomeWindow := GuiEx('-DPIScale Resize', setting['Name'])
 welcomeWindow.BackColor := 'White'
 welcomeWindow.MarginX := 20
 welcomeWindow.MarginY := 20
@@ -180,12 +180,23 @@ welcomeTitle.Focus()
 welcomeWindow.SetFont('s15')
 welcomeMetaInfo := welcomeWindow.AddText('xp yp+35 wp cGray')
 welcomeWindow.SetFont('s10')
-welcomeAccountInfo := welcomeWindow.AddEdit('ym h128 Right -VScroll ReadOnly BackgroundWhite -E0x200')
+welcomeAccountInfo := welcomeWindow.AddEdit('xm+403 ym h128 Right -VScroll ReadOnly BackgroundWhite -E0x200')
 welcomeAccountInfo.SetFont('s8')
-welcomeThumbnail := welcomeWindow.AddPicture('ym w128 h128')
+welcomeThumbnail := welcomeWindow.AddPicEx('ym w128 h128',, 0)
 welcomeWindow.SetFont('s10 Bold')
+ControlBorder(
+	welcomeWindow, [
+		welcomeTitle,
+		welcomeMetaInfo,
+		welcomeAccountInfo,
+		welcomeThumbnail
+	],
+	20,
+	10
+)
 FunctionPerRow := 5
 Managers := Map()
+ManagersCtrl := []
 For Each, Name in setting['Managers'] {
 	If !FileExist(Name '.ahk') {
 		FileAppend('', Name '.ahk')
@@ -206,14 +217,21 @@ For Each, Name in setting['Managers'] {
 			]*)
 	}
 	Managers[Name] := ButtonFunc
+	ManagersCtrl.Push(ButtonFunc)
 	; Add manager option to the create window
 	IL_Add(IL, 'images\' Name ' Icon.png')
 	createAutorisation.Add('Icon' . A_Index, Name)
 }
 manageAccount := welcomeWindow.AddLink("xm+5", '<a>Manage accounts!</a>')
 manageAccount.OnEvent('Click', Create)
+ControlBorder(
+	welcomeWindow, [
+		manageAccount,
+		ManagersCtrl*
+	],
+	20
+)
 
-Gdip_Shutdown(pToken)
 RunMe(Ctrl, Info) {
 	Run(StrReplace(Ctrl.Text, '`n') '.ahk ' loginUsername.Value)
 }

@@ -25,7 +25,7 @@ currency := readJson('setting\currency.json')
 names := Map()
 
 pToken := Gdip_Startup()
-mainWindow := AutoHotkeyUxGui(setting['Name'], 'Resize MinSize800x600')
+mainWindow := AutoHotkeyUxGui(setting['Name'], '-DPIScale Resize MinSize800x600')
 mainWindow.BackColor := 'White'
 mainWindow.MarginX := 30
 mainWindow.MarginY := 30
@@ -114,7 +114,7 @@ LeftAmount 		:= mainWindow.AddEdit('-E0x200 BackgroundFFFFFF ReadOnly Center cRe
 
 ResumeBox := Shadow(mainWindow, [TotalAmountText, TotalAmount, PaidAmountText, PaidAmount, LeftAmountText, LeftAmount])
 
-payCheckWindow := Gui('', setting['Name'])
+payCheckWindow := Gui('-DPIScale ', setting['Name'])
 payCheckWindow.BackColor := 'White'
 payCheckWindow.OnEvent('Close', (*) => (mainWindow.Opt('-Disabled'), SetTimer(commitClose, 0)))
 payCheckWindow.MarginX := 20

@@ -4,7 +4,7 @@ checkBypass(Prompt := 0) {
 		Key := InputBox('Enter a bypass key, make sure to remember it!', 'Bypass key', 'w400 h100', A_UserName)
 		If Key.Result != 'OK' {
 			Msgbox('The bypass key is required!', 'Bypass', 0x30)
-			Return
+			Return False
 		}
 		setting["FirstUse"] := True
 		setting["Bypass"] := Key.Value
@@ -13,11 +13,11 @@ checkBypass(Prompt := 0) {
 	If Prompt {
 		Key := InputBox('Enter the bypass key', 'Bypass key', 'w400 h100')
 		If Key.Result != 'OK' {
-			Return
+			Return False
 		}
 		If Key.Value !== setting["Bypass"] {
 			Msgbox('Wrong bypass key!', 'Bypass', 0x30)
-			Return
+			Return False
 		}
 	}
 	Return True
@@ -239,19 +239,17 @@ welcomeUpdateProfile() {
 	If setting['Bypass'] = bypassKey.Value {
 		loginUsername.Value := 'Owner'
 	} Else {
-		pToken := Gdip_Startup()
 		usersetting := readJson(A_AppData '\Cash Helper\users.json')
 		If usersetting.Has('Registered')
 			&& usersetting['Registered'].Has(loginUsername.Value)
 			&& hB := hBitmapFromB64(usersetting['Registered'][loginUsername.Value]['b64Thumbnail']) {
 				welcomeThumbnail.Value := 'HBITMAP:*' hB
 		}
-		Gdip_Shutdown(pToken)
 	}
 	welcomeAccountInfo.Value := loginUsername.Value
-	welcomeWindow.GetPos(, , &Width)
-	welcomeThumbnail.Move(Width - 168)
-	welcomeAccountInfo.Move(Width - 336)
+	;welcomeWindow.GetPos(, , &Width)
+	;welcomeThumbnail.Move(Width - 168)
+	;welcomeAccountInfo.Move(Width - 336)
 	StartTime := A_TickCount
 	SetTimer(UpdateMetaInfo, 1000)
 	UpdateMetaInfo() {

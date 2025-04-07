@@ -1,15 +1,16 @@
 newGroupCreate() {
-	UserInput := InputBox('Enter group name', 'Group', 'w400 h85', 'NewGroup')
-	If UserInput.Result != 'OK'
-		Return
-	If UserInput.Value = '' {
-		MsgBox('Nothing was entered', 'Group', 0x30)
-		NewGroupCreate()
-	}
-	If !(UserInput.Value ~= '^[A-Za-z0-9_ ]+$') {
-		MsgBox('The name must be alphanumeric! [ A-Z, a-z, 0-9, _, ] ', 'Group', 0x30)
-		NewGroupCreate()
-	}
+	Msgbox('Comming Soon!', 'Info', 0x40)
+	;UserInput := InputBox('Enter group name', 'Group', 'w400 h85', 'NewGroup')
+	;If UserInput.Result != 'OK'
+	;	Return
+	;If UserInput.Value = '' {
+	;	MsgBox('Nothing was entered', 'Group', 0x30)
+	;	NewGroupCreate()
+	;}
+	;If !(UserInput.Value ~= '^[A-Za-z0-9_ ]+$') {
+	;	MsgBox('The name must be alphanumeric! [ A-Z, a-z, 0-9, _, ] ', 'Group', 0x30)
+	;	NewGroupCreate()
+	;}
 }
 findItemInListView(Code, List := mainList, Vis := False) {
 	foundRow := 0
@@ -106,6 +107,7 @@ writeItemProperties(backUp := False) {
 				tmp['Related'] := Code 'x' (CF := Round(1 / EValue, setting['Rounder']))
 				tmp['Stock Value'] := Round(ST / CF, setting['Rounder'])
 				writeJson(tmp, setting['ItemDefLoc'] '\' CBValue '.json')
+			Case 'Sell Method': item[Property] := ItemPropertiesForms[Property]['Form'].Text
 			Default: item[Property] := Value
 		}
 	}
@@ -190,6 +192,7 @@ showItemProperties(Code) {
 					itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 					nameDisplay(itemPropertiesForms[Property[1]]['CBForm'], '')
 				}
+			Case 'Sell Method': ItemPropertiesForms[Property[1]]['Form'].Text := item[Property[1]]
 			Default: itemPropertiesForms[Property[1]]['Form'].Value := item[Property[1]]
 		}
 	}
@@ -656,26 +659,4 @@ generateItemCode128(Thickness := 1, Caption := False, BackColor := '0xFFFFFFFF',
 	barcoderPicture.GetPos(,, &bW)
 	barcoderWindow.GetPos(,, &wW)
 	barcoderPicture.Move((wW - bW) / 2 - 5)
-}
-resizeControls(GuiObj, MinMax, Width, Height) {
-	updateItem.GetPos(&uX, &uY, &uWidth, &uHeight)
-	updateItem.Move(, uY := Height - uHeight - 35)
-	propertiesWindow.GetPos(&X, &Y, &WWidth, &WHeight)
-	propertiesWindow.Move(,,, Height - (Y + (Height - (uY - 20))))
-	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
-	GroupPath.Move(,, Width - X - 40)
-	mainList.Move(,, Width - X - 40, Height - Y - 35)
-	searchList.Move(,, Width - X - 40, Height - Y - 35)
-	currentTask.GetPos(&X, &Y, &CWidth, &CHeight)
-	currentTask.Move(,, Width - X - 40)
-	SetTimer(boxRedraw, 0)
-	SetTimer(boxRedraw, -500)
-	Box1.ResizeShadow()
-	Box2.ResizeShadow()
-	Box3.ResizeShadow()
-}
-boxRedraw() {
-	Box1.RedrawShadow()
-	Box2.RedrawShadow()
-	Box3.RedrawShadow()
 }
