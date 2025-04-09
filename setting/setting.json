@@ -1,4 +1,4 @@
-{
+﻿{
 	"Author": "Chandool Muhammad",
 	"Bypass": "GG",
 	"ClientInfo": [
@@ -119,7 +119,7 @@
 		"Addresse",
 		"Code Postal",
 		"Ville / Pays",
-		"Num\u00C3\u00A9ro de t\u00C3\u00A9l\u00C3\u00A9phone",
+		"Numéro de téléphone",
 		"E-mail"
 	],
 	"Name": "Cash Helper",
