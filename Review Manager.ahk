@@ -1,15 +1,12 @@
 #Requires AutoHotkey v2
 #SingleInstance Force
 
-#Include <shared\gdip>
-#Include <shared\explorertheme>
-#Include <shared\lv_colors>
-#Include <shared\createimagebutton>
+#Include <GuiEx\GuiEx>
+
 #Include <inc\ui-base>
 #Include <review>
 #Include <setting>
-#Include <shadow>
-#Include <imagebuttons>
+#Include <GuiEx\GuiEx>
 
 If A_Args.Length != 1 || A_Args[1] = '' {
 	ExitApp()
@@ -29,21 +26,15 @@ review['OverAllItems'] := [0, 0]
 review['OverAllUser'] := [0, 0]
 review['OverAllDay'] := [0, 0]
 review['Pointer'] := []
-pToken := Gdip_Startup()
-mainWindow := AutoHotkeyUxGui(setting['Name'], '-DPIScale Resize MinSize800x600')
-mainWindow.BackColor := 'White'
-mainWindow.MarginX := 20
-mainWindow.MarginY := 5
-mainWindow.OnEvent('Close', Quit)
-Quit(HGui) {
-	Gdip_Shutdown(pToken)
-	ExitApp()
-}
-mainWindow.OnEvent('Size', resizeControls)
-C1 := mainWindow.AddPicture('xm+20 ym+20', 'images\Review Manager.png')
+
+mainWindow := GuiEx()
+mainWindow.Default()
+
+Logo := mainWindow.AddPicture('xm+20 ym+20', 'images\Review Manager.png')
 mainWindow.SetFont('s25', 'Segoe UI')
-C2 := mainWindow.AddText('ym+20', 'Review Manager')
-Box7 := Shadow(mainWindow, [C1, C2])
+Title := mainWindow.AddText('ym+20', 'Review Manager')
+mainWindow.AddBorder(mainWindow, [Logo, Title])
+
 IL := IL_Create(,, True)
 IL_Add(IL, 'images\pending.png')
 IL_Add(IL, 'images\archived.png')

@@ -6,8 +6,8 @@ class ControlBorder {
         This.AX := AX
         This.AY := AY
         This.Ctrl := Ctrl
-        This.Box := This.GetBox(This.Ctrl)
         This.HGui := HGui
+        This.Box := This.GetBox()
         This.Left := {
             B: 'iVBORw0KGgoAAAANSUhEUgAAAAcAAABACAYAAADWD20HAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAA2SURBVEhL7cmxEQAgCANA99+PLo2U0siJtHEBR8i3P243TxV3JlcEpzvNjACoVCqVSqXyk+ADDu6AG930WYwAAAAASUVORK5CYII=',
             W: 7,
@@ -42,8 +42,21 @@ class ControlBorder {
         }
         This.SetControlBorder()
     }
-    GetBox(Ctrl, Margin := 15) {
-        For Ct in Ctrl {
+    GetBox(Margin := 15) {
+        If This.Ctrl.Length {
+            For Ct in This.Ctrl {
+                Ct.GetPos(&_X, &_Y, &_Width, &_Height)
+                If !IsSet(X) || _X < X
+                    X := _X
+                If !IsSet(Y) || _Y < Y
+                    Y := _Y
+                If !IsSet(Width) || (_X + _Width) > Width
+                    Width := _X + _Width
+                If !IsSet(Height) || (_Y + _Height) > Height
+                    Height := _Y + _Height
+            }
+        } Else For Ct in This.HGui {
+            This.Ctrl.Push(Ct)
             Ct.GetPos(&_X, &_Y, &_Width, &_Height)
             If !IsSet(X) || _X < X
                 X := _X

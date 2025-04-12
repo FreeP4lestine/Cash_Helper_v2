@@ -18,27 +18,18 @@ setting := readJson()
 
 pToken := Gdip_Startup()
 
-mainWindow := GuiEx('-DPIScale Resize', setting['Name'])
-mainWindow.BackColor := 'White'
-mainWindow.MarginX := 20
-mainWindow.MarginY := 20
-mainWindow.OnEvent('Close', (*) => ExitApp())
-mainWindow.OnEvent('Size', Gui_Size)
-Gui_Size(GuiObj, MinMax, Width, Height) {
-	GuiObj.Resize(GuiObj, MinMax, Width, Height)
-}
-mainWindow.SetFont('s10 Bold', 'Segoe UI')
+mainWindow := GuiEx()
+mainWindow.Default(1)
+
 loginThumbnail := mainWindow.AddPicEx('xm+86 ym w128 h128', 'images\Default.png', 0)
 loginUsername := mainWindow.AddEditEx('xm w300 Center', , 'Username', ['s10 Bold', 'Segoe UI'], '^[A-Za-z_ 0-9]+$')
 loginUsername.OnEvent('Change', (*) => updateThumbnail())
-mainWindow.SetFont('s9')
-Keyboard := mainWindow.AddLink("xm w300 Center", '<a>Keyboard</a>')
+Keyboard := mainWindow.AddLinkEx("xm w300 Center", '<a>Keyboard</a>', ['s9'])
 Keyboard.OnEvent('Click', (*) => Run('osk.exe'))
-mainWindow.SetFont('s10')
-loginPassword := mainWindow.AddEditEx('w300 Center cRed Password', , 'Password')
+loginPassword := mainWindow.AddEditEx('w300 Center cRed Password', , 'Password', ['s10'])
 bypassKey := mainWindow.AddEditEx('w300 cGreen Password Center', , 'Bypass key')
-loginRemember := mainWindow.AddCheckBox(, 'Remember')
-submitLogin := mainWindow.AddButtonEx('w300', 'Login', , IBGreen2)
+loginRemember := mainWindow.AddCheckBoxEx(, 'Remember')
+submitLogin := mainWindow.AddButtonEx('w300', 'Login',, IBGreen2)
 submitLogin.OnEvent('Click', Submit)
 Submit(Ctrl, Info) {
 	If !checkBypass() || !submitAccount() {
@@ -48,8 +39,7 @@ Submit(Ctrl, Info) {
 	mainWindow.Hide()
 	welcomeUpdateProfile()
 }
-mainWindow.SetFont('s9')
-createAccount := mainWindow.AddLink("w300 Center", 'No account? <a>Create!</a>')
+createAccount := mainWindow.AddLinkEx("w300 Center", 'No account? <a>Create!</a>', ['s9'])
 createAccount.OnEvent('Click', Create)
 Create(Ctrl, ID, HREF) {
 	If !checkBypass(True) {
@@ -73,37 +63,22 @@ ControlBorder(
 	20
 )
 
-createWindow := GuiEx('-DPIScale Resize', setting['Name'])
-createWindow.BackColor := 'White'
-createWindow.MarginX := 20
-createWindow.MarginY := 20
-createWindow.OnEvent('Size', Gui_Size)
-createWindow.SetFont('s10', 'Segoe UI')
-b64createThumbnail := createWindow.AddEditEx('w300 ReadOnly Hidden')
+createWindow := GuiEx()
+createWindow.Default()
+
+b64createThumbnail := createWindow.AddEditEx('w300 ReadOnly Hidden',,, ['s10', 'Segoe UI'])
 createThumbnail := createWindow.AddPicEx('xm+86 ym w128 h128', 'images\Default.png', 0)
 createThumbnail.OnEvent('Click', (*) => pickThumbnail(createThumbnail, b64createThumbnail))
 createWindow.MarginY := 5
 createUsername := createWindow.AddComboBoxEx('xm w300 Center', , 'Username', , '^[A-Za-z_ 0-9]+$')
 createUsername.OnEvent('Change', (*) => createUpdateThumbnail())
-createWindow.SetFont('s9')
-Keyboard := createWindow.AddLink("w300 Center", '<a>Keyboard</a>')
+Keyboard := createWindow.AddLinkEx("w300 Center", '<a>Keyboard</a>', ['s9'])
 Keyboard.OnEvent('Click', (*) => Run('osk.exe'))
-createWindow.SetFont('s10')
+createPassword := createWindow.AddEditEx('w300 cRed Center', , 'Password', ['s10'])
 createWindow.MarginY := 20
-createWindow.MarginY := 5
-createPassword := createWindow.AddEditEx('w300 cRed Center', , 'Password')
-createWindow.MarginY := 20
-createAutorisation := createWindow.AddListView('r8 w300 Checked -Hdr', ['Autorisation'])
+createAutorisation := createWindow.AddListViewEx('r8 w300 Checked -Hdr', ['Autorisation'],, 1, 24, 24)
 createAutorisation.ModifyCol(1, '275')
 createAutorisation.OnEvent('ItemCheck', (*) => createAutorisation.Redraw())
-ILC_COLOR32 := 0x20
-ILC_ORIGINALSIZE := 0x00010000
-IL := ImageList_Create(24, 24, ILC_COLOR32 | ILC_ORIGINALSIZE, 100, 100)
-ImageList_Create(cx, cy, flags, cInitial, cGrow) {
-	return DllCall("comctl32.dll\ImageList_Create", "int", cx, "int", cy, "uint", flags, "int", cInitial, "int", cGrow)
-}
-createAutorisation.SetImageList(IL, 1)
-SetExplorerTheme(createAutorisation.Hwnd)
 flagDelete := createWindow.AddCheckBox(, 'Flag to delete')
 submitCreate := createWindow.AddButtonEx('xm yp+75 w300', 'Account Update', , IBBlack1)
 submitCreate.OnEvent('Click', (*) => updateAccount())
@@ -130,11 +105,7 @@ PersonalText := createWindow.AddText('xm+350 ym w300 Center', 'My personal/clien
 PersonalText.SetFont('Bold')
 spaceLogo := createWindow.AddPicEx('xp+86 yp+50 w128 h128', 'images\Default.png', 0)
 If MyInfo.Length {
-	pToken := Gdip_Startup()
-	If hB := hBitmapFromB64(MyInfo[1]) {
-		spaceLogo.Value := 'HBITMAP:*' hB
-	}
-	Gdip_Shutdown(pToken)
+	spaceLogo.B64Value := MyInfo[1]
 }
 createWindow.MarginY := 5
 For Property in setting['MyInfo'] {
@@ -148,14 +119,12 @@ For Property in setting['MyInfo'] {
 MyInfoHandle[2].OnEvent('Change', (*) => viewInfo())
 createWindow.MarginY := 20
 
-infoCreate := createWindow.AddButton('w150', 'Info Update')
+infoCreate := createWindow.AddButtonEx('w150', 'Info Update',, IBBlack1)
 infoCreate.OnEvent('Click', (*) => updateMyInfo())
-CreateImageButton(infoCreate, 0, IBBlack1*)
 spaceLogo.OnEvent('Click', (*) => pickThumbnail(spaceLogo, MyInfoHandle[1]))
 
-infoClCreate := createWindow.AddButton('xp+152 yp w150', 'Client Update')
+infoClCreate := createWindow.AddButtonEx('xp+152 yp w150', 'Client Update',, IBBlack1)
 infoClCreate.OnEvent('Click', (*) => updateMyInfo(1))
-CreateImageButton(infoClCreate, 0, IBBlack1*)
 ControlBorder(
 	createWindow, [
 		PersonalText,
@@ -168,12 +137,9 @@ ControlBorder(
 	20
 )
 
-welcomeWindow := GuiEx('-DPIScale Resize', setting['Name'])
-welcomeWindow.BackColor := 'White'
-welcomeWindow.MarginX := 20
-welcomeWindow.MarginY := 20
-welcomeWindow.OnEvent('Close', (*) => ExitApp())
-welcomeWindow.OnEvent('Size', Gui_Size)
+welcomeWindow := GuiEx()
+welcomeWindow.Default(1)
+
 welcomeWindow.SetFont('s25', 'Segoe UI')
 welcomeTitle := welcomeWindow.AddText(, setting['Name'])
 welcomeTitle.Focus()
@@ -202,25 +168,15 @@ For Each, Name in setting['Managers'] {
 		FileAppend('', Name '.ahk')
 	}
 	_XY := Mod((Index := A_Index - 1), FunctionPerRow) = 0 ? 'xm' : 'xp+145 yp'
-	ButtonFunc := welcomeWindow.AddButton('w120 h143 ' _XY, '`n`n`n`n`n`n`n' Name)
+	IBTheme := [
+		['images\' Name '_normal.png'], ['images\' Name '_hover.png'], ['images\' Name '_click.png'], ['images\SubApp_disabled2.png', , 0x80000000]
+	]
+	ButtonFunc := welcomeWindow.AddButtonEx('w120 h143 ' _XY, '`n`n`n`n`n`n`n' Name,, IBTheme)
 	ButtonFunc.OnEvent('Click', RunMe)
-	Try {
-		CreateImageButton(ButtonFunc,
-			0,
-			[
-				['images\' Name '_normal.png'],
-				['images\' Name '_hover.png'],
-				['images\' Name '_click.png'],
-				[
-					'images\SubApp_disabled2.png', , 0x80000000
-				]
-			]*)
-	}
 	Managers[Name] := ButtonFunc
 	ManagersCtrl.Push(ButtonFunc)
 	; Add manager option to the create window
-	IL_Add(IL, 'images\' Name ' Icon.png')
-	createAutorisation.Add('Icon' . A_Index, Name)
+	createAutorisation.AddEx('images\' Name ' Icon.png',, Name)
 }
 manageAccount := welcomeWindow.AddLink("xm+5", '<a>Manage accounts!</a>')
 manageAccount.OnEvent('Click', Create)
@@ -265,7 +221,7 @@ Your feedback is so important
 Have a nice day :D
 )'
 Text := StrReplace(Text, "setting['Version']", setting['Version'])
-SloganAbout := mainWindow.AddEditEx('xp y280 wp h210 Center -Border ReadOnly BackgroundF0F0F0 -VScroll', Text)
+SloganAbout := mainWindow.AddEditEx('xp y280 wp h180 Center -Border ReadOnly BackgroundF0F0F0 -VScroll', Text)
 ControlBorder(
 	mainWindow, [
 		Slogan,

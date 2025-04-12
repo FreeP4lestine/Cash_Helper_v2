@@ -112,22 +112,22 @@ LeadTrailZeroTrim(N) {
 	Return N
 }
 tmpRowColorize(Row) {
-	mainListCLV.Row(Row, , 0xFF999999)
-	mainListCLV.Cell(Row, 1, 0xFFCCCCCC)
-	mainListCLV.Cell(Row, 2, , 0xFF999999)
-	mainListCLV.Cell(Row, 4, , 0xFF999999)
-	mainListCLV.Cell(Row, 5, , 0xFF999999)
-	mainListCLV.Cell(Row, 10, , 0xFF999999)
-	mainListCLV.Cell(Row, 11, , 0xFFCCCCCC)
+	mainList.Color.Row(Row, , 0xFF999999)
+	mainList.Color.Cell(Row, 1, 0xFFCCCCCC)
+	mainList.Color.Cell(Row, 2, , 0xFF999999)
+	mainList.Color.Cell(Row, 4, , 0xFF999999)
+	mainList.Color.Cell(Row, 5, , 0xFF999999)
+	mainList.Color.Cell(Row, 10, , 0xFF999999)
+	mainList.Color.Cell(Row, 11, , 0xFFCCCCCC)
 }
 addedRowColorize(Row) {
-	mainListCLV.Row(Row, , 0xFF000000)
-	mainListCLV.Cell(Row, 1, 0xFF000000)
-	mainListCLV.Cell(Row, 2, , 0xFF0000FF)
-	mainListCLV.Cell(Row, 4, , 0xFF804000)
-	mainListCLV.Cell(Row, 5, , 0xFF008040)
-	mainListCLV.Cell(Row, 10, , 0xFFFF0000)
-	mainListCLV.Cell(Row, 11, 0xFFFFC080)
+	mainList.Color.Row(Row, , 0xFF000000)
+	mainList.Color.Cell(Row, 1, 0xFF000000)
+	mainList.Color.Cell(Row, 2, , 0xFF0000FF)
+	mainList.Color.Cell(Row, 4, , 0xFF804000)
+	mainList.Color.Cell(Row, 5, , 0xFF008040)
+	mainList.Color.Cell(Row, 10, , 0xFFFF0000)
+	mainList.Color.Cell(Row, 11, 0xFFFFC080)
 }
 updateQuantity(Data) {
 	QF := Data[7] / Data[6]
@@ -699,40 +699,4 @@ HideShowQuickies() {
 displayItemCode(Ctrl, Item) {
 	enteredCode.Value := Ctrl.GetText(Item)
 	analyzeCode()
-}
-resizeControls(GuiObj, MinMax, Width, Height) {
-	latestSells.GetPos(&X, &Y, &CWidth, &CHeight)
-	latestSells.Move(, , , Height - 190 - Y)
-	quickResume.GetPos(&X, &Y, &CWidth, &CHeight)
-	quickResume.Move(, Height - 172)
-	pendingBought.GetPos(&X, &Y, &CWidth, &CHeight)
-	pendingBought.Move(, Height - 134)
-	pendingSold.GetPos(&X, &Y, &CWidth, &CHeight)
-	pendingSold.Move(, Height - 96)
-	pendingProfit.GetPos(&X, &Y, &CWidth, &CHeight)
-	pendingProfit.Move(, Height - 58)
-	mainList.GetPos(&X, &Y, &CWidth, &CHeight)
-	mainList.Move(, , W := Width - 30 - X, Height - 150 - Y)
-	prevSess.GetPos(&X, &Y, &CWidth, &CHeight)
-	prevSess.Move(, Height - 79)
-	currentSession.Move(, Height - 77)
-	nextSess.Move(, Height - 79)
-	priceSum.Move(Width - 360, Height - 99)
-	enteredCode.GetPos(&X, &Y, &CWidth, &CHeight)
-	enteredCode.Move(330, , Width - 360)
-	searchList.Move(330, , Width - 360)
-	CItemPrice.GetPos(&X, &Y, &CWidth, &CHeight)
-	CItemPrice.Move(330, , Width - 360)
-	SetTimer(boxRedraw, 0)
-	SetTimer(boxRedraw, -500)
-	Box.ResizeShadow()
-	Box2.ResizeShadow()
-	Box3.ResizeShadow()
-	Box4.ResizeShadow()
-}
-boxRedraw() {
-	Box.RedrawShadow()
-	Box2.RedrawShadow()
-	Box3.RedrawShadow()
-	Box4.RedrawShadow()
 }

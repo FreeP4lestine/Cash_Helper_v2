@@ -76,7 +76,7 @@
 ; ======================================================================================================================
 ; CreateImageButton()
 ; ======================================================================================================================
-CreateImageButton(GuiBtn, Mode, Options*) {
+CreateImageButton(GuiBtn, Mode, IconFile := '', Options*) {
    ; Default colors - COLOR_3DFACE is used by AHK as default Gui background color
    Static DefGuiColor := SetDefGuiColor("*GUI*"),
           DefTxtColor := SetDefTxtColor("*DEF*"),
@@ -309,6 +309,33 @@ CreateImageButton(GuiBtn, Mode, Options*) {
                DllCall("Gdiplus.dll\GdipCreateSolidFill", "UInt", BkgColor1, "PtrP", &PBRUSH)
                ; Fill the path
                DllCall("Gdiplus.dll\GdipFillPath", "Ptr", PGRAPHICS, "Ptr", PBRUSH, "Ptr", PPATH)
+               ; Add custom icon
+               dx := 10
+               dy := 5
+               dw := BtnH - 10
+               dh := BtnH - 10
+               Switch A_Index {
+                  Case 1: DrawIcon(IconFile)
+                  Case 2: 
+                     SplitPath(IconFile,, &OutDir, &OutExt, &OutNameNoExt)
+                     File := OutDir '\' OutNameNoExt '_hover.' OutExt
+                     DrawIcon(File)
+                  Case 3: 
+                     SplitPath(IconFile,, &OutDir, &OutExt, &OutNameNoExt)
+                     File := OutDir '\' OutNameNoExt '_click.' OutExt
+                     DrawIcon(File)
+                  Case 4: 
+                     SplitPath(IconFile,, &OutDir, &OutExt, &OutNameNoExt)
+                     File := OutDir '\' OutNameNoExt '_disable.' OutExt
+                     DrawIcon(File)
+               }
+               DrawIcon(File) {
+                  If FileExist(File) {
+                     pB := Gdip_CreateBitmapFromFile(File)
+                     Gdip_DrawImage(PGRAPHICS, pB, dx, dy, dw, dh)
+                     Gdip_DisposeImage(pB)
+                  }
+               }
             Case 1, 2:                 ; the background is bicolored
                ; Create a LineGradientBrush
                SetRectF(&RECTF, PathX, PathY, PathW, PathH)
@@ -553,3 +580,4 @@ CreateImageButton(GuiBtn, Mode, Options*) {
       Throw Error(ErrMsg)
    }
 }
+#Include Gdip.ahk
