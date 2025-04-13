@@ -384,7 +384,7 @@ loadItemsDefinitions() {
 	}
 	currentTask.Value := 'Loaded ' A_LoopFileName '... [ ' Counted ' ]'
 	fitItemsListContent(mainList)
-	colorizeItemsList(mainList, mainListCLV)
+	colorizeItemsList(mainList, mainList.Color)
 	currentTask.Value := Counted ' Item(s) loaded in ' Round((A_TickCount - StartTime) / 1000, 2) ' second(s)'
 	mainList.Redraw()
 }
@@ -570,7 +570,7 @@ searchItemInMainList(andSearch := False) {
 	mainList.Visible := False
 	searchList.Visible := True
 	fitItemsListContent(searchList)
-	colorizeItemsList(searchList, searchListCLV)
+	colorizeItemsList(searchList, searchList.Color)
 	searchList.Redraw()
 }
 clearItemViewProperties() {

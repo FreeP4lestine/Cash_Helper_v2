@@ -122,6 +122,10 @@ class ControlBorder {
                     Ct.RegexInfo.GetPos(&X)
                     Ct.RegexInfo.Move(X + This.AX)
                 }
+                If Ct.HasProp('PlaceHolder') {
+                    Ct.PlaceHolder.GetPos(&X)
+                    Ct.PlaceHolder.Move(X + This.AX)
+                }
             }
         }
         If This.AY {
@@ -131,6 +135,10 @@ class ControlBorder {
                 If Ct.HasProp('RegexInfo') {
                     Ct.RegexInfo.GetPos(, &Y)
                     Ct.RegexInfo.Move(, Y + This.AY)
+                }
+                If Ct.HasProp('PlaceHolder') {
+                    Ct.PlaceHolder.GetPos(, &Y)
+                    Ct.PlaceHolder.Move(, Y + This.AY)
                 }
             }
         }

@@ -52,18 +52,17 @@ searchListHide() {
 	enteredCode.Visible := True
 	searchList.Visible := False
 }
-searchList.GetPos(&X, &Y, &W)
 
-CItemPrice := mainWindow.AddEditEx('x' X ' y' Y + 5 ' w' W ' cRed Right -Border',, '→ Price', ['s14'])
+CItemPrice := mainWindow.AddEditEx('xp yp+20 w' W ' cRed Right -Border',, '→ Price', ['s14'])
 mainWindow.AddBorder([Logo,  Title,  enteredCode,  CItemPrice], 20)
 
 mainWindow.MarginY := 10
 Thumb := mainWindow.AddPicEx('xm+20 yp+50 w64 h64', 'images\Default.png', 0)
 Stock := mainWindow.AddEditEx('xp+80 yp+10 w60 cRed ReadOnly Center -Border',,, ['s15'])
-Code128 := mainWindow.AddPicEx('xm+20 yp+20 w140 h32 -Border',, 0)
+Code128 := mainWindow.AddPicEx('xm+20 w140 h32 -Border',, 0)
 
-latestSellsCount := mainWindow.AddTextEx('cBlue xm yp+50 w192 Center', 'Latest sells:', ['s8 norm'])
-latestSells := mainWindow.AddListViewEx('w192 h326 -Hdr h200 -HScroll', ['Code', 'Name'], ['s10'])
+latestSellsCount := mainWindow.AddTextEx('cBlue xm yp+70 w192 Center', 'Latest sells:', ['s8 norm'])
+latestSells := mainWindow.AddListViewEx('w192 h326 -Hdr h165 -HScroll', ['Code', 'Name'], ['s10'])
 latestSells.OnEvent('Click', displayItemCode)
 latestSells.Color.AlternateRows(0xFFE6E6E6)
 latestSells.ModifyCol(1, 'Center ' 0)
@@ -75,7 +74,7 @@ pendingSold := mainWindow.AddEditEx('Hidden w192 Center ReadOnly cGreen',,, ['s1
 pendingProfit := mainWindow.AddEditEx('Hidden w192 Center ReadOnly cGreen',,, ['s12 Bold'])
 mainWindow.AddBorder([Thumb, Code128, latestSellsCount, latestSells, quickResume, pendingBought, pendingSold, pendingProfit], 20)
 
-mainList := mainWindow.AddListViewEx('xm+240 ym+160 w980 h365 NoSortHdr -E0x200',, ['s14 norm'])
+mainList := mainWindow.AddListViewEx('xm+240 ym+175 w980 h365 NoSortHdr -E0x200',, ['s14 norm'])
 mainList.OnNotify(-3, quickListEdit)
 mainList.OnEvent('ItemSelect', (*) => thumbCheck())
 mainList.OnEvent('Click', (*) => thumbCheck())
@@ -99,7 +98,7 @@ mainWindow.AddBorder([mainList], 20)
 
 mainList.GetPos(, &Y, &W)
 
-priceSum := mainWindow.AddEditEx('xm+820 y' Y + 415 ' w400 Right cRed ReadOnly -Border',,, ['s35', 'Calibri'])
+priceSum := mainWindow.AddEditEx('xm+820 y' Y + 407 ' w400 Right cRed ReadOnly -Border',,, ['s35', 'Calibri'])
 priceSum.GetPos(, &Y)
 
 prevSess := mainWindow.AddButtonEx('xm+240 y' Y + 15 ' w45  Center', , ['s12 Bold'], IBGray2, 'images\buttons\prev.png')

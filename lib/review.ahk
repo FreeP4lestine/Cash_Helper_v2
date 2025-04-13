@@ -26,12 +26,12 @@ autoResizeCols() {
     details.ModifyCol(11, 'Center 50')
 }
 addedRowColorize(Row) {
-    detailsCLV.Row(Row, , 0xFF000000)
-    detailsCLV.Cell(Row, 2, , 0xFF0000FF)
-    detailsCLV.Cell(Row, 4, , 0xFF804000)
-    detailsCLV.Cell(Row, 5, , 0xFF008040)
-    detailsCLV.Cell(Row, 10, , 0xFFFF0000)
-    detailsCLV.Cell(Row, 11, 0xFFFFC080)
+    details.Color.Row(Row, , 0xFF000000)
+    details.Color.Cell(Row, 2, , 0xFF0000FF)
+    details.Color.Cell(Row, 4, , 0xFF804000)
+    details.Color.Cell(Row, 5, , 0xFF008040)
+    details.Color.Cell(Row, 10, , 0xFFFF0000)
+    details.Color.Cell(Row, 11, 0xFFFFC080)
 }
 displayDetails() {
     details.Delete()
@@ -82,7 +82,7 @@ loadAll() {
         review['Pending'].Push(Sell)
         review['Pointer'].Push(A_Index)
         DateTime := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd [ HH:mm:ss ]')
-        nonSubmitted.Add('icon1', DateTime ' [ ' Sell.JSON['Items'].Length ' ]')
+        nonSubmitted.AddEx('images\pending.png',, DateTime ' [ ' Sell.JSON['Items'].Length ' ]')
         For Item in Sell.JSON['Items'] {
             S += Item[10]
             B += Item[4] * Item[7] / Item[6]
@@ -101,12 +101,12 @@ loadUsers() {
     Users.Value := 'Users loading - Please wait...'
     Found := review['Users'] := Map()
     usersList.Delete()
-    usersList.Add('Icon4 Select Focus', 'Everyone')
+    usersList.AddEx('images\users.png', 'Select Focus', 'Everyone')
     usersList.Modify(1,, 'Every (one / day) - ( ' review['Pending'].Length ' )')
     For Sell in review['Pending'] {
         If !Sell.JSON.Has('Username') || Sell.JSON['Username'] = '' {
             If !Found.Has('--Unknown--') {
-                R := usersList.Add('Icon3', '--Unknown--')
+                R := usersList.AddEx('images\user.png',, '--Unknown--')
                 Found['--Unknown--'] := {Title: '--Unknown--', Row: R, Pointer: []}
             }
             Found['--Unknown--'].Pointer.Push(A_Index)
@@ -114,7 +114,7 @@ loadUsers() {
             Continue
         }
         If !Found.Has(Sell.JSON['Username']) {
-            R := usersList.Add('Icon3', Sell.JSON['Username'])
+            R := usersList.AddEx('images\user.png',, Sell.JSON['Username'])
             Found[Sell.JSON['Username']] := {Title: Sell.JSON['Username'], Row: R, Pointer: []}
         }
         Found[Sell.JSON['Username']].Pointer.Push(A_Index)
@@ -129,7 +129,7 @@ loadDays() {
     For Sell in review['Pending'] {
         Day := FormatTime(Sell.JSON['CommitTime'], 'yyyy/MM/dd')
         If !Found.Has(Day) {
-            R := daysList.Add('Icon5', Day)
+            R := daysList.AddEx('images\day.png',, Day)
             Found[Day] := {Title: Day, Row: R, Pointer: []}
         }
         Found[Day].Pointer.Push(A_Index)
@@ -222,44 +222,6 @@ clearSells() {
         }
     }
     MsgBox('All clear!', 'Clear', 0x40)
-}
-resizeControls(GuiObj, MinMax, Width, Height) {
-    C2.Move(, , Width - 164)
-    nonSubmitted.GetPos(, &Y)
-    nonSubmitted.Move(,,, Height - Y - 70)
-    daysList.GetPos(, &Y)
-    daysList.Move(,,, Height - Y - 25)
-    submit.Move(, Height - 60)
-    details.GetPos(&X, &Y, &CWidth, &CHeight)
-    details.Move(, , WW := Width - X - 40, Height - Y - 210)
-    openTime.Move(, , WW // 2)
-    commitTime.Move(X + WW // 2, , WW // 2)
-    overAllItem.Move(, Height - 170, WW)
-    itemsBuyValue.Move(, Height - 140, WW // 3 - 10)
-    itemsSellValue.Move(X + WW // 3 + 10, Height - 140, WW // 3 - 10)
-    itemsProfitValue.Move(X + WW // 3 * 2 + 10, Height - 140, WW // 3 - 10)
-    overallTotal.Move(, Height - 100, WW)
-    totalBuyValue.Move(, Height - 70, WW // 3 - 10)
-    totalSellValue.Move(X + WW // 3 + 10, Height - 70, WW // 3 - 10)
-    totalProfitValue.Move(X + WW // 3 * 2, Height - 70, WW // 3 - 10)
-    Box1.ResizeShadow()
-    Box2.ResizeShadow()
-    Box3.ResizeShadow()
-    Box5.ResizeShadow()
-    Box6.ResizeShadow()
-    Box7.ResizeShadow()
-    Box8.ResizeShadow()
-    SetTimer(boxRedraw, 0)
-    SetTimer(boxRedraw, -500)
-}
-boxRedraw() {
-    Box1.RedrawShadow()
-    Box2.RedrawShadow()
-    Box3.RedrawShadow()
-    Box5.RedrawShadow()
-    Box6.RedrawShadow()
-    Box7.RedrawShadow()
-    Box8.RedrawShadow()
 }
 
 CancelSellNow() {

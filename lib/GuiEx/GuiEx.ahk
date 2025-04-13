@@ -98,7 +98,6 @@ Class GuiEx extends Gui {
                         ]
                         Control.Move(Coords*)
                         Control.GetPos(,, &Width, &Height)
-                        Control.Resize(Control, 1, Width, Height)
                     Default:
                         Coords := [
                             WWidth * Ratio[1],
@@ -167,7 +166,7 @@ Class GuiEx extends Gui {
                 }
             )
             AddEx(Ctrl, ImageFile, Option := '', Params*) {
-                L.Add('Icon' . IL_Add(I, ImageFile) ' ' Option, Params*)
+                Return L.Add('Icon' . IL_Add(I, ImageFile) ' ' Option, Params*)
             }
         }
         Return L
@@ -199,23 +198,30 @@ Class GuiEx extends Gui {
         }
         E.GetPos(&X, &Y, &Width, &Height)
         If Regex != ''
-            X := This.AddText('x' X ' y' Y + Height ' Hidden cRed', Regex)
-        Else X := This.AddText('x' X ' y' Y + Height ' w1 h1')
+            T := This.AddText('x' X ' y' Y + Height ' Hidden cRed', Regex)
+        Else T := This.AddText('x' X ' y' Y + Height ' w1 h1')
+        D := This.AddText('x' X ' y' Y ' w' Width ' h' Height ' Hidden')
         E.DefineProp('RegexInfo', {
             Get: GetText
         })
         GetText(Ctrl) {
-            Return X
+            Return T
+        }
+        E.DefineProp('PlaceHolder', {
+            Get: GetHolder
+        })
+        GetHolder(Ctrl) {
+            Return D
         }
         If Regex != '' {
             E.OnEvent('Change', (*) => Verify())
             Verify() {
                 If E.Value ~= Regex || E.Value = '' {
                     E.Opt('c000000 BackgroundFFFFFF ' Option)
-                    X.Visible := False
+                    T.Visible := False
                 } Else {
                     E.Opt('cFF0000 BackgroundFFB7B7')
-                    X.Visible := True
+                    T.Visible := True
                 }
                 E.Redraw()
             }
@@ -255,9 +261,8 @@ Class GuiEx extends Gui {
     }
     AddScrollGui() {
         G := GuiEx('Parent' This.Hwnd ' -Caption')
-        G.BackColor := 'FFFFFF'
-        G.MarginX := 10
-        G.MarginY := 10
+        G.Default()
+
         SB := ScrollBar(G, 1, 1)
         G.DefineProp('SB', {
             Get: GetSB
@@ -278,7 +283,7 @@ Class GuiEx extends Gui {
                 Width / WWidth,
                 Height / WHeight
             ]
-            G.Resize(G, 0, Width, Height)
+            ;G.Resize(G, 0, Width, Height)
         }
     }
     AddComboBoxEx(Option := '', Value := [], Banner := '', FontOption := [], Regex := '') {
