@@ -10,10 +10,10 @@
 Class GuiEx extends Gui {
     Proportion := Map()
     ProportionGuis := []
-	Default(QuitApp := 0) {
+	Default(QuitApp := 0, Options := '', Title := '') {
 		pToken := Gdip_Startup()
         This.Title := setting['Name']
-		This.Opt('Resize')
+		This.Opt('Resize ' Options)
         This.SetFont('s25', 'Segoe UI')
 		This.BackColor := 'White'
 		This.MarginX := 20
@@ -64,8 +64,8 @@ Class GuiEx extends Gui {
                             WHeight * Ratio[2] + (WHeight * Ratio[4] - Ratio[6]) / 2
                         ]
                         Control.Move(Coords*)
-                        If Control.HasProp('IB')
-                            CreateImageButton(Control, 0, Control.IB.Ico, Control.IB.IB*)
+                        ;If Control.HasProp('IB')
+                        ;    CreateImageButton(Control, 0, Control.IB.Ico, Control.IB.IB*)
                         Control.Redraw()
                     Case 'Gui.Pic':
                         If Control.HasProp('WHResize') && !Control.WHResize {
@@ -188,14 +188,21 @@ Class GuiEx extends Gui {
         }
         Return P
     }
-    AddEditEx(Option := '', Value := '', Banner := '', FontOption := [], Regex := '') {
+    AddEditEx(Option := '', Value := '', Banner := '', FontOption := [], Regex := '', Caption := 0, CaptionOption := 'xm w280 Center') {
         If FontOption && FontOption.Length && FontOption.Length <= 2{
             This.SetFont(FontOption*)
         }
-        E := This.AddEdit('-E0x200 Border BackgroundWhite ' Option, Value)
         If Banner != '' {
-            This.EM_SETCUEBANNER(E.Hwnd, Banner)
-        }
+            If !Caption {
+                E := This.AddEdit('-E0x200 Border BackgroundWhite ' Option, Value)
+                This.EM_SETCUEBANNER(E.Hwnd, Banner)
+            } Else {
+                C := This.AddText(CaptionOption, Banner)
+                C.SetFont('s10')
+                C.GetPos(&X, &Y, &Width, &Height)
+                E := This.AddEdit('x' X ' y' Y + Height ' -E0x200 Border BackgroundWhite ' Option, Value)
+            }
+        } Else E := This.AddEdit('-E0x200 Border BackgroundWhite ' Option, Value)
         E.GetPos(&X, &Y, &Width, &Height)
         If Regex != ''
             T := This.AddText('x' X ' y' Y + Height ' Hidden cRed', Regex)
@@ -261,8 +268,7 @@ Class GuiEx extends Gui {
     }
     AddScrollGui() {
         G := GuiEx('Parent' This.Hwnd ' -Caption')
-        G.Default()
-
+        G.Default(, '-Resize')
         SB := ScrollBar(G, 1, 1)
         G.DefineProp('SB', {
             Get: GetSB
@@ -286,17 +292,25 @@ Class GuiEx extends Gui {
             ;G.Resize(G, 0, Width, Height)
         }
     }
-    AddComboBoxEx(Option := '', Value := [], Banner := '', FontOption := [], Regex := '') {
-        If FontOption && FontOption.Length && FontOption.Length <= 2{
+    AddComboBoxEx(Option := '', Value := [], Banner := '', FontOption := [], Regex := '', Caption := 0, CaptionOption := 'xm w280 Center') {
+        If FontOption && FontOption.Length && FontOption.Length <= 2 {
             This.SetFont(FontOption*)
         }
-        CB := This.AddComboBox('-E0x200 Border ' Option, Value)
+        If Banner != '' {
+            If !Caption {
+                CB := This.AddComboBox(Option, Value)
+                SendMessage(0x1703, 0, StrPtr(Banner), CB.Hwnd) ; CB_SETCUEBANNER
+            } Else {
+                msgbox 
+                C := This.AddText(CaptionOption, Banner)
+                C.SetFont('s10')
+                C.GetPos(&X, &Y, &Width, &Height)
+                CB := This.AddComboBox('x' X ' y' Y + Height ' ' Option, Value)
+            }
+        } Else CB := This.AddComboBox(Option, Value)
         If InStr(Option, 'Center') {
             EditHandle := DllCall("User32.dll\GetWindow", "Ptr", CB.Hwnd, "UInt", 5, "Ptr") ; Get Edit Handle
             WinSetStyle("+0x0001", EditHandle) ; Apply ES_CENTER to center text
-        }
-        If Banner != '' {
-            SendMessage(0x1703, 0, StrPtr(Banner), CB.Hwnd) ; CB_SETCUEBANNER
         }
         CB.GetPos(&X, &Y, &Width, &Height)
         X := This.AddText('x' X ' y' Y + Height ' Hidden cRed', Regex)

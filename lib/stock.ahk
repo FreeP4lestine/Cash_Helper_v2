@@ -378,7 +378,7 @@ loadItemsDefinitions() {
 		currentTask.Value := 'Loading ' A_LoopFileName '... [ ' Counted ' ]'
 		item := readJson(A_LoopFileFullPath)
 		rowInfo := populateRow(item, currency['rates'][setting['DisplayCurrency']], setting['Rounder'])
-		mainList.Add(, rowInfo*)
+		mainList.AddEx('images\object.png',, rowInfo*)
 		++Counted
 		itemPropertiesForms['Related']['CBForm'].Add([item['Code']])
 	}

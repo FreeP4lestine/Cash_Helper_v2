@@ -24,7 +24,7 @@ mainWindow.Default(1)
 
 Logo := mainWindow.AddPicEx('xm+20 ym+20', 'images\Stock Manager.png', 0)
 Title := mainWindow.AddTextEx('ym+20', 'Stock Manager', ['s25'])
-currentTask := mainWindow.AddEditEx('xm+1140 yp ReadOnly Right cGray',,, ['s10'])
+currentTask := mainWindow.AddEditEx('xm+990 yp ReadOnly Right cGray w300 -Border',,, ['s10'])
 ControlBorder(
 	mainWindow, [
 		Logo,
@@ -32,66 +32,61 @@ ControlBorder(
 		currentTask
 	]
 )
+switchUpdate := mainWindow.AddButtonEx('xm+20 y150 w320', 'Single Item', ['s8 Bold'], IBBlue2, 'images\buttons\switch.png')
 propertiesWindow := mainWindow.AddScrollGui()
-propertiesWindow.SetFont('s12 Bold', 'Calibri')
 itemPropertiesForms := Map()
 For Property in setting['Item'] {
+	propertiesWindow.SetFont('s12 Bold')
 	Switch Property[1] {
 		Case 'Currency', 'Latest Update':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly Backgroundd4d4d4', , Property[1])
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly Backgroundd4d4d4', , Property[1],,, 1)
 		Case 'Code':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center cBlue', , Property[1],, '^[A-Za-z0-9_ ]+$')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center cBlue', , Property[1],, '^[A-Za-z0-9_ ]+$', 1)
 		Case 'Buy Value':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center cRed BackgroundFFDEDE', , Property[1],, '^\d+([.,]?\d+)?$')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center cRed BackgroundFFDEDE', , Property[1],, '^\d+([.,]?\d+)?$', 1)
 			itemPropertiesForms[Property[1]]['Form'].OnEvent('Change', (*) => updateRelatives())
-			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx(, 'Auto')
+			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx('xp yp+30', 'Auto', ['s9'])
 			itemPropertiesForms[Property[1]]['CForm'].OnEvent('Click', updateRelativesCheck)
 		Case 'Sell Value':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center c005800 BackgroundD8FFD8', , Property[1],, '^\d+([.,]?\d+)?$')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center c005800 BackgroundD8FFD8', , Property[1],, '^\d+([.,]?\d+)?$', 1)
 			itemPropertiesForms[Property[1]]['Form'].OnEvent('Change', (*) => updateRelatives())
-			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx(, 'Auto')
+			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx('xp yp+30', 'Auto', ['s9'])
 			itemPropertiesForms[Property[1]]['CForm'].OnEvent('Click', updateRelativesCheck)
 		Case 'Profit Value':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center BackgroundD8ECFF', , Property[1],, '^\d+([.,]?\d+)?$')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center BackgroundD8ECFF', , Property[1],, '^\d+([.,]?\d+)?$', 1)
 			itemPropertiesForms[Property[1]]['Form'].OnEvent('Change', (*) => updateRelatives())
-			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx('Checked', 'Auto')
+			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx('xp yp+30 Checked', 'Auto', ['s9'])
 			itemPropertiesForms[Property[1]]['CForm'].OnEvent('Click', updateRelativesCheck)
 		Case 'Profit Percent':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center BackgroundD8ECFF', , Property[1],, '^\d+([.,]?\d+)?$')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center BackgroundD8ECFF', , Property[1],, '^\d+([.,]?\d+)?$', 1)
 			itemPropertiesForms[Property[1]]['Form'].OnEvent('Change', (*) => updateRelatives())
-			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx('Checked', 'Auto')
+			itemPropertiesForms[Property[1]]['CForm'] := propertiesWindow.AddCheckboxEx('xp yp+30 Checked', 'Auto', ['s9'])
 			itemPropertiesForms[Property[1]]['CForm'].OnEvent('Click', updateRelativesCheck)
 		Case 'Thumbnail':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly Backgroundd4d4d4', , Property[1])
-			itemPropertiesForms[Property[1]]['Form'].Visible := False
-			itemPropertiesForms[Property[1]]['Form'].GetPos(&X, &Y)
-			itemPropertiesForms[Property[1]]['BForm'] := propertiesWindow.AddButtonEx('x' X ' y' Y ' w280', 'Select',, IBBlack1, 'images\buttons\image.png')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly Backgroundd4d4d4 Hidden', , Property[1])
+			itemPropertiesForms[Property[1]]['BForm'] := propertiesWindow.AddButtonEx('xp+65 w150', 'Select', ['s9'], IBBlack1, 'images\buttons\image.png')
 			itemPropertiesForms[Property[1]]['BForm'].OnEvent('Click', (*) => pickItemThumbnail())
 			itemPropertiesForms[Property[1]]['PForm'] := propertiesWindow.AddPicEx('xm+108 w64 h64', , 0)
 		Case 'Code128':
 			itemPropertiesForms[Property[1]] := Map()
 			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly Backgroundd4d4d4 Hidden', , Property[1])
-			itemPropertiesForms[Property[1]]['Form'].Visible := False
-			itemPropertiesForms[Property[1]]['Form'].GetPos(&X, &Y)
-			itemPropertiesForms[Property[1]]['BForm'] := propertiesWindow.AddButtonEx('x' X ' y' Y ' w280', 'Generate',, IBBlack1, 'images\buttons\bar.png')
+			itemPropertiesForms[Property[1]]['BForm'] := propertiesWindow.AddButtonEx('xp+65 w150', 'Generate', ['s9'], IBBlack1, 'images\buttons\bar.png')
 			itemPropertiesForms[Property[1]]['BForm'].OnEvent('Click', (*) => generateItemCode128(3, 1))
 			itemPropertiesForms[Property[1]]['PForm'] := propertiesWindow.AddPicEx('xm+70 w280 h32 BackgroundFFFFFF',, 0)
 		Case 'Related':
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly', , Property[1],, '^[A-Za-z0-9_ ]+$')
-			itemPropertiesForms[Property[1]]['Form'].Visible := False
-			itemPropertiesForms[Property[1]]['Form'].GetPos(&X, &Y)
-			itemPropertiesForms[Property[1]]['CBForm'] := propertiesWindow.AddComboBoxEx('x' X ' y' Y ' cBlue Center w280 r10',, Property[1],, '^[A-Za-z0-9_ ]+$')
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center ReadOnly Hidden', , Property[1],, '^[A-Za-z0-9_ ]+$', 1)
+			itemPropertiesForms[Property[1]]['CBForm'] := propertiesWindow.AddComboBoxEx('xp yp cBlue Center wp r10',,,, '^[A-Za-z0-9_ ]+$')
 			itemPropertiesForms[Property[1]]['CBForm'].OnEvent('Change', nameDisplay)
-			itemPropertiesForms[Property[1]]['ENForm'] := propertiesWindow.AddEditEx('w280 Center ReadOnly cRed -Border',, 'Product Name')
-			itemPropertiesForms[Property[1]]['EForm'] := propertiesWindow.AddEditEx('w280 Center',, 'Multiplication Value',, '^\d+([.,]?\d+)?$')
+			itemPropertiesForms[Property[1]]['ENForm'] := propertiesWindow.AddEditEx('w280 Center ReadOnly cRed -Border',, 'Product Name',,, 1)
+			itemPropertiesForms[Property[1]]['EForm'] := propertiesWindow.AddEditEx('w280 Center',, 'Multiply by',, '^\d+([.,]?\d+)?$', 1)
 		Case 'Sell Method':
 			itemPropertiesForms[Property[1]] := Map()
 			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddComboBoxEx('xm w280 Center Choose1', ['Piece (p)', 'Weight (g)', 'Volume (l)'] , Property[1])
@@ -100,13 +95,13 @@ For Property in setting['Item'] {
 			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center', , Property[1],, '^\d+([.,]?\d+)?$')
 		Default:
 			itemPropertiesForms[Property[1]] := Map()
-			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center', , Property[1])
+			itemPropertiesForms[Property[1]]['Form'] := propertiesWindow.AddEditEx('xm w280 Center', , Property[1],,, 1)
 	}
 }
-
-GroupPath := mainWindow.AddEditEx('xm+400 ym+135 yp+4 w790 hp cGreen -Border')
-mainList := mainWindow.AddListViewEx('xm+400 ym+175 w890 h420 -E0x200',, ['s12'], 1, 32, 32)
-searchList := mainWindow.AddListViewEx('xp yp wp hp Hidden -E0x200',,, 1, 32, 32)
+propertiesWindow.AddTextEx()
+GroupPath := mainWindow.AddButtonEx('xm+400 y150 w890 cGreen -Border ReadOnly', '---',, IBBlack1)
+mainList := mainWindow.AddListViewEx('xm+400 ym+175 w890 h435',, ['s12'], 1, 32, 32)
+searchList := mainWindow.AddListViewEx('xp yp wp hp Hidden',,, 1, 32, 32)
 mainList.OnEvent('DoubleClick', ItemSelect)
 searchList.OnEvent('DoubleClick', ItemSelect)
 ItemSelect(Ctrl, Item) {
@@ -123,12 +118,13 @@ For Property in setting['Item'] {
 	searchList.InsertCol(A_Index, '100', Property[1])
 }
 mainList.GetPos(&X, &Y, &W, &H)
-updateItem := mainWindow.AddButtonEx('xm+20 y' (Y + H - 30) ' w320', 'Update', ['Bold'], IBBlack1, 'images\buttons\commit.png')
+updateItem := mainWindow.AddButtonEx('xm+20 y' (Y + H - 30) ' w320', 'Update', ['s10 Bold'], IBBlack1, 'images\buttons\commit.png')
 updateItem.OnEvent('Click', (*) => writeItemProperties(1))
 ControlBorder(
 	mainWindow, [
 		mainList, 
-		searchList
+		searchList,
+		GroupPath
 	]
 )
 
@@ -147,11 +143,12 @@ Menus.Add("File", FileMenu)
 Menus.Add("Edit", HelpMenu)
 Menus.Add("View", ViewMenu)
 mainWindow.MenuBar := Menus
-propertiesWindow.Show('x40 y140 h410 w320')
+propertiesWindow.Show('x40 y180 h410 w320')
 ControlBorder(
 	mainWindow, [
 		propertiesWindow,
-		updateItem
+		updateItem,
+		switchUpdate
 	]
 )
 mainWindow.Show()
